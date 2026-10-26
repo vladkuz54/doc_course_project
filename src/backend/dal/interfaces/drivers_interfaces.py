@@ -1,0 +1,15 @@
+from abc import abstractmethod
+
+from ..db_models import Drivers
+from .base_interfaces import IBaseRepository
+
+
+class IDriversRepository(IBaseRepository[Drivers]):
+
+    @abstractmethod
+    async def get_by_user_id(self, user_id):
+        pass
+
+    @abstractmethod
+    async def get_active(self):
+        pass
