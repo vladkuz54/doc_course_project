@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "aiosqlite>=0.22.1",
     "asyncpg>=0.32.0",
     "bcrypt>=5.0.0",
     "black>=26.10.1",
@@ -15,7 +16,7 @@ dependencies = [
     "isort>=9.0.2",
     "passlib>=1.7.4",
     "python-jose[cryptography]>=3.5.0",
-    "sqlalchemy>=2.1.6",
+    "sqlalchemy[asyncio]>=2.1.6",
 ]
 
 [project.scripts]
