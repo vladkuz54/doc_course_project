@@ -368,3 +368,5 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+*.db
