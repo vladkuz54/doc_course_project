@@ -23,7 +23,7 @@ class VehiclesService(IVehiclesService, BaseService):
     def __init__(self, repository: IVehiclesRepository):
         super().__init__(repository)
 
-    async def validate(self, data, id=None):
+    async def _validate(self, data, id=None):
         existing = await self.repository.get_by_vin(data.vin)
         if existing and existing.id != id:
             raise EntityAlreadyExistsError(

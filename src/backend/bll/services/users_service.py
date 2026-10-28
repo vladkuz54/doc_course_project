@@ -21,7 +21,7 @@ class UsersService(IUsersService, BaseService):
     def __init__(self, repository: IUsersRepository):
         super().__init__(repository)
 
-    async def validate(self, data, id=None):
+    async def _validate(self, data, id=None):
         existing = await self.repository.get_by_username(data.username)
         if existing and existing.id != id:
             raise EntityAlreadyExistsError(f"User {data.username} already exists")
