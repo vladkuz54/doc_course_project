@@ -53,3 +53,6 @@ class NotificationsService(INotificationsService, BaseService):
             raise EntityNotFoundError(
                 f"{data.related_entity} record with ID {data.related_id} not found"
             )
+
+    async def get_by_driver(self, driver_id):
+        return await self.repository.get_by_driver(driver_id)

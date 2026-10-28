@@ -11,5 +11,5 @@ class INotificationsRepository(IBaseRepository[Notifications]):
         pass
 
     @abstractmethod
-    async def get_for_driver(self, driver_id):
+    async def get_by_driver(self, driver_id):
         pass
