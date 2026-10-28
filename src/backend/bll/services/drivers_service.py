@@ -39,3 +39,12 @@ class DriversService(IDriversService, BaseService):
             raise EntityAlreadyExistsError(
                 f"User with ID {data.user_id} already has a driver profile"
             )
+
+    async def get_by_user_id(self, user_id):
+        driver = await self.repository.get_by_user_id(user_id)
+        if not driver:
+            raise EntityNotFoundError(f"User with ID {user_id} has no driver profile")
+        return driver
+
+    async def get_by_driver(self, driver_id):
+        return [await self.get_by_id(driver_id)]
