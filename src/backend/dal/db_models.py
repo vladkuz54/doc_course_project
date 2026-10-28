@@ -175,7 +175,7 @@ class RepairRecords(Base):
     id = Column(Integer, primary_key=True, index=True)
     vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False, index=True)
     date = Column(Date, nullable=False)
-    amount = Column(Numeric(10, 2), nullable=True)  
+    amount = Column(Numeric(10, 2), nullable=True)
     type = Column(
         StrEnum("SERVICE_TO", "INSPECTION", "REPAIR", name="maintenance_type"),
         nullable=False,
