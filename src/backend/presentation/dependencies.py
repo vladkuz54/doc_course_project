@@ -98,4 +98,10 @@ def get_insurance_policies_service(
 def get_notifications_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> NotificationsService:
-    return NotificationsService(NotificationsRepository(session))
+    return NotificationsService(
+        NotificationsRepository(session),
+        DriversRepository(session),
+        VehiclesRepository(session),
+        RoutesRepository(session),
+        DriverRequestsRepository(session),
+    )
