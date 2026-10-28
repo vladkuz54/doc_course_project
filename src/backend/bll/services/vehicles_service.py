@@ -1,7 +1,9 @@
+from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
+from ...dal.db_models import LICENSE_CATEGORIES, MIN_VEHICLE_YEAR
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityAlreadyExistsError
 from ..interfaces.vehicles_interface import IVehiclesService
@@ -10,11 +12,18 @@ from .base_service import BaseService
 
 class VehicleData(BaseModel):
     make: str
-    year: int
-    vin: str
-    required_license_category: str
+    year: int = Field(ge=MIN_VEHICLE_YEAR)
+    vin: str = Field(pattern=r"^[A-HJ-NPR-Z0-9]{17}$")
+    required_license_category: Literal[LICENSE_CATEGORIES]
     technical_state: str
     status: Literal["ACTIVE", "DECOMMISSIONED"] = "ACTIVE"
+
+    @field_validator("year")
+    @classmethod
+    def year_not_in_future(cls, value):
+        if value > date.today().year + 1:
+            raise ValueError(f"year must be at most {date.today().year + 1}")
+        return value
 
 
 class VehiclesService(IVehiclesService, BaseService):
