@@ -21,6 +21,14 @@ class UsersService(IUsersService, BaseService):
     def __init__(self, repository: IUsersRepository):
         super().__init__(repository)
 
+    async def authenticate(self, username, password):
+        user = await self.repository.get_by_username(username)
+        if not user or not bcrypt.checkpw(
+            password.encode(), user.password_hash.encode()
+        ):
+            return None
+        return user
+
     async def _validate(self, data, id=None):
         existing = await self.repository.get_by_username(data.username)
         if existing and existing.id != id:
@@ -32,3 +40,6 @@ class UsersService(IUsersService, BaseService):
             data.password.encode(), bcrypt.gensalt()
         ).decode()
         return fields
+
+    async def get_by_driver(self, driver_id):
+        return await self.repository.get_by_driver(driver_id)
