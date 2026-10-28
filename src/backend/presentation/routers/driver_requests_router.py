@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ConfigDict
 
 from ...bll.services.driver_requests_service import (
@@ -41,16 +41,23 @@ async def get_by_id(
     return obj
 
 
-@router.post(
-    "/",
-    response_model=DriverRequestResponse,
-    status_code=201,
-    dependencies=[Depends(require_admin)],
-)
+@router.post("/", response_model=DriverRequestResponse, status_code=201)
 async def create(
     data: DriverRequestData,
+    driver_id: int | None = Depends(get_current_driver_id),
     service: DriverRequestsService = Depends(get_driver_requests_service),
 ):
+    if driver_id is not None:
+        if data.driver_id != driver_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Drivers can only create requests for themselves",
+            )
+        if data.status != "PENDING":
+            raise HTTPException(
+                status_code=403,
+                detail="Drivers can only create requests with PENDING status",
+            )
     return await service.create(data)
 
 
