@@ -42,4 +42,3 @@ class BaseRepository(IBaseRepository):
     async def _first(self, *conditions):
         result = await self.session.execute(select(self.model).where(*conditions))
         return result.scalars().first()
-
