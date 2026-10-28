@@ -5,9 +5,8 @@ from ..interfaces.base_interface import IBaseService
 class BaseService(IBaseService):
     entity_name = "Entity"
 
-    def __init__(self, repository, references=None):
+    def __init__(self, repository):
         self.repository = repository
-        self.references = references or {}
 
     async def get_all(self):
         return await self.repository.get_all()
@@ -35,11 +34,9 @@ class BaseService(IBaseService):
         await self.get_by_id(id)
         return await self.repository.delete(id)
 
-    async def validate(self, data, id=None):
-        for field, (repository, name) in self.references.items():
-            value = getattr(data, field)
-            if value is not None and not await repository.get_by_id(value):
-                raise EntityNotFoundError(f"{name} with ID {value} not found")
+    async def _validate(self, data, id=None):
+        # services override this with their own checks before create/update
+        pass
 
     def to_fields(self, data):
         return data.model_dump()

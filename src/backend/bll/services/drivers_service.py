@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.users_interfaces import IUsersRepository
-from ..exceptions import EntityAlreadyExistsError
+from ..exceptions import EntityAlreadyExistsError, EntityNotFoundError
 from ..interfaces.drivers_interface import IDriversService
 from .base_service import BaseService
 
@@ -28,10 +28,12 @@ class DriversService(IDriversService, BaseService):
     def __init__(
         self, repository: IDriversRepository, users_repository: IUsersRepository
     ):
-        super().__init__(repository, {"user_id": (users_repository, "User")})
+        super().__init__(repository)
+        self.users_repository = users_repository
 
-    async def validate(self, data, id=None):
-        await super().validate(data, id)
+    async def _validate(self, data, id=None):
+        if not await self.users_repository.get_by_id(data.user_id):
+            raise EntityNotFoundError(f"User with ID {data.user_id} not found")
         existing = await self.repository.get_by_user_id(data.user_id)
         if existing and existing.id != id:
             raise EntityAlreadyExistsError(
