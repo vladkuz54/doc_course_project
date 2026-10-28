@@ -1,8 +1,9 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from ...dal.db_models import LICENSE_CATEGORIES
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.users_interfaces import IUsersRepository
 from ..exceptions import EntityAlreadyExistsError, EntityNotFoundError
@@ -13,8 +14,8 @@ from .base_service import BaseService
 class DriverData(BaseModel):
     user_id: int
     full_name: str
-    license_category: str
-    experience_years: int = 0
+    license_category: Literal[LICENSE_CATEGORIES]
+    experience_years: int = Field(0, ge=0, le=60)
     license_expiry_date: date
     medical_check_date: date
     medical_valid_until: date
