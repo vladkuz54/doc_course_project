@@ -3,6 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from ...dal.db_models import LICENSE_CATEGORIES
 from ...dal.interfaces.driver_requests_interfaces import IDriverRequestsRepository
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ..exceptions import EntityNotFoundError
@@ -14,7 +15,7 @@ class DriverRequestData(BaseModel):
     driver_id: int
     type: Literal["LICENSE_UPDATE", "MEDICAL_CHECK"]
     status: Literal["PENDING", "APPROVED"] = "PENDING"
-    new_license_category: str | None = None
+    new_license_category: Literal[LICENSE_CATEGORIES] | None = None
     new_license_expiry_date: date | None = None
 
 
