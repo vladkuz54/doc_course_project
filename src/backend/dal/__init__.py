@@ -1,10 +1,12 @@
 import os
+from pathlib import Path
 
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
-DB_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///fleet.db")
+DEFAULT_DB_PATH = Path(__file__).resolve().parents[3] / "fleet.db"
+DB_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{DEFAULT_DB_PATH}")
 
 engine = create_async_engine(DB_URL, echo=False)
 
