@@ -30,3 +30,6 @@ class RouteStopsService(IRouteStopsService, BaseService):
             raise EntityAlreadyExistsError(
                 f"Route {data.route_id} already has a stop number {data.order_no}"
             )
+
+    async def get_by_driver(self, driver_id):
+        return await self.repository.get_by_driver(driver_id)

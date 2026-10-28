@@ -29,3 +29,6 @@ class VehiclesService(IVehiclesService, BaseService):
             raise EntityAlreadyExistsError(
                 f"Vehicle with VIN {data.vin} already exists"
             )
+
+    async def get_by_driver(self, driver_id):
+        return await self.repository.get_by_driver(driver_id)

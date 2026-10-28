@@ -13,3 +13,7 @@ class IVehiclesRepository(IBaseRepository[Vehicles]):
     @abstractmethod
     async def get_active(self):
         pass
+
+    @abstractmethod
+    async def get_by_driver(self, driver_id):
+        pass

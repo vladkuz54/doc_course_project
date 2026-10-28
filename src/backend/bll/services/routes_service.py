@@ -44,3 +44,6 @@ class RoutesService(IRoutesService, BaseService):
             and not await self.vehicles_repository.get_by_id(data.vehicle_id)
         ):
             raise EntityNotFoundError(f"Vehicle with ID {data.vehicle_id} not found")
+
+    async def get_by_driver(self, driver_id):
+        return await self.repository.get_by_driver(driver_id)

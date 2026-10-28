@@ -32,3 +32,6 @@ class DriverRequestsService(IDriverRequestsService, BaseService):
     async def _validate(self, data, id=None):
         if not await self.drivers_repository.get_by_id(data.driver_id):
             raise EntityNotFoundError(f"Driver with ID {data.driver_id} not found")
+
+    async def get_by_driver(self, driver_id):
+        return await self.repository.get_by_driver(driver_id)
