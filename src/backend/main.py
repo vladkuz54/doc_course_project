@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
 from .bll.exceptions import EntityAlreadyExistsError, EntityNotFoundError
+from .presentation.routers.auth import router as auth_router
 from .presentation.routers.driver_requests_router import (
     router as driver_requests_router,
 )
@@ -42,6 +43,7 @@ async def integrity_error_handler(request: Request, exc: IntegrityError):
     return JSONResponse(status_code=409, content={"detail": detail})
 
 
+app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(drivers_router)
 app.include_router(driver_requests_router)
