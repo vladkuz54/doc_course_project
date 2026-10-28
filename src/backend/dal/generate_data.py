@@ -4,8 +4,8 @@ from decimal import Decimal
 
 import bcrypt
 
-from . import Session
-from .db_models import (
+from backend.dal import Session
+from backend.dal.db_models import (
     DBModels,
     DriverRequests,
     Drivers,
@@ -311,7 +311,6 @@ def build():
     )
 
     def make_notifications():
-        # needs ids, so call it after flush; related_id is a polymorphic link without FK
         return [
             Notifications(
                 type="LICENSE_UPDATE_REQUEST",
