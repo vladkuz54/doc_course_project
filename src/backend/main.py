@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 
 from .bll.exceptions import EntityAlreadyExistsError, EntityNotFoundError
 from .presentation.routers.driver_requests_router import (
@@ -17,7 +18,7 @@ from .presentation.routers.routes_router import router as routes_router
 from .presentation.routers.users_router import router as users_router
 from .presentation.routers.vehicles_router import router as vehicles_router
 
-app = FastAPI(title="Fleet Management API", version="1.0")
+app = FastAPI(title="Fleet Management API")
 
 
 @app.exception_handler(EntityNotFoundError)
@@ -30,6 +31,15 @@ async def entity_already_exists_handler(
     request: Request, exc: EntityAlreadyExistsError
 ):
     return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+
+@app.exception_handler(IntegrityError)
+async def integrity_error_handler(request: Request, exc: IntegrityError):
+    if "FOREIGN KEY" in str(exc.orig):
+        detail = "Record is used by other records and cannot be deleted or changed"
+    else:
+        detail = f"Database constraint violated: {exc.orig}"
+    return JSONResponse(status_code=409, content={"detail": detail})
 
 
 app.include_router(users_router)
