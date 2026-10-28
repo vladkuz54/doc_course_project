@@ -3,8 +3,11 @@ from pydantic import ConfigDict
 
 from ...bll.services.fuel_records_service import FuelRecordData, FuelRecordsService
 from ..dependencies import get_fuel_records_service
+from .auth import require_admin
 
-router = APIRouter(prefix="/fuel-records", tags=["fuel-records"])
+router = APIRouter(
+    prefix="/fuel-records", tags=["fuel-records"], dependencies=[Depends(require_admin)]
+)
 
 
 class FuelRecordResponse(FuelRecordData):
