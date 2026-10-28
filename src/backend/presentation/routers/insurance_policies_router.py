@@ -6,8 +6,13 @@ from ...bll.services.insurance_policies_service import (
     InsurancePolicyData,
 )
 from ..dependencies import get_insurance_policies_service
+from .auth import require_admin
 
-router = APIRouter(prefix="/insurance-policies", tags=["insurance-policies"])
+router = APIRouter(
+    prefix="/insurance-policies",
+    tags=["insurance-policies"],
+    dependencies=[Depends(require_admin)],
+)
 
 
 class InsurancePolicyResponse(InsurancePolicyData):
