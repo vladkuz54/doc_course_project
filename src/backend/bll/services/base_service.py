@@ -18,14 +18,14 @@ class BaseService(IBaseService):
         return obj
 
     async def create(self, data):
-        await self.validate(data)
+        await self._validate(data)
         return await self.repository.create(
             self.repository.model(**self.to_fields(data))
         )
 
     async def update(self, id, data):
         obj = await self.get_by_id(id)
-        await self.validate(data, id)
+        await self._validate(data, id)
         for field, value in self.to_fields(data).items():
             setattr(obj, field, value)
         return await self.repository.update(obj)
