@@ -1,8 +1,10 @@
 from abc import abstractmethod
 from typing import TypeVar
+
 from .base_interfaces import IBaseRepository
 
 T = TypeVar("T")
+
 
 class IAccountingRepository(IBaseRepository[T]):
 

@@ -30,7 +30,9 @@ class Users(Base):
     password_hash = Column(String, nullable=False)
     role = Column(StrEnum("DRIVER", "ADMIN", name="user_role"), nullable=False)
 
-    driver = relationship("Drivers", back_populates="user", uselist=False)
+    driver = relationship(
+        "Drivers", back_populates="user", uselist=False, passive_deletes="all"
+    )
 
 
 class Drivers(Base):
@@ -56,8 +58,10 @@ class Drivers(Base):
     )
 
     user = relationship("Users", back_populates="driver")
-    requests = relationship("DriverRequests", back_populates="driver")
-    routes = relationship("Routes", back_populates="driver")
+    requests = relationship(
+        "DriverRequests", back_populates="driver", passive_deletes="all"
+    )
+    routes = relationship("Routes", back_populates="driver", passive_deletes="all")
 
 
 class DriverRequests(Base):
@@ -95,10 +99,16 @@ class Vehicles(Base):
         default="ACTIVE",
     )
 
-    routes = relationship("Routes", back_populates="vehicle")
-    fuel_records = relationship("FuelRecords", back_populates="vehicle")
-    repair_records = relationship("RepairRecords", back_populates="vehicle")
-    insurance_policies = relationship("InsurancePolicies", back_populates="vehicle")
+    routes = relationship("Routes", back_populates="vehicle", passive_deletes="all")
+    fuel_records = relationship(
+        "FuelRecords", back_populates="vehicle", passive_deletes="all"
+    )
+    repair_records = relationship(
+        "RepairRecords", back_populates="vehicle", passive_deletes="all"
+    )
+    insurance_policies = relationship(
+        "InsurancePolicies", back_populates="vehicle", passive_deletes="all"
+    )
 
 
 class Routes(Base):
@@ -175,7 +185,7 @@ class RepairRecords(Base):
     id = Column(Integer, primary_key=True, index=True)
     vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False, index=True)
     date = Column(Date, nullable=False)
-    amount = Column(Numeric(10, 2), nullable=True)  
+    amount = Column(Numeric(10, 2), nullable=True)
     type = Column(
         StrEnum("SERVICE_TO", "INSPECTION", "REPAIR", name="maintenance_type"),
         nullable=False,

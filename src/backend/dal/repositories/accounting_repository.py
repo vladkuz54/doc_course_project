@@ -1,7 +1,8 @@
 from sqlalchemy import select
 
-from backend.dal.repositories.base_repository import BaseRepository
 from backend.dal.interfaces.accounting_interfaces import IAccountingRepository
+from backend.dal.repositories.base_repository import BaseRepository
+
 
 class AccountingRepository(IAccountingRepository, BaseRepository):
     async def get_by_vehicle(self, vehicle_id):

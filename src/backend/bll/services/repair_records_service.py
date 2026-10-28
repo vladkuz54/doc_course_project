@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from ...dal.interfaces.repair_records_interfaces import IRepairRecordsRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
+from ..exceptions import EntityNotFoundError
 from ..interfaces.repair_records_interface import IRepairRecordsService
 from .base_service import BaseService
 
@@ -27,4 +28,9 @@ class RepairRecordsService(IRepairRecordsService, BaseService):
         repository: IRepairRecordsRepository,
         vehicles_repository: IVehiclesRepository,
     ):
-        super().__init__(repository, {"vehicle_id": (vehicles_repository, "Vehicle")})
+        super().__init__(repository)
+        self.vehicles_repository = vehicles_repository
+
+    async def _validate(self, data, id=None):
+        if not await self.vehicles_repository.get_by_id(data.vehicle_id):
+            raise EntityNotFoundError(f"Vehicle with ID {data.vehicle_id} not found")

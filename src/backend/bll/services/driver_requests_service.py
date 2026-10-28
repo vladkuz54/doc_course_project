@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from ...dal.interfaces.driver_requests_interfaces import IDriverRequestsRepository
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
+from ..exceptions import EntityNotFoundError
 from ..interfaces.driver_requests_interface import IDriverRequestsService
 from .base_service import BaseService
 
@@ -25,4 +26,12 @@ class DriverRequestsService(IDriverRequestsService, BaseService):
         repository: IDriverRequestsRepository,
         drivers_repository: IDriversRepository,
     ):
-        super().__init__(repository, {"driver_id": (drivers_repository, "Driver")})
+        super().__init__(repository)
+        self.drivers_repository = drivers_repository
+
+    async def _validate(self, data, id=None):
+        if not await self.drivers_repository.get_by_id(data.driver_id):
+            raise EntityNotFoundError(f"Driver with ID {data.driver_id} not found")
+
+    async def get_by_driver(self, driver_id):
+        return await self.repository.get_by_driver(driver_id)
