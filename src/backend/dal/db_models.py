@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     Date,
     DateTime,
@@ -22,6 +23,25 @@ def StrEnum(*values, name):
     return Enum(*values, name=name, native_enum=False, create_constraint=True)
 
 
+LICENSE_CATEGORIES = (
+    "A1",
+    "A",
+    "B1",
+    "B",
+    "C1",
+    "C",
+    "D1",
+    "D",
+    "BE",
+    "C1E",
+    "CE",
+    "D1E",
+    "DE",
+    "T",
+)
+MIN_VEHICLE_YEAR = 1980
+
+
 class Users(Base):
     __tablename__ = "users"
 
@@ -37,11 +57,16 @@ class Users(Base):
 
 class Drivers(Base):
     __tablename__ = "drivers"
+    __table_args__ = (
+        CheckConstraint("experience_years >= 0", name="ck_drivers_experience"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     full_name = Column(String, nullable=False)
-    license_category = Column(String, nullable=False)
+    license_category = Column(
+        StrEnum(*LICENSE_CATEGORIES, name="license_category"), nullable=False
+    )
     experience_years = Column(Integer, nullable=False, default=0)
     license_expiry_date = Column(Date, nullable=False)
     medical_check_date = Column(Date, nullable=False)
@@ -77,7 +102,9 @@ class DriverRequests(Base):
         nullable=False,
         default="PENDING",
     )
-    new_license_category = Column(String, nullable=True)
+    new_license_category = Column(
+        StrEnum(*LICENSE_CATEGORIES, name="new_license_category"), nullable=True
+    )
     new_license_expiry_date = Column(Date, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
 
@@ -86,12 +113,18 @@ class DriverRequests(Base):
 
 class Vehicles(Base):
     __tablename__ = "vehicles"
+    __table_args__ = (
+        CheckConstraint("length(vin) = 17", name="ck_vehicles_vin_length"),
+        CheckConstraint(f"year >= {MIN_VEHICLE_YEAR}", name="ck_vehicles_year"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     make = Column(String, nullable=False)
     year = Column(Integer, nullable=False)
     vin = Column(String, unique=True, nullable=False, index=True)
-    required_license_category = Column(String, nullable=False)
+    required_license_category = Column(
+        StrEnum(*LICENSE_CATEGORIES, name="required_license_category"), nullable=False
+    )
     technical_state = Column(String, nullable=False)
     status = Column(
         StrEnum("ACTIVE", "DECOMMISSIONED", name="vehicle_status"),
