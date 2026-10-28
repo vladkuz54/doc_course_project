@@ -6,8 +6,13 @@ from ...bll.services.repair_records_service import (
     RepairRecordsService,
 )
 from ..dependencies import get_repair_records_service
+from .auth import require_admin
 
-router = APIRouter(prefix="/repair-records", tags=["repair-records"])
+router = APIRouter(
+    prefix="/repair-records",
+    tags=["repair-records"],
+    dependencies=[Depends(require_admin)],
+)
 
 
 class RepairRecordResponse(RepairRecordData):
