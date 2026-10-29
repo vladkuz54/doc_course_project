@@ -21,11 +21,11 @@ class DriverData(BaseModel):
     medical_check_date: date
     medical_valid_until: date
     medical_check_status: Literal["VALID", "EXPIRED", "PENDING"] = "VALID"
-    employment_status: Literal["ACTIVE", "DISMISSED"] = "ACTIVE"
+    employment_status: Literal["ACTIVE", "ON_LEAVE", "DISMISSED"] = "ACTIVE"
 
 
 class DriverStatusData(BaseModel):
-    employment_status: Literal["ACTIVE", "DISMISSED"]
+    employment_status: Literal["ACTIVE", "ON_LEAVE", "DISMISSED"]
 
 
 class DriversService(IDriversService, EntityManagement):
@@ -52,7 +52,7 @@ class DriversService(IDriversService, EntityManagement):
             )
 
     async def _can_change_status(self, entity, status):
-        if status != "DISMISSED":
+        if status == "ACTIVE":
             return True
         routes = await self.routes_repository.get_by_driver(entity.id)
         return not any(r.status in ACTIVE_ROUTE_STATUSES for r in routes)
