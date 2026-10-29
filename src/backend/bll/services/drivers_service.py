@@ -14,7 +14,7 @@ from .base_service import BaseService
 class DriverData(BaseModel):
     user_id: int
     full_name: str
-    license_category: Literal[LICENSE_CATEGORIES]
+    license_categories: list[Literal[LICENSE_CATEGORIES]] = Field(min_length=1)
     experience_years: int = Field(0, ge=0, le=60)
     license_expiry_date: date
     medical_check_date: date
