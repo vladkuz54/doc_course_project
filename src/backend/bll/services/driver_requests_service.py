@@ -34,24 +34,35 @@ class DriverRequestsService(IDriverRequestsService, BaseService):
         driver = await self.drivers_repository.get_by_id(data.driver_id)
         if not driver:
             raise EntityNotFoundError(f"Driver with ID {data.driver_id} not found")
-        if data.type == "LICENSE_UPDATE":
-            if data.new_license_category is None:
-                raise BusinessRuleError(
-                    "License update request needs new_license_category"
-                )
-            if id is None and data.new_license_category in driver.license_categories:
-                raise BusinessRuleError(
-                    f"Driver already has license category {data.new_license_category}"
-                )
-            if id is None and any(
-                r.type == "LICENSE_UPDATE"
-                and r.status == "PENDING"
-                and r.new_license_category == data.new_license_category
+        pending = (
+            []
+            if id is not None
+            else [
+                r
                 for r in await self.repository.get_by_driver(data.driver_id)
-            ):
+                if r.status == "PENDING" and r.type == data.type
+            ]
+        )
+        if data.type == "MEDICAL_CHECK":
+            if data.new_license_category or data.new_license_expiry_date:
                 raise BusinessRuleError(
-                    f"Driver already has a pending request for category {data.new_license_category}"
+                    "Medical check request cannot contain license fields"
                 )
+            if pending:
+                raise BusinessRuleError(
+                    "Driver already has a pending medical check request"
+                )
+            return
+        if data.new_license_category is None:
+            raise BusinessRuleError("License update request needs new_license_category")
+        if id is None and data.new_license_category in driver.license_categories:
+            raise BusinessRuleError(
+                f"Driver already has license category {data.new_license_category}"
+            )
+        if any(r.new_license_category == data.new_license_category for r in pending):
+            raise BusinessRuleError(
+                f"Driver already has a pending request for category {data.new_license_category}"
+            )
 
     async def get_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)
