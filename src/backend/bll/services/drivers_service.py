@@ -54,6 +54,8 @@ class DriversService(IDriversService, EntityManagement):
     async def _can_change_status(self, entity, status):
         if status == "ACTIVE":
             return True
+        if status == "ON_LEAVE" and entity.employment_status == "DISMISSED":
+            return False
         routes = await self.routes_repository.get_by_driver(entity.id)
         return not any(r.status in ACTIVE_ROUTE_STATUSES for r in routes)
 
