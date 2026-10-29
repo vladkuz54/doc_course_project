@@ -28,14 +28,14 @@ LICENSE_CATEGORIES = (
     "A",
     "B1",
     "B",
-    "C1",
-    "C",
-    "D1",
-    "D",
     "BE",
+    "C1",
     "C1E",
+    "C",
     "CE",
+    "D1",
     "D1E",
+    "D",
     "DE",
     "T",
 )
@@ -64,9 +64,6 @@ class Drivers(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     full_name = Column(String, nullable=False)
-    license_category = Column(
-        StrEnum(*LICENSE_CATEGORIES, name="license_category"), nullable=False
-    )
     experience_years = Column(Integer, nullable=False, default=0)
     license_expiry_date = Column(Date, nullable=False)
     medical_check_date = Column(Date, nullable=False)
@@ -87,6 +84,39 @@ class Drivers(Base):
         "DriverRequests", back_populates="driver", passive_deletes="all"
     )
     routes = relationship("Routes", back_populates="driver", passive_deletes="all")
+    categories = relationship(
+        "DriverLicenseCategories",
+        back_populates="driver",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    @property
+    def license_categories(self):
+        return sorted(
+            (c.category for c in self.categories), key=LICENSE_CATEGORIES.index
+        )
+
+    @license_categories.setter
+    def license_categories(self, values):
+        existing = {c.category: c for c in self.categories}
+        self.categories = [
+            existing.get(v) or DriverLicenseCategories(category=v)
+            for v in dict.fromkeys(values)
+        ]
+
+
+class DriverLicenseCategories(Base):
+    __tablename__ = "driver_license_categories"
+
+    driver_id = Column(
+        Integer, ForeignKey("drivers.id", ondelete="CASCADE"), primary_key=True
+    )
+    category = Column(
+        StrEnum(*LICENSE_CATEGORIES, name="license_category"), primary_key=True
+    )
+
+    driver = relationship("Drivers", back_populates="categories")
 
 
 class DriverRequests(Base):
