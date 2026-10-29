@@ -9,6 +9,10 @@ class EntityManagement(BaseService):
 
     async def change_status(self, id, status):
         entity = await self.get_by_id(id)
+        if getattr(entity, self.status_field) == status:
+            raise BusinessRuleError(
+                f"{self.entity_name} with ID {id} already has status {status}"
+            )
         if not await self._can_change_status(entity, status):
             raise BusinessRuleError(
                 f"{self.entity_name} with ID {id} cannot change status to {status}"
