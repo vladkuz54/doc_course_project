@@ -75,7 +75,7 @@ class Drivers(Base):
         default="VALID",
     )
     employment_status = Column(
-        StrEnum("ACTIVE", "ON_LEAVE", "DISMISSED", name="employment_status"),
+        StrEnum("ACTIVE", "DISMISSED", name="employment_status"),
         nullable=False,
         default="ACTIVE",
     )
