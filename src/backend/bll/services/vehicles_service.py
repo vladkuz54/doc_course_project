@@ -3,11 +3,16 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from ...dal.db_models import LICENSE_CATEGORIES, MIN_VEHICLE_YEAR
+from ...dal.db_models import (
+    ACTIVE_ROUTE_STATUSES,
+    LICENSE_CATEGORIES,
+    MIN_VEHICLE_YEAR,
+)
+from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityAlreadyExistsError
 from ..interfaces.vehicles_interface import IVehiclesService
-from .base_service import BaseService
+from .entity_management import EntityManagement
 
 
 class VehicleData(BaseModel):
@@ -26,11 +31,18 @@ class VehicleData(BaseModel):
         return value
 
 
-class VehiclesService(IVehiclesService, BaseService):
+class VehicleStatusData(BaseModel):
+    status: Literal["ACTIVE", "DECOMMISSIONED"]
+
+
+class VehiclesService(IVehiclesService, EntityManagement):
     entity_name = "Vehicle"
 
-    def __init__(self, repository: IVehiclesRepository):
+    def __init__(
+        self, repository: IVehiclesRepository, routes_repository: IRoutesRepository
+    ):
         super().__init__(repository)
+        self.routes_repository = routes_repository
 
     async def _validate(self, data, id=None):
         existing = await self.repository.get_by_vin(data.vin)
@@ -38,6 +50,12 @@ class VehiclesService(IVehiclesService, BaseService):
             raise EntityAlreadyExistsError(
                 f"Vehicle with VIN {data.vin} already exists"
             )
+
+    async def _can_change_status(self, entity, status):
+        if status != "DECOMMISSIONED":
+            return True
+        routes = await self.routes_repository.get_by_vehicle(entity.id)
+        return not any(r.status in ACTIVE_ROUTE_STATUSES for r in routes)
 
     async def get_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)
