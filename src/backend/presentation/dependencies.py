@@ -38,7 +38,9 @@ def get_users_service(
 def get_drivers_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> DriversService:
-    return DriversService(DriversRepository(session), UsersRepository(session))
+    return DriversService(
+        DriversRepository(session), UsersRepository(session), RoutesRepository(session)
+    )
 
 
 def get_driver_requests_service(
@@ -52,7 +54,7 @@ def get_driver_requests_service(
 def get_vehicles_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> VehiclesService:
-    return VehiclesService(VehiclesRepository(session))
+    return VehiclesService(VehiclesRepository(session), RoutesRepository(session))
 
 
 def get_routes_service(
