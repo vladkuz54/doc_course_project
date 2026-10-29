@@ -4,3 +4,7 @@ class EntityNotFoundError(Exception):
 
 class EntityAlreadyExistsError(Exception):
     pass
+
+
+class BusinessRuleError(Exception):
+    pass
