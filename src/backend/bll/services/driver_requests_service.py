@@ -43,6 +43,15 @@ class DriverRequestsService(IDriverRequestsService, BaseService):
                 raise BusinessRuleError(
                     f"Driver already has license category {data.new_license_category}"
                 )
+            if id is None and any(
+                r.type == "LICENSE_UPDATE"
+                and r.status == "PENDING"
+                and r.new_license_category == data.new_license_category
+                for r in await self.repository.get_by_driver(data.driver_id)
+            ):
+                raise BusinessRuleError(
+                    f"Driver already has a pending request for category {data.new_license_category}"
+                )
 
     async def get_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)
