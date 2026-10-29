@@ -42,7 +42,7 @@ def build():
     petrenko = Drivers(
         user=user("petrenko", "DRIVER"),
         full_name="Петренко Іван Олександрович",
-        license_category="C",
+        license_categories=["B", "C"],
         experience_years=12,
         license_expiry_date=days(900),
         medical_check_date=days(-100),
@@ -51,7 +51,7 @@ def build():
     kovalenko = Drivers(
         user=user("kovalenko", "DRIVER"),
         full_name="Коваленко Олег Петрович",
-        license_category="B",
+        license_categories=["B"],
         experience_years=4,
         license_expiry_date=days(20),
         medical_check_date=days(-200),
@@ -60,7 +60,7 @@ def build():
     shevchenko = Drivers(
         user=user("shevchenko", "DRIVER"),
         full_name="Шевченко Андрій Миколайович",
-        license_category="CE",
+        license_categories=["B", "C", "CE"],
         experience_years=20,
         license_expiry_date=days(1500),
         medical_check_date=days(-370),
@@ -70,7 +70,7 @@ def build():
     bondar = Drivers(
         user=user("bondar", "DRIVER"),
         full_name="Бондар Сергій Васильович",
-        license_category="C",
+        license_categories=["B", "C"],
         experience_years=8,
         license_expiry_date=days(400),
         medical_check_date=days(-30),
@@ -79,7 +79,7 @@ def build():
     melnyk = Drivers(
         user=user("melnyk", "DRIVER"),
         full_name="Мельник Віктор Іванович",
-        license_category="B",
+        license_categories=["B"],
         experience_years=15,
         license_expiry_date=days(600),
         medical_check_date=days(-300),
