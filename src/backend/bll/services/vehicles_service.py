@@ -3,11 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from ...dal.db_models import (
-    ACTIVE_ROUTE_STATUSES,
-    LICENSE_CATEGORIES,
-    MIN_VEHICLE_YEAR,
-)
+from ...dal.db_models import ACTIVE_ROUTE_STATUSES, LICENSE_CATEGORIES, MIN_VEHICLE_YEAR
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityAlreadyExistsError

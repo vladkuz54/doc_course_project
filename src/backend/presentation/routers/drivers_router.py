@@ -1,11 +1,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict
 
-from ...bll.services.drivers_service import (
-    DriverData,
-    DriversService,
-    DriverStatusData,
-)
+from ...bll.services.drivers_service import DriverData, DriversService, DriverStatusData
 from ..dependencies import get_drivers_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
