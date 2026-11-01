@@ -8,7 +8,7 @@ from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityNotFoundError
 from ..interfaces.routes_interface import IRoutesService
-from .base_service import BaseService
+from .entity_management import EntityManagement
 
 
 class RouteData(BaseModel):
@@ -21,7 +21,11 @@ class RouteData(BaseModel):
     status: Literal["PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"] = "PLANNED"
 
 
-class RoutesService(IRoutesService, BaseService):
+class RouteStatusData(BaseModel):
+    status: Literal["PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
+
+
+class RoutesService(IRoutesService, EntityManagement):
     entity_name = "Route"
 
     def __init__(
