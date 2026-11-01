@@ -22,7 +22,7 @@ async def get_all(
     service: NotificationsService = Depends(get_notifications_service),
 ):
     if driver_id is None:
-        return await service.get_all()
+        return await service.get_for_admins()
     return await service.get_by_driver(driver_id)
 
 
@@ -49,6 +49,18 @@ async def create(
     service: NotificationsService = Depends(get_notifications_service),
 ):
     return await service.create(data)
+
+
+@router.patch("/{id}/read", response_model=NotificationResponse)
+async def mark_as_read(
+    id: int,
+    driver_id: int | None = Depends(get_current_driver_id),
+    service: NotificationsService = Depends(get_notifications_service),
+):
+    obj = await service.get_by_id(id)
+    if driver_id is not None:
+        ensure_visible(obj, await service.get_by_driver(driver_id))
+    return await service.mark_as_read(id)
 
 
 @router.put(
