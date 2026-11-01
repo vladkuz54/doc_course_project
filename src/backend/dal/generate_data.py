@@ -348,12 +348,28 @@ def build():
                 text=f"Посвідчення Коваленка О. П. спливає {days(20):%d.%m.%Y}",
             ),
             Notifications(
+                recipient_id=kovalenko.user_id,
+                type="LICENSE_EXPIRING",
+                related_entity="drivers",
+                related_id=kovalenko.id,
+                created_at=NOW,
+                text=f"Посвідчення Коваленка О. П. спливає {days(20):%d.%m.%Y}",
+            ),
+            Notifications(
                 type="MEDICAL_CHECK_DUE",
                 related_entity="drivers",
                 related_id=shevchenko.id,
                 created_at=NOW - timedelta(days=5),
                 text="Медогляд Шевченка А. М. прострочено",
                 is_read=True,
+            ),
+            Notifications(
+                recipient_id=shevchenko.user_id,
+                type="MEDICAL_CHECK_DUE",
+                related_entity="drivers",
+                related_id=shevchenko.id,
+                created_at=NOW - timedelta(days=5),
+                text="Медогляд Шевченка А. М. прострочено",
             ),
         ]
 

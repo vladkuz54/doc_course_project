@@ -13,6 +13,7 @@ from .base_service import BaseService
 
 
 class NotificationData(BaseModel):
+    recipient_id: int | None = None
     type: Literal[
         "LICENSE_UPDATE_REQUEST",
         "MEDICAL_CHECK_REQUEST",
@@ -21,6 +22,7 @@ class NotificationData(BaseModel):
         "INSURANCE_EXPIRING",
         "LICENSE_EXPIRING",
         "MEDICAL_CHECK_DUE",
+        "ROUTE_ASSIGNED",
     ]
     text: str
     related_entity: Literal["drivers", "vehicles", "routes", "driver_requests"]

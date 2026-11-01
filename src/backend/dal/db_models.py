@@ -268,6 +268,7 @@ class Notifications(Base):
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
+    recipient_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     type = Column(
         StrEnum(
             "LICENSE_UPDATE_REQUEST",
@@ -277,6 +278,7 @@ class Notifications(Base):
             "INSURANCE_EXPIRING",
             "LICENSE_EXPIRING",
             "MEDICAL_CHECK_DUE",
+            "ROUTE_ASSIGNED",
             name="notification_type",
         ),
         nullable=False,
