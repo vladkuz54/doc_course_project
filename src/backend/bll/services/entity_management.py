@@ -1,5 +1,3 @@
-from abc import abstractmethod
-
 from ..exceptions import BusinessRuleError
 from .base_service import BaseService
 
@@ -32,9 +30,8 @@ class EntityManagement(BaseService):
             )
         return await super().update(id, data)
 
-    @abstractmethod
     async def _can_change_status(self, entity, status):
-        pass
+        return True
 
     async def _apply_status(self, entity, status):
         setattr(entity, self.status_field, status)
