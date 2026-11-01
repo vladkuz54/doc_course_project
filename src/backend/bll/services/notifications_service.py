@@ -58,3 +58,11 @@ class NotificationsService(INotificationsService, BaseService):
 
     async def get_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)
+
+    async def get_for_admins(self):
+        return await self.repository.get_for_admins()
+
+    async def mark_as_read(self, id):
+        obj = await self.get_by_id(id)
+        obj.is_read = True
+        return await self.repository.update(obj)
