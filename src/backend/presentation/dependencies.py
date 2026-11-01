@@ -52,10 +52,21 @@ def get_driver_requests_service(
     return DriverRequestsService(DriverRequestsRepository(session))
 
 
+def get_repair_records_service(
+    session: AsyncSession = Depends(get_db_session),
+) -> RepairRecordsService:
+    return RepairRecordsService(
+        RepairRecordsRepository(session), VehiclesRepository(session)
+    )
+
+
 def get_vehicles_service(
     session: AsyncSession = Depends(get_db_session),
+    repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
 ) -> VehiclesService:
-    return VehiclesService(VehiclesRepository(session), RoutesRepository(session))
+    return VehiclesService(
+        VehiclesRepository(session), RoutesRepository(session), repair_records_service
+    )
 
 
 def get_routes_service(
@@ -79,14 +90,6 @@ def get_fuel_records_service(
 ) -> FuelRecordsService:
     return FuelRecordsService(
         FuelRecordsRepository(session), VehiclesRepository(session)
-    )
-
-
-def get_repair_records_service(
-    session: AsyncSession = Depends(get_db_session),
-) -> RepairRecordsService:
-    return RepairRecordsService(
-        RepairRecordsRepository(session), VehiclesRepository(session)
     )
 
 
