@@ -12,3 +12,15 @@ class DriversRepository(IDriversRepository, BaseRepository):
 
     async def get_active(self):
         return await self._where(self.model.employment_status == "ACTIVE")
+
+    async def get_license_expiring(self, until):
+        return await self._where(
+            self.model.employment_status == "ACTIVE",
+            self.model.license_expiry_date <= until,
+        )
+
+    async def get_medical_check_due(self, until):
+        return await self._where(
+            self.model.employment_status == "ACTIVE",
+            self.model.medical_valid_until <= until,
+        )
