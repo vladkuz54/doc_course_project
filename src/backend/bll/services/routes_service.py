@@ -192,6 +192,7 @@ class RoutesService(IRoutesService, EntityManagement):
         route = await self.get_by_id(route_id)
         await self._ensure_nothing_in_progress(route)
         route.start()
+        await self._check_assignment(route)
         return await self.repository.update(route)
 
     async def arrive_at_stop(self, route_id, stop_id):
