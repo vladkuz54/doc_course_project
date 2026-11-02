@@ -1,7 +1,7 @@
 from datetime import datetime, time
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, NaiveDatetime
+from pydantic import BaseModel, Field, NaiveDatetime, StringConstraints
 
 from ...dal.db_models import ACTIVE_ROUTE_STATUSES, RouteStops
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
@@ -26,6 +26,8 @@ from ..interfaces.routes_interface import IRoutesService
 from ..observer import DomainEvent
 from .entity_management import EntityManagement
 
+StopAddress = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+
 
 class RouteData(BaseModel):
     driver_id: int | None = None
@@ -35,7 +37,7 @@ class RouteData(BaseModel):
 
 
 class RouteCreateData(RouteData):
-    stops: list[str] = Field(min_length=1)
+    stops: list[StopAddress] = Field(min_length=1)
 
 
 class RouteStatusData(BaseModel):
@@ -43,7 +45,7 @@ class RouteStatusData(BaseModel):
 
 
 class RouteStopsData(BaseModel):
-    stops: list[str]
+    stops: list[StopAddress]
 
 
 class RouteDriverData(BaseModel):
