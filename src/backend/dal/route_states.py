@@ -94,6 +94,8 @@ class PlannedState(RouteState):
             )
         self._ensure_assigned(route)
         _ensure_not_in_future(returned_at)
+        if returned_at < route.departure_at:
+            raise RouteActionNotAllowed("Return time cannot be before the departure")
         route.completed_at = returned_at
         route.set_state(CompletedState())
 
