@@ -105,7 +105,7 @@ def get_routes_service(
 def get_route_stops_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> RouteStopsService:
-    return RouteStopsService(RouteStopsRepository(session), RoutesRepository(session))
+    return RouteStopsService(RouteStopsRepository(session))
 
 
 def get_fuel_records_service(
