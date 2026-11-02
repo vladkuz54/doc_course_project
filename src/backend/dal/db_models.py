@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import (
     Boolean,
@@ -17,6 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import declared_attr, relationship
 
 from . import Base, engine
+from .route_states import RouteState
 
 
 def StrEnum(*values, name):
@@ -41,6 +42,8 @@ LICENSE_CATEGORIES = (
 )
 MIN_VEHICLE_YEAR = 1980
 ACTIVE_ROUTE_STATUSES = ("PLANNED", "IN_PROGRESS")
+AVERAGE_SPEED_KMH = 60
+MINUTES_PER_STOP = 15
 
 
 class Users(Base):
@@ -183,6 +186,7 @@ class Routes(Base):
     vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=True, index=True)
     distance = Column(Float, nullable=False)
     departure_at = Column(DateTime, nullable=False)
+    planned_return_at = Column(DateTime, nullable=False)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     status = Column(
@@ -203,6 +207,46 @@ class Routes(Base):
         order_by="RouteStops.order_no",
     )
 
+    @property
+    def state(self):
+        return RouteState.from_status(self.status)
+
+    def set_state(self, state):
+        self.status = state.status()
+
+    def reassign_driver(self, driver):
+        self.state.reassign_driver(self, driver)
+
+    def reassign_vehicle(self, vehicle):
+        self.state.reassign_vehicle(self, vehicle)
+
+    def reschedule(self, departure_at):
+        self.state.reschedule(self, departure_at)
+
+    def edit_stops(self, stops):
+        self.state.edit_stops(self, stops)
+
+    def start(self):
+        self.state.start(self)
+
+    def arrive_at_stop(self, stop):
+        self.state.arrive_at_stop(self, stop)
+
+    def complete(self, returned_at=None):
+        self.state.complete(self, returned_at)
+
+    def cancel(self):
+        self.state.cancel(self)
+
+    def delete(self):
+        self.state.delete(self)
+
+    def update_planned_return(self):
+        self.planned_return_at = self.departure_at + timedelta(
+            hours=self.distance / AVERAGE_SPEED_KMH,
+            minutes=MINUTES_PER_STOP * len(self.stops),
+        )
+
 
 class RouteStops(Base):
     __tablename__ = "route_stops"
@@ -214,6 +258,7 @@ class RouteStops(Base):
     )
     order_no = Column(Integer, nullable=False)
     address = Column(String, nullable=False)
+    arrived_at = Column(DateTime, nullable=True)
 
     route = relationship("Routes", back_populates="stops")
 
