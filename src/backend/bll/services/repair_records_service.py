@@ -41,6 +41,14 @@ class RepairRecordsService(IRepairRecordsService, AccountingService):
 
     async def _validate(self, data, id=None):
         await self._ensure_vehicle_exists(data.vehicle_id)
+        if id is not None:
+            existing = await self.get_by_id(id)
+            if data.status != existing.status or (
+                existing.status == "DONE" and data.amount != existing.amount
+            ):
+                raise BusinessRuleError(
+                    "Repair status and cost change only through the cost route"
+                )
         if data.status == "PLANNED" and data.amount is not None:
             raise BusinessRuleError("A planned repair cannot have an amount")
         if data.status == "DONE" and data.amount is None:
