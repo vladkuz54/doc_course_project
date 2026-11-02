@@ -1,5 +1,5 @@
-from .base_interface import IBaseService
+from .accounting_interface import IAccountingService
 
 
-class IFuelRecordsService(IBaseService):
+class IFuelRecordsService(IAccountingService):
     pass
