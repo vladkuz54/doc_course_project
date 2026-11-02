@@ -1,6 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..bll.services.deadline_monitor import DeadlineMonitor
 from ..bll.services.driver_requests_service import DriverRequestsService
 from ..bll.services.drivers_service import DriversService
 from ..bll.services.fuel_records_service import FuelRecordsService
@@ -120,3 +121,18 @@ def get_insurance_policies_service(
     return InsurancePoliciesService(
         InsurancePoliciesRepository(session), VehiclesRepository(session)
     )
+
+
+def get_deadline_monitor(
+    repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
+    insurance_policies_service: InsurancePoliciesService = Depends(
+        get_insurance_policies_service
+    ),
+    drivers_service: DriversService = Depends(get_drivers_service),
+    notifications: NotificationsService = Depends(get_notifications_service),
+) -> DeadlineMonitor:
+    monitor = DeadlineMonitor(
+        repair_records_service, insurance_policies_service, drivers_service
+    )
+    monitor.attach(notifications)
+    return monitor
