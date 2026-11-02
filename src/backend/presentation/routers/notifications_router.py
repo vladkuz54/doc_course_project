@@ -5,7 +5,11 @@ from pydantic import ConfigDict
 
 from ...bll.observer import DomainEvent
 from ...bll.services.deadline_monitor import DeadlineMonitor
-from ...bll.services.notifications_service import NotificationData, NotificationsService
+from ...bll.services.notifications_service import (
+    NotificationData,
+    NotificationsService,
+    NotificationUpdateData,
+)
 from ..dependencies import get_deadline_monitor, get_notifications_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
@@ -84,7 +88,7 @@ async def mark_as_read(
 )
 async def update(
     id: int,
-    data: NotificationData,
+    data: NotificationUpdateData,
     service: NotificationsService = Depends(get_notifications_service),
 ):
     return await service.update(id, data)
