@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from ..dal.db_models import Drivers, Routes, Vehicles
+
+MIN_ROUTE_GAP_MINUTES = 10
 
 
 @dataclass
@@ -126,13 +128,18 @@ class InsuranceHandler(AssignmentHandler):
 class ScheduleConflictHandler(AssignmentHandler):
     async def _check(self, request):
         route = request.route
+        gap = timedelta(minutes=MIN_ROUTE_GAP_MINUTES)
         for other in request.other_routes:
             end = other.planned_return_at
             if other.status == "IN_PROGRESS":
                 end = max(end, datetime.now())
             if (
-                route.departure_at < end
-                and other.departure_at < route.planned_return_at
+                route.departure_at < end + gap
+                and other.departure_at < route.planned_return_at + gap
             ):
-                return CheckResult(False, f"The route overlaps with route {other.id}")
+                return CheckResult(
+                    False,
+                    f"The route needs at least {MIN_ROUTE_GAP_MINUTES} minutes "
+                    f"between it and route {other.id}",
+                )
         return CheckResult(True)
