@@ -30,6 +30,22 @@ class RouteStatusData(BaseModel):
     status: Literal["PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
 
 
+class RouteStopsData(BaseModel):
+    stops: list[str]
+
+
+class RouteDriverData(BaseModel):
+    driver_id: int
+
+
+class RouteVehicleData(BaseModel):
+    vehicle_id: int
+
+
+class RouteCompleteData(BaseModel):
+    returned_at: NaiveDatetime | None = None
+
+
 class RoutesService(IRoutesService, EntityManagement):
     entity_name = "Route"
 
