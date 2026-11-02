@@ -14,7 +14,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declared_attr, relationship
 
 from . import Base, engine
 
@@ -218,37 +218,38 @@ class RouteStops(Base):
     route = relationship("Routes", back_populates="stops")
 
 
-class InsurancePolicies(Base):
-    __tablename__ = "insurance_policies"
+class AccountingRecord(Base):
+    __abstract__ = True
 
     id = Column(Integer, primary_key=True, index=True)
-    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False, index=True)
     date = Column(Date, nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
+
+    @declared_attr
+    def vehicle_id(cls):
+        return Column(Integer, ForeignKey("vehicles.id"), nullable=False, index=True)
+
+
+class InsurancePolicies(AccountingRecord):
+    __tablename__ = "insurance_policies"
+
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
 
     vehicle = relationship("Vehicles", back_populates="insurance_policies")
 
 
-class FuelRecords(Base):
+class FuelRecords(AccountingRecord):
     __tablename__ = "fuel_records"
 
-    id = Column(Integer, primary_key=True, index=True)
-    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False, index=True)
-    date = Column(Date, nullable=False)
-    amount = Column(Numeric(10, 2), nullable=False)
     liters = Column(Float, nullable=False)
 
     vehicle = relationship("Vehicles", back_populates="fuel_records")
 
 
-class RepairRecords(Base):
+class RepairRecords(AccountingRecord):
     __tablename__ = "repair_records"
 
-    id = Column(Integer, primary_key=True, index=True)
-    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False, index=True)
-    date = Column(Date, nullable=False)
     amount = Column(Numeric(10, 2), nullable=True)
     type = Column(
         StrEnum("SERVICE_TO", "INSPECTION", "REPAIR", name="maintenance_type"),
