@@ -1,7 +1,12 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict
 
-from ...bll.services.drivers_service import DriverData, DriversService, DriverStatusData
+from ...bll.services.drivers_service import (
+    DriverData,
+    DriversService,
+    DriverStatusData,
+    DriverUpdateData,
+)
 from ..dependencies import get_drivers_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
@@ -51,7 +56,9 @@ async def create(
     "/{id}", response_model=DriverResponse, dependencies=[Depends(require_admin)]
 )
 async def update(
-    id: int, data: DriverData, service: DriversService = Depends(get_drivers_service)
+    id: int,
+    data: DriverUpdateData,
+    service: DriversService = Depends(get_drivers_service),
 ):
     return await service.update(id, data)
 
