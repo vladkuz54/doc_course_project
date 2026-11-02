@@ -72,7 +72,9 @@ def get_repair_records_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> RepairRecordsService:
     return RepairRecordsService(
-        RepairRecordsRepository(session), VehiclesRepository(session)
+        RepairRecordsRepository(session),
+        VehiclesRepository(session),
+        RoutesRepository(session),
     )
 
 
