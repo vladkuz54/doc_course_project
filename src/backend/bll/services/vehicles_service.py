@@ -30,6 +30,10 @@ class VehicleData(BaseModel):
         return value
 
 
+class VehicleUpdateData(VehicleData):
+    status: Literal["ACTIVE", "DECOMMISSIONED"]
+
+
 class VehicleStatusData(BaseModel):
     status: Literal["ACTIVE", "DECOMMISSIONED"]
 
