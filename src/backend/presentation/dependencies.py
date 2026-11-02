@@ -35,15 +35,30 @@ def get_users_service(
     return UsersService(UsersRepository(session))
 
 
+def get_notifications_service(
+    session: AsyncSession = Depends(get_db_session),
+) -> NotificationsService:
+    return NotificationsService(
+        NotificationsRepository(session),
+        DriversRepository(session),
+        VehiclesRepository(session),
+        RoutesRepository(session),
+        DriverRequestsRepository(session),
+    )
+
+
 def get_drivers_service(
     session: AsyncSession = Depends(get_db_session),
+    notifications: NotificationsService = Depends(get_notifications_service),
 ) -> DriversService:
-    return DriversService(
+    service = DriversService(
         DriversRepository(session),
         UsersRepository(session),
         RoutesRepository(session),
         DriverRequestsRepository(session),
     )
+    service.attach(notifications)
+    return service
 
 
 def get_driver_requests_service(
@@ -63,20 +78,26 @@ def get_repair_records_service(
 def get_vehicles_service(
     session: AsyncSession = Depends(get_db_session),
     repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
+    notifications: NotificationsService = Depends(get_notifications_service),
 ) -> VehiclesService:
-    return VehiclesService(
+    service = VehiclesService(
         VehiclesRepository(session), RoutesRepository(session), repair_records_service
     )
+    service.attach(notifications)
+    return service
 
 
 def get_routes_service(
     session: AsyncSession = Depends(get_db_session),
+    notifications: NotificationsService = Depends(get_notifications_service),
 ) -> RoutesService:
-    return RoutesService(
+    service = RoutesService(
         RoutesRepository(session),
         DriversRepository(session),
         VehiclesRepository(session),
     )
+    service.attach(notifications)
+    return service
 
 
 def get_route_stops_service(
@@ -98,16 +119,4 @@ def get_insurance_policies_service(
 ) -> InsurancePoliciesService:
     return InsurancePoliciesService(
         InsurancePoliciesRepository(session), VehiclesRepository(session)
-    )
-
-
-def get_notifications_service(
-    session: AsyncSession = Depends(get_db_session),
-) -> NotificationsService:
-    return NotificationsService(
-        NotificationsRepository(session),
-        DriversRepository(session),
-        VehiclesRepository(session),
-        RoutesRepository(session),
-        DriverRequestsRepository(session),
     )
