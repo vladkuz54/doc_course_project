@@ -35,7 +35,7 @@ async def get_db_session():
 def get_users_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> UsersService:
-    return UsersService(UsersRepository(session))
+    return UsersService(UsersRepository(session), DriversRepository(session))
 
 
 def get_notifications_service(
