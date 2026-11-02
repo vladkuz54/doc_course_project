@@ -1,9 +1,14 @@
 from ..exceptions import BusinessRuleError
+from ..observer import Subject
 from .base_service import BaseService
 
 
-class EntityManagement(BaseService):
+class EntityManagement(BaseService, Subject):
     status_field = "status"
+
+    def __init__(self, repository):
+        BaseService.__init__(self, repository)
+        Subject.__init__(self)
 
     async def change_status(self, id, status):
         entity = await self.get_by_id(id)
