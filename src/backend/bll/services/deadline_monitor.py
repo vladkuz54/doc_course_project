@@ -21,10 +21,11 @@ class DeadlineMonitor(Subject):
 
     async def check_maintenance_due(self):
         until = _until()
+        events = []
         for repair in await self.repair_records_service.get_planned():
             if repair.date <= until:
                 label = MAINTENANCE_TYPE_LABELS[repair.type]
-                await self._notify(
+                events.append(
                     DomainEvent(
                         "MAINTENANCE_DUE",
                         "vehicles",
@@ -32,6 +33,7 @@ class DeadlineMonitor(Subject):
                         f"Планове обслуговування ({label}) для {repair.vehicle.make}: {repair.date:%d.%m.%Y}",
                     )
                 )
+        return await self._publish(events)
 
     async def check_insurance_expiring(self):
         until = _until()
@@ -40,11 +42,12 @@ class DeadlineMonitor(Subject):
             current = latest.get(policy.vehicle_id)
             if current is None or policy.end_date > current.end_date:
                 latest[policy.vehicle_id] = policy
+        events = []
         for vehicle_id, policy in latest.items():
             policies = await self.insurance_policies_service.get_by_vehicle(vehicle_id)
             if any(p.end_date > until for p in policies):
                 continue
-            await self._notify(
+            events.append(
                 DomainEvent(
                     "INSURANCE_EXPIRING",
                     "vehicles",
@@ -52,25 +55,35 @@ class DeadlineMonitor(Subject):
                     f"Страховка {policy.vehicle.make} спливає {policy.end_date:%d.%m.%Y}",
                 )
             )
+        return await self._publish(events)
 
     async def check_license_expiring(self):
+        events = []
         for driver in await self.drivers_service.get_license_expiring(_until()):
-            await self._notify_driver_and_admins(
+            events += self._driver_and_admin_events(
                 "LICENSE_EXPIRING",
                 driver,
                 f"Посвідчення спливає: {driver.full_name}, {driver.license_expiry_date:%d.%m.%Y}",
             )
+        return await self._publish(events)
 
     async def check_medical_check_due(self):
+        events = []
         for driver in await self.drivers_service.get_medical_check_due(_until()):
-            await self._notify_driver_and_admins(
+            events += self._driver_and_admin_events(
                 "MEDICAL_CHECK_DUE",
                 driver,
                 f"Медогляд спливає: {driver.full_name}, {driver.medical_valid_until:%d.%m.%Y}",
             )
+        return await self._publish(events)
 
-    async def _notify_driver_and_admins(self, type, driver, text):
-        for recipient_id in (driver.user_id, None):
-            await self._notify(
-                DomainEvent(type, "drivers", driver.id, text, recipient_id)
-            )
+    def _driver_and_admin_events(self, type, driver, text):
+        return [
+            DomainEvent(type, "drivers", driver.id, text, recipient_id)
+            for recipient_id in (driver.user_id, None)
+        ]
+
+    async def _publish(self, events):
+        for event in events:
+            await self._notify(event)
+        return events
