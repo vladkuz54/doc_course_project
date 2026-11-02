@@ -19,6 +19,7 @@ from .presentation.routers.insurance_policies_router import (
 )
 from .presentation.routers.notifications_router import router as notifications_router
 from .presentation.routers.repair_records_router import router as repair_records_router
+from .presentation.routers.reports_router import router as reports_router
 from .presentation.routers.route_stops_router import router as route_stops_router
 from .presentation.routers.routes_router import router as routes_router
 from .presentation.routers.users_router import router as users_router
@@ -71,3 +72,4 @@ app.include_router(fuel_records_router)
 app.include_router(repair_records_router)
 app.include_router(insurance_policies_router)
 app.include_router(notifications_router)
+app.include_router(reports_router)
