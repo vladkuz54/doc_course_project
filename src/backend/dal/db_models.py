@@ -17,7 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import declared_attr, relationship
 
 from . import Base, engine
-from .route_states import RouteState
+from .route_states import RouteActionNotAllowed, RouteState
 
 
 def StrEnum(*values, name):
@@ -242,10 +242,13 @@ class Routes(Base):
         self.state.delete(self)
 
     def update_planned_return(self):
-        self.planned_return_at = self.departure_at + timedelta(
-            hours=self.distance / AVERAGE_SPEED_KMH,
-            minutes=MINUTES_PER_STOP * len(self.stops),
-        )
+        try:
+            self.planned_return_at = self.departure_at + timedelta(
+                hours=self.distance / AVERAGE_SPEED_KMH,
+                minutes=MINUTES_PER_STOP * len(self.stops),
+            )
+        except OverflowError:
+            raise RouteActionNotAllowed("The departure time is too far in the future")
 
 
 class RouteStops(Base):
