@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from .base_interface import IBaseService
+from .accounting_interface import IAccountingService
 
 
-class IRepairRecordsService(IBaseService):
+class IRepairRecordsService(IAccountingService):
 
     @abstractmethod
     async def record_repair_cost(self, id, cost):

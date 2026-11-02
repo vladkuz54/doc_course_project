@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from .base_interface import IBaseService
+from .accounting_interface import IAccountingService
 
 
-class IInsurancePoliciesService(IBaseService):
+class IInsurancePoliciesService(IAccountingService):
 
     @abstractmethod
     async def get_expiring(self, until):
