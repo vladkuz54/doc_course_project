@@ -1,7 +1,15 @@
+from datetime import datetime
+from typing import Literal
+
 from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
-from ...bll.services.routes_service import RouteData, RoutesService, RouteStatusData
+from ...bll.services.routes_service import (
+    RouteCreateData,
+    RouteData,
+    RoutesService,
+    RouteStatusData,
+)
 from ..dependencies import get_routes_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
@@ -10,6 +18,10 @@ router = APIRouter(prefix="/routes", tags=["routes"])
 
 class RouteResponse(RouteData):
     id: int
+    planned_return_at: datetime
+    started_at: datetime | None
+    completed_at: datetime | None
+    status: Literal["PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -20,7 +32,7 @@ async def get_all(
 ):
     if driver_id is None:
         return await service.get_all()
-    return await service.get_by_driver(driver_id)
+    return await service.list_by_driver(driver_id)
 
 
 @router.get("/{id}", response_model=RouteResponse)
@@ -31,7 +43,7 @@ async def get_by_id(
 ):
     obj = await service.get_by_id(id)
     if driver_id is not None:
-        ensure_visible(obj, await service.get_by_driver(driver_id))
+        ensure_visible(obj, await service.list_by_driver(driver_id))
     return obj
 
 
@@ -41,7 +53,9 @@ async def get_by_id(
     status_code=201,
     dependencies=[Depends(require_admin)],
 )
-async def create(data: RouteData, service: RoutesService = Depends(get_routes_service)):
+async def create(
+    data: RouteCreateData, service: RoutesService = Depends(get_routes_service)
+):
     return await service.create(data)
 
 
