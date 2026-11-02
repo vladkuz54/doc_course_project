@@ -1,6 +1,8 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..bll.exports import ReportExporter
+from ..bll.reports import ReportService
 from ..bll.services.deadline_monitor import DeadlineMonitor
 from ..bll.services.driver_requests_service import DriverRequestsService
 from ..bll.services.drivers_service import DriversService
@@ -33,7 +35,7 @@ async def get_db_session():
 def get_users_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> UsersService:
-    return UsersService(UsersRepository(session))
+    return UsersService(UsersRepository(session), DriversRepository(session))
 
 
 def get_notifications_service(
@@ -72,7 +74,9 @@ def get_repair_records_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> RepairRecordsService:
     return RepairRecordsService(
-        RepairRecordsRepository(session), VehiclesRepository(session)
+        RepairRecordsRepository(session),
+        VehiclesRepository(session),
+        RoutesRepository(session),
     )
 
 
@@ -88,8 +92,20 @@ def get_vehicles_service(
     return service
 
 
+def get_insurance_policies_service(
+    session: AsyncSession = Depends(get_db_session),
+) -> InsurancePoliciesService:
+    return InsurancePoliciesService(
+        InsurancePoliciesRepository(session), VehiclesRepository(session)
+    )
+
+
 def get_routes_service(
     session: AsyncSession = Depends(get_db_session),
+    repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
+    insurance_policies_service: InsurancePoliciesService = Depends(
+        get_insurance_policies_service
+    ),
     notifications: NotificationsService = Depends(get_notifications_service),
 ) -> RoutesService:
     service = RoutesService(
@@ -97,6 +113,8 @@ def get_routes_service(
         DriversRepository(session),
         VehiclesRepository(session),
         RouteStopsRepository(session),
+        repair_records_service,
+        insurance_policies_service,
     )
     service.attach(notifications)
     return service
@@ -116,14 +134,6 @@ def get_fuel_records_service(
     )
 
 
-def get_insurance_policies_service(
-    session: AsyncSession = Depends(get_db_session),
-) -> InsurancePoliciesService:
-    return InsurancePoliciesService(
-        InsurancePoliciesRepository(session), VehiclesRepository(session)
-    )
-
-
 def get_deadline_monitor(
     repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
     insurance_policies_service: InsurancePoliciesService = Depends(
@@ -137,3 +147,11 @@ def get_deadline_monitor(
     )
     monitor.attach(notifications)
     return monitor
+
+
+def get_report_service() -> ReportService:
+    return ReportService()
+
+
+def get_report_exporter() -> ReportExporter:
+    return ReportExporter()

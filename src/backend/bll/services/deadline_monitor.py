@@ -10,6 +10,17 @@ def _until():
     return date.today() + timedelta(days=WARNING_DAYS)
 
 
+def _cover_end(policies):
+    """Last day of unbroken cover from today. A gap that is already over doesn't count."""
+    policies = sorted(policies, key=lambda p: p.start_date)
+    cover_end = policies[0].end_date
+    for policy in policies[1:]:
+        if policy.start_date > max(cover_end, date.today()) + timedelta(days=1):
+            break
+        cover_end = max(cover_end, policy.end_date)
+    return cover_end
+
+
 class DeadlineMonitor(Subject):
     def __init__(
         self, repair_records_service, insurance_policies_service, drivers_service
@@ -37,24 +48,22 @@ class DeadlineMonitor(Subject):
 
     async def check_insurance_expiring(self):
         until = _until()
-        latest = {}
-        for policy in await self.insurance_policies_service.get_expiring(until):
-            current = latest.get(policy.vehicle_id)
-            if current is None or policy.end_date > current.end_date:
-                latest[policy.vehicle_id] = policy
+        expiring = await self.insurance_policies_service.get_expiring(until)
+        vehicles = {p.vehicle_id: p.vehicle for p in expiring}
         events = []
-        for vehicle_id, policy in latest.items():
-            policies = await self.insurance_policies_service.get_by_vehicle(vehicle_id)
-            if any(p.end_date > until for p in policies):
-                continue
-            events.append(
-                DomainEvent(
-                    "INSURANCE_EXPIRING",
-                    "vehicles",
-                    vehicle_id,
-                    f"Страховка {policy.vehicle.make} спливає {policy.end_date:%d.%m.%Y}",
-                )
+        for vehicle_id, vehicle in vehicles.items():
+            cover_end = _cover_end(
+                await self.insurance_policies_service.get_by_vehicle(vehicle_id)
             )
+            if cover_end <= until:
+                events.append(
+                    DomainEvent(
+                        "INSURANCE_EXPIRING",
+                        "vehicles",
+                        vehicle_id,
+                        f"Страховка {vehicle.make} спливає {cover_end:%d.%m.%Y}",
+                    )
+                )
         return await self._publish(events)
 
     async def check_license_expiring(self):

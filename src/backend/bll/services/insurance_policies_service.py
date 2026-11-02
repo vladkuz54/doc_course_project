@@ -1,7 +1,7 @@
 from datetime import date as Date
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ...dal.db_models import InsurancePolicies
 from ..exceptions import BusinessRuleError
@@ -12,7 +12,7 @@ from .accounting_service import AccountingService
 class InsurancePolicyData(BaseModel):
     vehicle_id: int
     date: Date
-    amount: Decimal
+    amount: Decimal = Field(ge=0)
     start_date: Date
     end_date: Date
 

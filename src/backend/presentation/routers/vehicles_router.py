@@ -7,6 +7,7 @@ from ...bll.services.vehicles_service import (
     VehicleData,
     VehiclesService,
     VehicleStatusData,
+    VehicleUpdateData,
 )
 from ..dependencies import get_vehicles_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
@@ -58,7 +59,9 @@ async def create(
     "/{id}", response_model=VehicleResponse, dependencies=[Depends(require_admin)]
 )
 async def update(
-    id: int, data: VehicleData, service: VehiclesService = Depends(get_vehicles_service)
+    id: int,
+    data: VehicleUpdateData,
+    service: VehiclesService = Depends(get_vehicles_service),
 ):
     return await service.update(id, data)
 

@@ -1,0 +1,145 @@
+from abc import ABC, abstractmethod
+from datetime import date
+from decimal import Decimal
+
+from pydantic import BaseModel
+
+from .exceptions import BusinessRuleError
+
+
+class ReportData(BaseModel):
+    title: str
+    period_from: date
+    period_to: date
+    rows: list[dict]
+
+
+def _sorted_rows(rows_by_vehicle):
+    return [rows_by_vehicle[id] for id in sorted(rows_by_vehicle)]
+
+
+async def _completed_routes(routes_service, period_from, period_to, vehicle):
+    routes = await routes_service.list(period_from, period_to, vehicle)
+    return [r for r in routes if r.status == "COMPLETED" and r.vehicle_id is not None]
+
+
+class ReportStrategy(ABC):
+    @abstractmethod
+    async def generate(self, period_from, period_to, vehicle=None):
+        pass
+
+
+class VehicleUtilizationReport(ReportStrategy):
+    def __init__(self, routes_service):
+        self.routes_service = routes_service
+
+    async def generate(self, period_from, period_to, vehicle=None):
+        rows = {}
+        for route in await _completed_routes(
+            self.routes_service, period_from, period_to, vehicle
+        ):
+            row = rows.setdefault(
+                route.vehicle_id,
+                {
+                    "vehicle_id": route.vehicle_id,
+                    "completed_routes": 0,
+                    "total_distance": 0.0,
+                },
+            )
+            row["completed_routes"] += 1
+            row["total_distance"] += route.distance
+        return ReportData(
+            title="Використання транспорту",
+            period_from=period_from,
+            period_to=period_to,
+            rows=_sorted_rows(rows),
+        )
+
+
+class MaintenanceCostReport(ReportStrategy):
+    def __init__(self, repair_records_service):
+        self.repair_records_service = repair_records_service
+
+    async def generate(self, period_from, period_to, vehicle=None):
+        rows = {}
+        for repair in await self.repair_records_service.list(
+            period_from, period_to, vehicle
+        ):
+            row = rows.setdefault(
+                repair.vehicle_id,
+                {
+                    "vehicle_id": repair.vehicle_id,
+                    "done_repairs": 0,
+                    "planned_repairs": 0,
+                    "total_cost": Decimal("0"),
+                },
+            )
+            if repair.status == "DONE":
+                row["done_repairs"] += 1
+                row["total_cost"] += repair.amount
+            else:
+                row["planned_repairs"] += 1
+        return ReportData(
+            title="Витрати на обслуговування",
+            period_from=period_from,
+            period_to=period_to,
+            rows=_sorted_rows(rows),
+        )
+
+
+class UsageAnalyticsReport(ReportStrategy):
+    def __init__(self, routes_service, fuel_records_service):
+        self.routes_service = routes_service
+        self.fuel_records_service = fuel_records_service
+
+    async def generate(self, period_from, period_to, vehicle=None):
+        rows = {}
+
+        def row_for(vehicle_id):
+            return rows.setdefault(
+                vehicle_id,
+                {
+                    "vehicle_id": vehicle_id,
+                    "total_distance": 0.0,
+                    "liters": 0.0,
+                    "fuel_cost": Decimal("0"),
+                    "liters_per_100km": None,
+                },
+            )
+
+        for route in await _completed_routes(
+            self.routes_service, period_from, period_to, vehicle
+        ):
+            row_for(route.vehicle_id)["total_distance"] += route.distance
+        for fuel in await self.fuel_records_service.list(
+            period_from, period_to, vehicle
+        ):
+            row = row_for(fuel.vehicle_id)
+            row["liters"] += fuel.liters
+            row["fuel_cost"] += fuel.amount
+        for row in rows.values():
+            if row["total_distance"] > 0:
+                row["liters_per_100km"] = round(
+                    row["liters"] / row["total_distance"] * 100, 2
+                )
+        return ReportData(
+            title="Аналітика використання",
+            period_from=period_from,
+            period_to=period_to,
+            rows=_sorted_rows(rows),
+        )
+
+
+class ReportService:
+    def __init__(self):
+        self._strategy = None
+
+    def set_strategy(self, strategy):
+        self._strategy = strategy
+
+    async def build(self, period_from, period_to, vehicle=None):
+        if self._strategy is None:
+            raise BusinessRuleError("The report type is not set")
+        if period_from > period_to:
+            raise BusinessRuleError("period_from cannot be after period_to")
+        return await self._strategy.generate(period_from, period_to, vehicle)
