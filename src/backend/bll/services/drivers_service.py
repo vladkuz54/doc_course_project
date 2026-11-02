@@ -14,6 +14,7 @@ from ..exceptions import (
     EntityNotFoundError,
 )
 from ..interfaces.drivers_interface import IDriversService
+from ..observer import DomainEvent
 from .entity_management import EntityManagement
 
 
@@ -79,9 +80,18 @@ class DriversService(IDriversService, EntityManagement):
 
     async def submit_request(self, data):
         await self._validate_request(data)
-        return await self.driver_requests_repository.create(
+        request = await self.driver_requests_repository.create(
             self.driver_requests_repository.model(**data.model_dump(), status="PENDING")
         )
+        driver = await self.get_by_id(request.driver_id)
+        if request.type == "LICENSE_UPDATE":
+            type = "LICENSE_UPDATE_REQUEST"
+            text = f"{driver.full_name} просить оновити посвідчення до категорії {request.new_license_category}"
+        else:
+            type = "MEDICAL_CHECK_REQUEST"
+            text = f"{driver.full_name} подав запит на підтвердження медогляду"
+        await self._notify(DomainEvent(type, "driver_requests", request.id, text))
+        return request
 
     async def approve_license_update(self, request_id):
         request = await self._get_pending_request(request_id, "LICENSE_UPDATE")
