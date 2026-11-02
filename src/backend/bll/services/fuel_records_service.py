@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ...dal.db_models import FuelRecords
 from ..interfaces.fuel_records_interface import IFuelRecordsService
@@ -11,8 +11,8 @@ from .accounting_service import AccountingService
 class FuelRecordData(BaseModel):
     vehicle_id: int
     date: date
-    amount: Decimal
-    liters: float
+    amount: Decimal = Field(ge=0)
+    liters: float = Field(gt=0, allow_inf_nan=False)
 
 
 class FuelRecordsService(IFuelRecordsService, AccountingService):
