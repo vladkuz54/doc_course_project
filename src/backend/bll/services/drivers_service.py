@@ -30,6 +30,12 @@ class DriverData(BaseModel):
     employment_status: Literal["ACTIVE", "DISMISSED"] = "ACTIVE"
 
 
+class DriverUpdateData(DriverData):
+    experience_years: int = Field(ge=0, le=60)
+    medical_check_status: Literal["VALID", "EXPIRED", "PENDING"]
+    employment_status: Literal["ACTIVE", "DISMISSED"]
+
+
 class DriverStatusData(BaseModel):
     employment_status: Literal["ACTIVE", "DISMISSED"]
 
