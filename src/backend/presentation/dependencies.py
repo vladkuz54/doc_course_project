@@ -96,6 +96,7 @@ def get_routes_service(
         RoutesRepository(session),
         DriversRepository(session),
         VehiclesRepository(session),
+        RouteStopsRepository(session),
     )
     service.attach(notifications)
     return service
