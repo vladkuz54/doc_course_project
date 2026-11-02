@@ -88,8 +88,20 @@ def get_vehicles_service(
     return service
 
 
+def get_insurance_policies_service(
+    session: AsyncSession = Depends(get_db_session),
+) -> InsurancePoliciesService:
+    return InsurancePoliciesService(
+        InsurancePoliciesRepository(session), VehiclesRepository(session)
+    )
+
+
 def get_routes_service(
     session: AsyncSession = Depends(get_db_session),
+    repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
+    insurance_policies_service: InsurancePoliciesService = Depends(
+        get_insurance_policies_service
+    ),
     notifications: NotificationsService = Depends(get_notifications_service),
 ) -> RoutesService:
     service = RoutesService(
@@ -97,6 +109,8 @@ def get_routes_service(
         DriversRepository(session),
         VehiclesRepository(session),
         RouteStopsRepository(session),
+        repair_records_service,
+        insurance_policies_service,
     )
     service.attach(notifications)
     return service
@@ -113,14 +127,6 @@ def get_fuel_records_service(
 ) -> FuelRecordsService:
     return FuelRecordsService(
         FuelRecordsRepository(session), VehiclesRepository(session)
-    )
-
-
-def get_insurance_policies_service(
-    session: AsyncSession = Depends(get_db_session),
-) -> InsurancePoliciesService:
-    return InsurancePoliciesService(
-        InsurancePoliciesRepository(session), VehiclesRepository(session)
     )
 
 
