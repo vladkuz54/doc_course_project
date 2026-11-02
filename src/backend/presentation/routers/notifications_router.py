@@ -3,8 +3,9 @@ from datetime import datetime
 from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
+from ...bll.services.deadline_monitor import DeadlineMonitor
 from ...bll.services.notifications_service import NotificationData, NotificationsService
-from ..dependencies import get_notifications_service
+from ..dependencies import get_deadline_monitor, get_notifications_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -49,6 +50,14 @@ async def create(
     service: NotificationsService = Depends(get_notifications_service),
 ):
     return await service.create(data)
+
+
+@router.post("/check-deadlines", status_code=204, dependencies=[Depends(require_admin)])
+async def check_deadlines(monitor: DeadlineMonitor = Depends(get_deadline_monitor)):
+    await monitor.check_maintenance_due()
+    await monitor.check_insurance_expiring()
+    await monitor.check_license_expiring()
+    await monitor.check_medical_check_due()
 
 
 @router.patch("/{id}/read", response_model=NotificationResponse)
