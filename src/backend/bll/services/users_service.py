@@ -1,7 +1,7 @@
 from typing import Literal
 
 import bcrypt
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.users_interfaces import IUsersRepository
