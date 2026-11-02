@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ConfigDict
@@ -7,7 +8,8 @@ from ...bll.services.driver_requests_service import (
     DriverRequestData,
     DriverRequestsService,
 )
-from ..dependencies import get_driver_requests_service
+from ...bll.services.drivers_service import DriversService, MedicalApprovalData
+from ..dependencies import get_driver_requests_service, get_drivers_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
 router = APIRouter(prefix="/driver-requests", tags=["driver-requests"])
@@ -15,6 +17,7 @@ router = APIRouter(prefix="/driver-requests", tags=["driver-requests"])
 
 class DriverRequestResponse(DriverRequestData):
     id: int
+    status: Literal["PENDING", "APPROVED"]
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -45,37 +48,35 @@ async def get_by_id(
 async def create(
     data: DriverRequestData,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: DriverRequestsService = Depends(get_driver_requests_service),
+    service: DriversService = Depends(get_drivers_service),
 ):
-    if driver_id is not None:
-        if data.driver_id != driver_id:
-            raise HTTPException(
-                status_code=403,
-                detail="Drivers can only create requests for themselves",
-            )
-        if data.status != "PENDING":
-            raise HTTPException(
-                status_code=403,
-                detail="Drivers can only create requests with PENDING status",
-            )
-    return await service.create(data)
+    if driver_id is not None and data.driver_id != driver_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Drivers can only create requests for themselves",
+        )
+    return await service.submit_request(data)
 
 
-@router.put(
-    "/{id}", response_model=DriverRequestResponse, dependencies=[Depends(require_admin)]
+@router.post(
+    "/{id}/approve-license",
+    response_model=DriverRequestResponse,
+    dependencies=[Depends(require_admin)],
 )
-async def update(
+async def approve_license(
+    id: int, service: DriversService = Depends(get_drivers_service)
+):
+    return await service.approve_license_update(id)
+
+
+@router.post(
+    "/{id}/approve-medical",
+    response_model=DriverRequestResponse,
+    dependencies=[Depends(require_admin)],
+)
+async def approve_medical(
     id: int,
-    data: DriverRequestData,
-    service: DriverRequestsService = Depends(get_driver_requests_service),
+    data: MedicalApprovalData,
+    service: DriversService = Depends(get_drivers_service),
 ):
-    return await service.update(id, data)
-
-
-@router.delete(
-    "/{id}", response_model=DriverRequestResponse, dependencies=[Depends(require_admin)]
-)
-async def delete(
-    id: int, service: DriverRequestsService = Depends(get_driver_requests_service)
-):
-    return await service.delete(id)
+    return await service.approve_medical_check(id, data.valid_until)

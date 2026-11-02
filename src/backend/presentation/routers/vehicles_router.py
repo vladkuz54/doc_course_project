@@ -1,9 +1,16 @@
 from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
-from ...bll.services.vehicles_service import VehicleData, VehiclesService
+from ...bll.services.vehicles_service import (
+    MaintenanceData,
+    TechnicalStateData,
+    VehicleData,
+    VehiclesService,
+    VehicleStatusData,
+)
 from ..dependencies import get_vehicles_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
+from .repair_records_router import RepairRecordResponse
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
@@ -54,6 +61,46 @@ async def update(
     id: int, data: VehicleData, service: VehiclesService = Depends(get_vehicles_service)
 ):
     return await service.update(id, data)
+
+
+@router.patch(
+    "/{id}/status",
+    response_model=VehicleResponse,
+    dependencies=[Depends(require_admin)],
+)
+async def change_status(
+    id: int,
+    data: VehicleStatusData,
+    service: VehiclesService = Depends(get_vehicles_service),
+):
+    return await service.change_status(id, data.status)
+
+
+@router.post(
+    "/{id}/maintenance",
+    response_model=RepairRecordResponse,
+    status_code=201,
+    dependencies=[Depends(require_admin)],
+)
+async def schedule_maintenance(
+    id: int,
+    data: MaintenanceData,
+    service: VehiclesService = Depends(get_vehicles_service),
+):
+    return await service.schedule_maintenance(id, data.type, data.date)
+
+
+@router.patch(
+    "/{id}/technical-state",
+    response_model=VehicleResponse,
+    dependencies=[Depends(require_admin)],
+)
+async def update_technical_state(
+    id: int,
+    data: TechnicalStateData,
+    service: VehiclesService = Depends(get_vehicles_service),
+):
+    return await service.update_technical_state(id, data.technical_state)
 
 
 @router.delete(

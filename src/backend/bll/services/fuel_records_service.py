@@ -3,11 +3,9 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
-from ...dal.interfaces.fuel_records_interfaces import IFuelRecordsRepository
-from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
-from ..exceptions import EntityNotFoundError
+from ...dal.db_models import FuelRecords
 from ..interfaces.fuel_records_interface import IFuelRecordsService
-from .base_service import BaseService
+from .accounting_service import AccountingService
 
 
 class FuelRecordData(BaseModel):
@@ -17,17 +15,11 @@ class FuelRecordData(BaseModel):
     liters: float
 
 
-class FuelRecordsService(IFuelRecordsService, BaseService):
+class FuelRecordsService(IFuelRecordsService, AccountingService):
     entity_name = "Fuel record"
 
-    def __init__(
-        self,
-        repository: IFuelRecordsRepository,
-        vehicles_repository: IVehiclesRepository,
-    ):
-        super().__init__(repository)
-        self.vehicles_repository = vehicles_repository
-
     async def _validate(self, data, id=None):
-        if not await self.vehicles_repository.get_by_id(data.vehicle_id):
-            raise EntityNotFoundError(f"Vehicle with ID {data.vehicle_id} not found")
+        await self._ensure_vehicle_exists(data.vehicle_id)
+
+    def _create_record(self, data):
+        return FuelRecords(**self.to_fields(data))

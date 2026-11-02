@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from ..exceptions import EntityNotFoundError
 from ..interfaces.base_interface import IBaseService
 
@@ -19,9 +21,9 @@ class BaseService(IBaseService):
 
     async def create(self, data):
         await self._validate(data)
-        return await self.repository.create(
-            self.repository.model(**self.to_fields(data))
-        )
+        entity = await self._save(data)
+        await self._after_add(entity)
+        return entity
 
     async def update(self, id, data):
         obj = await self.get_by_id(id)
@@ -34,8 +36,16 @@ class BaseService(IBaseService):
         await self.get_by_id(id)
         return await self.repository.delete(id)
 
+    @abstractmethod
     async def _validate(self, data, id=None):
-        # services override this with their own checks before create/update
+        pass
+
+    async def _save(self, data):
+        return await self.repository.create(
+            self.repository.model(**self.to_fields(data))
+        )
+
+    async def _after_add(self, entity):
         pass
 
     def to_fields(self, data):

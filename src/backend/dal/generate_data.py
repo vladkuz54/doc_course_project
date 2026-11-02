@@ -4,8 +4,8 @@ from decimal import Decimal
 
 import bcrypt
 
-from . import Session
-from .db_models import (
+from backend.dal import Session
+from backend.dal.db_models import (
     DBModels,
     DriverRequests,
     Drivers,
@@ -42,7 +42,7 @@ def build():
     petrenko = Drivers(
         user=user("petrenko", "DRIVER"),
         full_name="Петренко Іван Олександрович",
-        license_category="C",
+        license_categories=["B", "C"],
         experience_years=12,
         license_expiry_date=days(900),
         medical_check_date=days(-100),
@@ -51,7 +51,7 @@ def build():
     kovalenko = Drivers(
         user=user("kovalenko", "DRIVER"),
         full_name="Коваленко Олег Петрович",
-        license_category="B",
+        license_categories=["B"],
         experience_years=4,
         license_expiry_date=days(20),
         medical_check_date=days(-200),
@@ -60,7 +60,7 @@ def build():
     shevchenko = Drivers(
         user=user("shevchenko", "DRIVER"),
         full_name="Шевченко Андрій Миколайович",
-        license_category="CE",
+        license_categories=["B", "C", "CE"],
         experience_years=20,
         license_expiry_date=days(1500),
         medical_check_date=days(-370),
@@ -70,7 +70,7 @@ def build():
     bondar = Drivers(
         user=user("bondar", "DRIVER"),
         full_name="Бондар Сергій Васильович",
-        license_category="C",
+        license_categories=["B", "C"],
         experience_years=8,
         license_expiry_date=days(400),
         medical_check_date=days(-30),
@@ -79,7 +79,7 @@ def build():
     melnyk = Drivers(
         user=user("melnyk", "DRIVER"),
         full_name="Мельник Віктор Іванович",
-        license_category="B",
+        license_categories=["B"],
         experience_years=15,
         license_expiry_date=days(600),
         medical_check_date=days(-300),
@@ -209,6 +209,13 @@ def build():
         ),
     ]
 
+    for route in routes:
+        route.update_planned_return()
+        if route.status == "COMPLETED":
+            leg = (route.completed_at - route.started_at) / len(route.stops)
+            for number, stop in enumerate(route.stops, 1):
+                stop.arrived_at = route.started_at + leg * number
+
     fuel = [
         FuelRecords(
             vehicle=man, date=days(-10), liters=180.0, amount=Decimal("9540.00")
@@ -311,7 +318,6 @@ def build():
     )
 
     def make_notifications():
-        # needs ids, so call it after flush; related_id is a polymorphic link without FK
         return [
             Notifications(
                 type="LICENSE_UPDATE_REQUEST",
@@ -346,15 +352,31 @@ def build():
                 related_entity="drivers",
                 related_id=kovalenko.id,
                 created_at=NOW,
-                text=f"Посвідчення Коваленка О. П. спливає {days(20):%d.%m.%Y}",
+                text=f"Посвідчення спливає: {kovalenko.full_name}, {days(20):%d.%m.%Y}",
+            ),
+            Notifications(
+                recipient_id=kovalenko.user_id,
+                type="LICENSE_EXPIRING",
+                related_entity="drivers",
+                related_id=kovalenko.id,
+                created_at=NOW,
+                text=f"Посвідчення спливає: {kovalenko.full_name}, {days(20):%d.%m.%Y}",
             ),
             Notifications(
                 type="MEDICAL_CHECK_DUE",
                 related_entity="drivers",
                 related_id=shevchenko.id,
                 created_at=NOW - timedelta(days=5),
-                text="Медогляд Шевченка А. М. прострочено",
+                text=f"Медогляд спливає: {shevchenko.full_name}, {days(-5):%d.%m.%Y}",
                 is_read=True,
+            ),
+            Notifications(
+                recipient_id=shevchenko.user_id,
+                type="MEDICAL_CHECK_DUE",
+                related_entity="drivers",
+                related_id=shevchenko.id,
+                created_at=NOW - timedelta(days=5),
+                text=f"Медогляд спливає: {shevchenko.full_name}, {days(-5):%d.%m.%Y}",
             ),
         ]
 

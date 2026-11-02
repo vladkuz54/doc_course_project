@@ -15,5 +15,5 @@ class IRoutesRepository(IBaseRepository[Routes]):
         pass
 
     @abstractmethod
-    async def get_between_dates(self, start, end):
+    async def get_between_dates(self, start, end, vehicle_id=None):
         pass

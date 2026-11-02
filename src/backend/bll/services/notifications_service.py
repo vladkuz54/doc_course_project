@@ -9,10 +9,12 @@ from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityNotFoundError
 from ..interfaces.notifications_interface import INotificationsService
+from ..observer import Observer
 from .base_service import BaseService
 
 
 class NotificationData(BaseModel):
+    recipient_id: int | None = None
     type: Literal[
         "LICENSE_UPDATE_REQUEST",
         "MEDICAL_CHECK_REQUEST",
@@ -21,6 +23,7 @@ class NotificationData(BaseModel):
         "INSURANCE_EXPIRING",
         "LICENSE_EXPIRING",
         "MEDICAL_CHECK_DUE",
+        "ROUTE_ASSIGNED",
     ]
     text: str
     related_entity: Literal["drivers", "vehicles", "routes", "driver_requests"]
@@ -28,7 +31,7 @@ class NotificationData(BaseModel):
     is_read: bool = False
 
 
-class NotificationsService(INotificationsService, BaseService):
+class NotificationsService(INotificationsService, BaseService, Observer):
     entity_name = "Notification"
 
     def __init__(
@@ -56,3 +59,31 @@ class NotificationsService(INotificationsService, BaseService):
 
     async def get_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)
+
+    async def get_for_admins(self):
+        return await self.repository.get_for_admins()
+
+    async def mark_as_read(self, id):
+        obj = await self.get_by_id(id)
+        obj.is_read = True
+        return await self.repository.update(obj)
+
+    async def on_event(self, event):
+        for n in await self.repository.get_unread():
+            if (
+                n.type == event.type
+                and n.related_entity == event.related_entity
+                and n.related_id == event.related_id
+                and n.recipient_id == event.recipient_id
+                and n.text == event.text
+            ):
+                return
+        await self.repository.create(
+            self.repository.model(
+                type=event.type,
+                related_entity=event.related_entity,
+                related_id=event.related_id,
+                recipient_id=event.recipient_id,
+                text=event.text,
+            )
+        )

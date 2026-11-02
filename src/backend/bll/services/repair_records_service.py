@@ -4,11 +4,16 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from ...dal.interfaces.repair_records_interfaces import IRepairRecordsRepository
-from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
-from ..exceptions import EntityNotFoundError
+from ...dal.db_models import RepairRecords
+from ..exceptions import BusinessRuleError
 from ..interfaces.repair_records_interface import IRepairRecordsService
-from .base_service import BaseService
+from .accounting_service import AccountingService
+
+MAINTENANCE_TYPE_LABELS = {
+    "SERVICE_TO": "ТО",
+    "INSPECTION": "техогляд",
+    "REPAIR": "ремонт",
+}
 
 
 class RepairRecordData(BaseModel):
@@ -20,17 +25,34 @@ class RepairRecordData(BaseModel):
     status: Literal["PLANNED", "DONE"] = "PLANNED"
 
 
-class RepairRecordsService(IRepairRecordsService, BaseService):
+class RepairCostData(BaseModel):
+    cost: Decimal
+
+
+class RepairRecordsService(IRepairRecordsService, AccountingService):
     entity_name = "Repair record"
 
-    def __init__(
-        self,
-        repository: IRepairRecordsRepository,
-        vehicles_repository: IVehiclesRepository,
-    ):
-        super().__init__(repository)
-        self.vehicles_repository = vehicles_repository
-
     async def _validate(self, data, id=None):
-        if not await self.vehicles_repository.get_by_id(data.vehicle_id):
-            raise EntityNotFoundError(f"Vehicle with ID {data.vehicle_id} not found")
+        await self._ensure_vehicle_exists(data.vehicle_id)
+        if data.status == "PLANNED" and data.amount is not None:
+            raise BusinessRuleError("A planned repair cannot have an amount")
+        if data.status == "DONE" and data.amount is None:
+            raise BusinessRuleError("A done repair must have an amount")
+        if data.amount is not None and data.amount < 0:
+            raise BusinessRuleError("Repair amount cannot be negative")
+
+    def _create_record(self, data):
+        return RepairRecords(**self.to_fields(data))
+
+    async def record_repair_cost(self, id, cost):
+        record = await self.get_by_id(id)
+        if record.status != "PLANNED":
+            raise BusinessRuleError(f"Repair record with ID {id} is not planned")
+        if cost < 0:
+            raise BusinessRuleError("Repair cost cannot be negative")
+        record.amount = cost
+        record.status = "DONE"
+        return await self.repository.update(record)
+
+    async def get_planned(self):
+        return await self.repository.get_planned()

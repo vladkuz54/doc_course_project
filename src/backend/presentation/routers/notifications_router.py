@@ -3,8 +3,10 @@ from datetime import datetime
 from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
+from ...bll.observer import DomainEvent
+from ...bll.services.deadline_monitor import DeadlineMonitor
 from ...bll.services.notifications_service import NotificationData, NotificationsService
-from ..dependencies import get_notifications_service
+from ..dependencies import get_deadline_monitor, get_notifications_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -22,8 +24,22 @@ async def get_all(
     service: NotificationsService = Depends(get_notifications_service),
 ):
     if driver_id is None:
-        return await service.get_all()
+        return await service.get_for_admins()
     return await service.get_by_driver(driver_id)
+
+
+@router.get(
+    "/check-deadlines",
+    response_model=list[DomainEvent],
+    dependencies=[Depends(require_admin)],
+)
+async def check_deadlines(monitor: DeadlineMonitor = Depends(get_deadline_monitor)):
+    return [
+        *await monitor.check_maintenance_due(),
+        *await monitor.check_insurance_expiring(),
+        *await monitor.check_license_expiring(),
+        *await monitor.check_medical_check_due(),
+    ]
 
 
 @router.get("/{id}", response_model=NotificationResponse)
@@ -49,6 +65,18 @@ async def create(
     service: NotificationsService = Depends(get_notifications_service),
 ):
     return await service.create(data)
+
+
+@router.patch("/{id}/read", response_model=NotificationResponse)
+async def mark_as_read(
+    id: int,
+    driver_id: int | None = Depends(get_current_driver_id),
+    service: NotificationsService = Depends(get_notifications_service),
+):
+    obj = await service.get_by_id(id)
+    if driver_id is not None:
+        ensure_visible(obj, await service.get_by_driver(driver_id))
+    return await service.mark_as_read(id)
 
 
 @router.put(
