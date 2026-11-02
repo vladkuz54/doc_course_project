@@ -345,7 +345,7 @@ def build():
                 related_entity="drivers",
                 related_id=kovalenko.id,
                 created_at=NOW,
-                text=f"Посвідчення Коваленка О. П. спливає {days(20):%d.%m.%Y}",
+                text=f"Посвідчення спливає: {kovalenko.full_name}, {days(20):%d.%m.%Y}",
             ),
             Notifications(
                 recipient_id=kovalenko.user_id,
@@ -353,14 +353,14 @@ def build():
                 related_entity="drivers",
                 related_id=kovalenko.id,
                 created_at=NOW,
-                text=f"Посвідчення Коваленка О. П. спливає {days(20):%d.%m.%Y}",
+                text=f"Посвідчення спливає: {kovalenko.full_name}, {days(20):%d.%m.%Y}",
             ),
             Notifications(
                 type="MEDICAL_CHECK_DUE",
                 related_entity="drivers",
                 related_id=shevchenko.id,
                 created_at=NOW - timedelta(days=5),
-                text="Медогляд Шевченка А. М. прострочено",
+                text=f"Медогляд спливає: {shevchenko.full_name}, {days(-5):%d.%m.%Y}",
                 is_read=True,
             ),
             Notifications(
@@ -369,7 +369,7 @@ def build():
                 related_entity="drivers",
                 related_id=shevchenko.id,
                 created_at=NOW - timedelta(days=5),
-                text="Медогляд Шевченка А. М. прострочено",
+                text=f"Медогляд спливає: {shevchenko.full_name}, {days(-5):%d.%m.%Y}",
             ),
         ]
 
