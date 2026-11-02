@@ -1,9 +1,15 @@
-from abc import abstractmethod
-
-from .base_interface import IBaseService
+from abc import ABC, abstractmethod
 
 
-class IRouteStopsService(IBaseService):
+class IRouteStopsService(ABC):
+
+    @abstractmethod
+    async def get_all(self):
+        pass
+
+    @abstractmethod
+    async def get_by_id(self, id):
+        pass
 
     @abstractmethod
     async def get_by_driver(self, driver_id):
