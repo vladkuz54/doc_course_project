@@ -1,4 +1,7 @@
+import os
+
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
@@ -26,6 +29,13 @@ from .presentation.routers.users_router import router as users_router
 from .presentation.routers.vehicles_router import router as vehicles_router
 
 app = FastAPI(title="Fleet Management API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.exception_handler(EntityNotFoundError)
