@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
 from ...bll.services.repair_records_service import (
+    RepairCostData,
     RepairRecordData,
     RepairRecordsService,
 )
@@ -47,6 +48,15 @@ async def update(
     service: RepairRecordsService = Depends(get_repair_records_service),
 ):
     return await service.update(id, data)
+
+
+@router.post("/{id}/cost", response_model=RepairRecordResponse)
+async def record_cost(
+    id: int,
+    data: RepairCostData,
+    service: RepairRecordsService = Depends(get_repair_records_service),
+):
+    return await service.record_repair_cost(id, data.cost)
 
 
 @router.delete("/{id}", response_model=RepairRecordResponse)
