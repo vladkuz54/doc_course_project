@@ -38,6 +38,8 @@ class RepairRecordsService(IRepairRecordsService, AccountingService):
             raise BusinessRuleError("A planned repair cannot have an amount")
         if data.status == "DONE" and data.amount is None:
             raise BusinessRuleError("A done repair must have an amount")
+        if data.amount is not None and data.amount < 0:
+            raise BusinessRuleError("Repair amount cannot be negative")
 
     def _create_record(self, data):
         return RepairRecords(**self.to_fields(data))
