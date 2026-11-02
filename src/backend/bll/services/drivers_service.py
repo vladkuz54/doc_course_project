@@ -61,8 +61,11 @@ class DriversService(IDriversService, EntityManagement):
         self.driver_requests_repository = driver_requests_repository
 
     async def _validate(self, data, id=None):
-        if not await self.users_repository.get_by_id(data.user_id):
+        user = await self.users_repository.get_by_id(data.user_id)
+        if not user:
             raise EntityNotFoundError(f"User with ID {data.user_id} not found")
+        if user.role != "DRIVER":
+            raise BusinessRuleError(f"User with ID {data.user_id} is not a driver")
         existing = await self.repository.get_by_user_id(data.user_id)
         if existing and existing.id != id:
             raise EntityAlreadyExistsError(
