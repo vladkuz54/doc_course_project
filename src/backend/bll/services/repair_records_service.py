@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -57,11 +57,12 @@ class RepairRecordsService(IRepairRecordsService, AccountingService):
             raise BusinessRuleError("Repair amount cannot be negative")
         if data.status == "PLANNED":
             for route in await self.routes_repository.get_by_vehicle(data.vehicle_id):
+                last_day = route.planned_return_at
+                if route.status == "IN_PROGRESS":
+                    last_day = max(last_day, datetime.now())
                 if (
                     route.status in ACTIVE_ROUTE_STATUSES
-                    and route.departure_at.date()
-                    <= data.date
-                    <= route.planned_return_at.date()
+                    and route.departure_at.date() <= data.date <= last_day.date()
                 ):
                     raise BusinessRuleError(
                         f"The vehicle is on route {route.id} on {data.date}"
