@@ -134,8 +134,8 @@ class ScheduleConflictHandler(AssignmentHandler):
             if other.status == "IN_PROGRESS":
                 end = max(end, datetime.now())
             if (
-                route.departure_at < end + gap
-                and other.departure_at < route.planned_return_at + gap
+                route.departure_at - end < gap
+                and other.departure_at - route.planned_return_at < gap
             ):
                 return CheckResult(
                     False,
