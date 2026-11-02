@@ -78,6 +78,8 @@ class VehiclesService(IVehiclesService, EntityManagement):
 
     async def schedule_maintenance(self, vehicle_id, type, date):
         vehicle = await self.get_by_id(vehicle_id)
+        if vehicle.status != "ACTIVE":
+            raise BusinessRuleError(f"Vehicle with ID {vehicle_id} is not active")
         if date < Date.today():
             raise BusinessRuleError("Maintenance date cannot be in the past")
         record = await self.repair_records_service.create(
