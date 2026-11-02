@@ -209,6 +209,13 @@ def build():
         ),
     ]
 
+    for route in routes:
+        route.update_planned_return()
+        if route.status == "COMPLETED":
+            leg = (route.completed_at - route.started_at) / len(route.stops)
+            for number, stop in enumerate(route.stops, 1):
+                stop.arrived_at = route.started_at + leg * number
+
     fuel = [
         FuelRecords(
             vehicle=man, date=days(-10), liters=180.0, amount=Decimal("9540.00")
