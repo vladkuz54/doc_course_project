@@ -9,8 +9,9 @@ from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import BusinessRuleError, EntityAlreadyExistsError
 from ..interfaces.repair_records_interface import IRepairRecordsService
 from ..interfaces.vehicles_interface import IVehiclesService
+from ..observer import DomainEvent
 from .entity_management import EntityManagement
-from .repair_records_service import RepairRecordData
+from .repair_records_service import MAINTENANCE_TYPE_LABELS, RepairRecordData
 
 
 class VehicleData(BaseModel):
@@ -72,14 +73,23 @@ class VehiclesService(IVehiclesService, EntityManagement):
         return await self.repository.get_by_driver(driver_id)
 
     async def schedule_maintenance(self, vehicle_id, type, date):
-        await self.get_by_id(vehicle_id)
+        vehicle = await self.get_by_id(vehicle_id)
         if date < Date.today():
             raise BusinessRuleError("Maintenance date cannot be in the past")
-        return await self.repair_records_service.create(
+        record = await self.repair_records_service.create(
             RepairRecordData(
                 vehicle_id=vehicle_id, date=date, type=type, status="PLANNED"
             )
         )
+        await self._notify(
+            DomainEvent(
+                "MAINTENANCE_SCHEDULED",
+                "vehicles",
+                vehicle_id,
+                f"Заплановано {MAINTENANCE_TYPE_LABELS[type]} для {vehicle.make} на {date:%d.%m.%Y}",
+            )
+        )
+        return record
 
     async def update_technical_state(self, vehicle_id, state):
         vehicle = await self.get_by_id(vehicle_id)
