@@ -9,6 +9,12 @@ from ..exceptions import BusinessRuleError
 from ..interfaces.repair_records_interface import IRepairRecordsService
 from .accounting_service import AccountingService
 
+MAINTENANCE_TYPE_LABELS = {
+    "SERVICE_TO": "ТО",
+    "INSPECTION": "техогляд",
+    "REPAIR": "ремонт",
+}
+
 
 class RepairRecordData(BaseModel):
     vehicle_id: int
