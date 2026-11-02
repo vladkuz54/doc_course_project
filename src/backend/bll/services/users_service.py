@@ -1,10 +1,11 @@
 from typing import Literal
 
 import bcrypt
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
+from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.users_interfaces import IUsersRepository
-from ..exceptions import EntityAlreadyExistsError
+from ..exceptions import BusinessRuleError, EntityAlreadyExistsError
 from ..interfaces.users_interface import IUsersService
 from .base_service import BaseService
 
@@ -18,8 +19,11 @@ class UserData(BaseModel):
 class UsersService(IUsersService, BaseService):
     entity_name = "User"
 
-    def __init__(self, repository: IUsersRepository):
+    def __init__(
+        self, repository: IUsersRepository, drivers_repository: IDriversRepository
+    ):
         super().__init__(repository)
+        self.drivers_repository = drivers_repository
 
     async def authenticate(self, username, password):
         user = await self.repository.get_by_username(username)
@@ -33,6 +37,12 @@ class UsersService(IUsersService, BaseService):
         existing = await self.repository.get_by_username(data.username)
         if existing and existing.id != id:
             raise EntityAlreadyExistsError(f"User {data.username} already exists")
+        if (
+            id is not None
+            and data.role != "DRIVER"
+            and await self.drivers_repository.get_by_user_id(id)
+        ):
+            raise BusinessRuleError("A user with a driver profile must stay a driver")
 
     def to_fields(self, data):
         fields = data.model_dump(exclude={"password"})
