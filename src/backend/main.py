@@ -7,6 +7,7 @@ from .bll.exceptions import (
     EntityAlreadyExistsError,
     EntityNotFoundError,
 )
+from .dal.route_states import RouteActionNotAllowed
 from .presentation.routers.auth import router as auth_router
 from .presentation.routers.driver_requests_router import (
     router as driver_requests_router,
@@ -40,6 +41,13 @@ async def entity_already_exists_handler(
 
 @app.exception_handler(BusinessRuleError)
 async def business_rule_error_handler(request: Request, exc: BusinessRuleError):
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+
+@app.exception_handler(RouteActionNotAllowed)
+async def route_action_not_allowed_handler(
+    request: Request, exc: RouteActionNotAllowed
+):
     return JSONResponse(status_code=422, content={"detail": str(exc)})
 
 
