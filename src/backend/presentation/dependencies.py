@@ -1,6 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..bll.exports import ReportExporter
 from ..bll.reports import ReportService
 from ..bll.services.deadline_monitor import DeadlineMonitor
 from ..bll.services.driver_requests_service import DriverRequestsService
@@ -150,3 +151,7 @@ def get_deadline_monitor(
 
 def get_report_service() -> ReportService:
     return ReportService()
+
+
+def get_report_exporter() -> ReportExporter:
+    return ReportExporter()
