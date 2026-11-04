@@ -8,6 +8,7 @@ from ...dal.db_models import ACTIVE_ROUTE_STATUSES, RepairRecords
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ..exceptions import BusinessRuleError
 from ..interfaces.repair_records_interface import IRepairRecordsService
+from ..observer import DomainEvent, Subject
 from .accounting_service import AccountingService
 
 MAINTENANCE_TYPE_LABELS = {
@@ -30,13 +31,14 @@ class RepairCostData(BaseModel):
     cost: Decimal
 
 
-class RepairRecordsService(IRepairRecordsService, AccountingService):
+class RepairRecordsService(IRepairRecordsService, AccountingService, Subject):
     entity_name = "Repair record"
 
     def __init__(
         self, repository, vehicles_repository, routes_repository: IRoutesRepository
     ):
-        super().__init__(repository, vehicles_repository)
+        AccountingService.__init__(self, repository, vehicles_repository)
+        Subject.__init__(self)
         self.routes_repository = routes_repository
 
     async def _validate(self, data, id=None):
@@ -56,6 +58,14 @@ class RepairRecordsService(IRepairRecordsService, AccountingService):
         if data.amount is not None and data.amount < 0:
             raise BusinessRuleError("Repair amount cannot be negative")
         if data.status == "PLANNED":
+            if id is None:
+                vehicle = await self.vehicles_repository.get_by_id(data.vehicle_id)
+                if vehicle.status != "ACTIVE":
+                    raise BusinessRuleError(
+                        f"Vehicle with ID {data.vehicle_id} is not active"
+                    )
+                if data.date < date.today():
+                    raise BusinessRuleError("Maintenance date cannot be in the past")
             for route in await self.routes_repository.get_by_vehicle(data.vehicle_id):
                 last_day = route.planned_return_at
                 if route.status == "IN_PROGRESS":
@@ -70,6 +80,19 @@ class RepairRecordsService(IRepairRecordsService, AccountingService):
 
     def _create_record(self, data):
         return RepairRecords(**self.to_fields(data))
+
+    async def _after_add(self, entity):
+        if entity.status != "PLANNED":
+            return
+        vehicle = await self.vehicles_repository.get_by_id(entity.vehicle_id)
+        await self._notify(
+            DomainEvent(
+                "MAINTENANCE_SCHEDULED",
+                "vehicles",
+                entity.vehicle_id,
+                f"Заплановано {MAINTENANCE_TYPE_LABELS[entity.type]} для {vehicle.make} на {entity.date:%d.%m.%Y}",
+            )
+        )
 
     async def record_repair_cost(self, id, cost):
         record = await self.get_by_id(id)
