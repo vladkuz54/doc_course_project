@@ -32,7 +32,7 @@ class RouteState(ABC):
     def edit_stops(self, route, stops):
         self._reject("edit the stops of")
 
-    def start(self, route):
+    def start(self, route, started_at):
         self._reject("start")
 
     def arrive_at_stop(self, route, stop):
@@ -51,9 +51,9 @@ class RouteState(ABC):
         raise RouteActionNotAllowed(f"Cannot {action} a {self.status()} route")
 
 
-def _ensure_not_in_future(returned_at):
-    if returned_at > datetime.now():
-        raise RouteActionNotAllowed("Return time cannot be in the future")
+def _ensure_not_in_future(moment, name):
+    if moment > datetime.now():
+        raise RouteActionNotAllowed(f"{name} time cannot be in the future")
 
 
 class PlannedState(RouteState):
@@ -82,9 +82,13 @@ class PlannedState(RouteState):
                 route.stops.append(stop)
         del route.stops[len(stops) :]
 
-    def start(self, route):
+    def start(self, route, started_at):
         self._ensure_assigned(route)
-        route.started_at = datetime.now()
+        if started_at is None:
+            started_at = datetime.now()
+        else:
+            _ensure_not_in_future(started_at, "Start")
+        route.started_at = started_at
         route.set_state(InProgressState())
 
     def complete(self, route, returned_at):
@@ -93,7 +97,7 @@ class PlannedState(RouteState):
                 "A route that was never started needs a return time"
             )
         self._ensure_assigned(route)
-        _ensure_not_in_future(returned_at)
+        _ensure_not_in_future(returned_at, "Return")
         if returned_at < route.departure_at:
             raise RouteActionNotAllowed("Return time cannot be before the departure")
         route.completed_at = returned_at
@@ -129,7 +133,7 @@ class InProgressState(RouteState):
         if returned_at is None:
             returned_at = datetime.now()
         else:
-            _ensure_not_in_future(returned_at)
+            _ensure_not_in_future(returned_at, "Return")
             if returned_at < route.started_at:
                 raise RouteActionNotAllowed("Return time cannot be before the start")
         route.completed_at = returned_at
