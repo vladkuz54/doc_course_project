@@ -49,14 +49,6 @@ button:disabled {
   cursor: default;
 }
 
-.link-button {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--road);
-  text-decoration: underline;
-}
-
 input {
   width: 100%;
   min-height: 40px;
