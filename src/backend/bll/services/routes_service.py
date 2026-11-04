@@ -56,6 +56,10 @@ class RouteVehicleData(BaseModel):
     vehicle_id: int
 
 
+class RouteStartData(BaseModel):
+    started_at: NaiveDatetime | None = None
+
+
 class RouteCompleteData(BaseModel):
     returned_at: NaiveDatetime | None = None
 
@@ -190,10 +194,10 @@ class RoutesService(IRoutesService, EntityManagement):
         await self._check_assignment(route)
         return await self.repository.update(route)
 
-    async def start(self, route_id):
+    async def start(self, route_id, started_at=None):
         route = await self.get_by_id(route_id)
         await self._ensure_nothing_in_progress(route)
-        route.start()
+        route.start(started_at)
         await self._check_assignment(route)
         return await self.repository.update(route)
 

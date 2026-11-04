@@ -30,7 +30,7 @@ class IRoutesService(IBaseService):
         pass
 
     @abstractmethod
-    async def start(self, route_id):
+    async def start(self, route_id, started_at=None):
         pass
 
     @abstractmethod
