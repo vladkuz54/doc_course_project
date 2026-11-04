@@ -73,6 +73,20 @@ class NotificationsService(INotificationsService, BaseService, Observer):
         obj.is_read = True
         return await self.repository.update(obj)
 
+    async def mark_all_as_read(self, driver_id=None):
+        rows = (
+            await self.get_for_admins()
+            if driver_id is None
+            else await self.get_by_driver(driver_id)
+        )
+        unread = [row for row in rows if not row.is_read]
+        for row in unread:
+            row.is_read = True
+        if unread:
+            # They share a session, so one commit saves every row
+            await self.repository.update(unread[0])
+        return rows
+
     async def on_event(self, event):
         for n in await self.repository.get_unread():
             if (

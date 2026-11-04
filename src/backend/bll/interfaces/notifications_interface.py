@@ -18,5 +18,9 @@ class INotificationsService(IBaseService):
         pass
 
     @abstractmethod
+    async def mark_all_as_read(self, driver_id=None):
+        pass
+
+    @abstractmethod
     async def on_event(self, event):
         pass
