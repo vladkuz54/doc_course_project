@@ -26,6 +26,10 @@ class IDriversService(IBaseService):
         pass
 
     @abstractmethod
+    async def reject_request(self, request_id):
+        pass
+
+    @abstractmethod
     async def get_license_expiring(self, until):
         pass
 

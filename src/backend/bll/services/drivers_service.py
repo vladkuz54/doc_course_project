@@ -112,7 +112,7 @@ class DriversService(IDriversService, EntityManagement):
         if request.new_license_expiry_date:
             driver.license_expiry_date = request.new_license_expiry_date
         request.status = "APPROVED"
-        return await self.driver_requests_repository.update(request)
+        return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
 
     async def approve_medical_check(self, request_id, valid_until):
         request = await self._get_pending_request(request_id, "MEDICAL_CHECK")
@@ -123,7 +123,12 @@ class DriversService(IDriversService, EntityManagement):
         driver.medical_check_date = date.today()
         driver.medical_check_status = "VALID"
         request.status = "APPROVED"
-        return await self.driver_requests_repository.update(request)
+        return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
+
+    async def reject_request(self, request_id):
+        request = await self._get_pending_request(request_id)
+        request.status = "REJECTED"
+        return await self._save_decision(request, "REQUEST_REJECTED", "відхилено")
 
     async def get_license_expiring(self, until):
         return await self.repository.get_license_expiring(until)
@@ -159,11 +164,31 @@ class DriversService(IDriversService, EntityManagement):
                 f"Driver already has a pending request for category {data.new_license_category}"
             )
 
-    async def _get_pending_request(self, request_id, type):
+    async def _save_decision(self, request, type, verb):
+        request = await self.driver_requests_repository.update(request)
+        driver = await self.get_by_id(request.driver_id)
+        if request.type == "LICENSE_UPDATE":
+            subject = (
+                f"оновлення посвідчення (категорія {request.new_license_category})"
+            )
+        else:
+            subject = "підтвердження медогляду"
+        await self._notify(
+            DomainEvent(
+                type,
+                "driver_requests",
+                request.id,
+                f"Ваш запит на {subject} {verb}",
+                driver.user_id,
+            )
+        )
+        return request
+
+    async def _get_pending_request(self, request_id, type=None):
         request = await self.driver_requests_repository.get_by_id(request_id)
         if not request:
             raise EntityNotFoundError(f"Driver request with ID {request_id} not found")
-        if request.type != type:
+        if type is not None and request.type != type:
             raise BusinessRuleError(
                 f"Driver request with ID {request_id} is not a {type} request"
             )
