@@ -6,6 +6,7 @@ export function useData<T>(load: () => Promise<T>) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [pending, setPending] = useState(false);
 
   const reload = useCallback(
     () => load().then(setData, (e: Error) => setError(e.message)),
@@ -19,6 +20,7 @@ export function useData<T>(load: () => Promise<T>) {
   const run = (action: () => Promise<unknown>, doneNotice = "") => {
     setError("");
     setNotice("");
+    setPending(true);
     return action()
       .then(reload)
       .then(() => {
@@ -28,8 +30,9 @@ export function useData<T>(load: () => Promise<T>) {
       .catch((e: Error) => {
         setError(e.message);
         return false;
-      });
+      })
+      .finally(() => setPending(false));
   };
 
-  return { data, error, notice, reload, run };
+  return { data, error, notice, pending, reload, run };
 }
