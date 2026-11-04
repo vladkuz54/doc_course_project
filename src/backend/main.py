@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
 from .bll.exceptions import (
+    AccountDisabledError,
     BusinessRuleError,
     EntityAlreadyExistsError,
     EntityNotFoundError,
@@ -48,6 +49,11 @@ async def entity_already_exists_handler(
     request: Request, exc: EntityAlreadyExistsError
 ):
     return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+
+@app.exception_handler(AccountDisabledError)
+async def account_disabled_handler(request: Request, exc: AccountDisabledError):
+    return JSONResponse(status_code=403, content={"detail": str(exc)})
 
 
 @app.exception_handler(BusinessRuleError)
