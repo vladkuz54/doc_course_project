@@ -76,11 +76,7 @@ export class AppUI extends Component<object, AppUIState> {
           <span className="brand">Fleet</span>
           {this.factory.createMenu().render()}
           <div className="topbar-actions">
-            <button
-              type="button"
-              className="link-button"
-              onClick={this.signOut}
-            >
+            <button type="button" onClick={this.signOut}>
               Sign out
             </button>
           </div>
