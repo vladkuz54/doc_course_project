@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, useState, type FormEvent } from "react";
+import { Component, useEffect, useState, type FormEvent } from "react";
 import {
   ApiError,
   getMe,
@@ -8,17 +8,20 @@ import {
   login,
   logout,
   setUnauthorizedHandler,
-  type CurrentUser,
 } from "./api";
+import { RoleUIFactory } from "./factories";
+import type { ProfilePage, Role, Workspace } from "./products";
+import { useHash } from "./shared/useHash";
 
 type AppUIState = {
   phase: "loading" | "login" | "ready";
   message: string;
-  user: CurrentUser | null;
 };
 
 export class AppUI extends Component<object, AppUIState> {
-  state: AppUIState = { phase: "loading", message: "", user: null };
+  private factory: RoleUIFactory | null = null;
+
+  state: AppUIState = { phase: "loading", message: "" };
 
   componentDidMount() {
     setUnauthorizedHandler(() =>
@@ -35,13 +38,19 @@ export class AppUI extends Component<object, AppUIState> {
     setUnauthorizedHandler(null);
   }
 
+  start(role: Role) {
+    this.factory = RoleUIFactory.forRole(role);
+    this.setState({ phase: "ready", message: "" });
+  }
+
   private showLogin(message = "") {
-    this.setState({ phase: "login", message, user: null });
+    this.factory = null;
+    this.setState({ phase: "login", message });
   }
 
   private loadUser = () =>
     getMe()
-      .then((user) => this.setState({ phase: "ready", message: "", user }))
+      .then((user) => this.start(user.role))
       .catch((error: Error) => {
         if (error instanceof ApiError && error.status === 401) return;
         this.showLogin(error.message);
@@ -54,25 +63,53 @@ export class AppUI extends Component<object, AppUIState> {
   };
 
   render() {
-    const { phase, message, user } = this.state;
+    const { phase, message } = this.state;
 
     if (phase === "loading") return <p className="loading">Loading...</p>;
-    if (phase === "login" || !user) {
+    if (phase === "login" || !this.factory) {
       return <LoginForm message={message} onLoggedIn={this.loadUser} />;
     }
 
     return (
-      <header className="topbar">
-        <span className="brand">Fleet</span>
-        <span>{user.username}</span>
-        <div className="topbar-actions">
-          <button type="button" className="link-button" onClick={this.signOut}>
-            Sign out
-          </button>
-        </div>
-      </header>
+      <>
+        <header className="topbar">
+          <span className="brand">Fleet</span>
+          {this.factory.createMenu().render()}
+          <div className="topbar-actions">
+            <button
+              type="button"
+              className="link-button"
+              onClick={this.signOut}
+            >
+              Sign out
+            </button>
+          </div>
+        </header>
+        <Screen
+          profile={this.factory.createProfilePage()}
+          workspace={this.factory.createWorkspace()}
+        />
+      </>
     );
   }
+}
+
+function Screen({
+  profile,
+  workspace,
+}: {
+  profile: ProfilePage;
+  workspace: Workspace;
+}) {
+  const hash = useHash();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [hash]);
+
+  return (
+    <main>{hash === "profile" ? profile.render() : workspace.render()}</main>
+  );
 }
 
 function LoginForm({
