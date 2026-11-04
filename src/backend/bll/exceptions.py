@@ -8,3 +8,7 @@ class EntityAlreadyExistsError(Exception):
 
 class BusinessRuleError(Exception):
     pass
+
+
+class AccountDisabledError(Exception):
+    pass
