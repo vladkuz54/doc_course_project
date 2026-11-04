@@ -2,17 +2,8 @@
 
 import { apiGet } from "../api";
 import type { ProfilePage } from "../products";
+import type { Driver } from "../shared/fleet";
 import { useData } from "../shared/useData";
-
-type Driver = {
-  id: number;
-  full_name: string;
-  license_categories: string[];
-  experience_years: number;
-  license_expiry_date: string;
-  medical_valid_until: string;
-  medical_check_status: "VALID" | "EXPIRED" | "PENDING";
-};
 
 const MEDICAL_LABELS: Record<Driver["medical_check_status"], string> = {
   VALID: "Valid",
