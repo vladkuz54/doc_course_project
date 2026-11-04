@@ -132,7 +132,7 @@ class DriverRequests(Base):
         StrEnum("LICENSE_UPDATE", "MEDICAL_CHECK", name="request_type"), nullable=False
     )
     status = Column(
-        StrEnum("PENDING", "APPROVED", name="request_status"),
+        StrEnum("PENDING", "APPROVED", "REJECTED", name="request_status"),
         nullable=False,
         default="PENDING",
     )
@@ -328,6 +328,8 @@ class Notifications(Base):
             "LICENSE_EXPIRING",
             "MEDICAL_CHECK_DUE",
             "ROUTE_ASSIGNED",
+            "REQUEST_APPROVED",
+            "REQUEST_REJECTED",
             name="notification_type",
         ),
         nullable=False,
