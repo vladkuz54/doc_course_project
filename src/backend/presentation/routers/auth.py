@@ -74,7 +74,10 @@ async def get_current_driver_id(
     """None for an admin (sees everything), the driver's id for a driver."""
     if current_user.role == "ADMIN":
         return None
-    return (await drivers_service.get_by_user_id(current_user.user_id)).id
+    driver = await drivers_service.get_by_user_id(current_user.user_id)
+    if driver.employment_status == "DISMISSED":
+        raise HTTPException(status_code=403, detail="This driver has been dismissed")
+    return driver.id
 
 
 def ensure_visible(obj, visible):
