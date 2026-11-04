@@ -24,6 +24,8 @@ class NotificationData(BaseModel):
         "LICENSE_EXPIRING",
         "MEDICAL_CHECK_DUE",
         "ROUTE_ASSIGNED",
+        "REQUEST_APPROVED",
+        "REQUEST_REJECTED",
     ]
     text: str
     related_entity: Literal["drivers", "vehicles", "routes", "driver_requests"]
