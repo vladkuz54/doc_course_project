@@ -7,7 +7,9 @@
   --alert: #b3261e;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -23,6 +25,12 @@ body {
 h1 {
   margin: 0 0 24px;
   font-size: 28px;
+  font-weight: 600;
+}
+
+h2 {
+  margin: 0;
+  font-size: 20px;
   font-weight: 600;
 }
 
@@ -42,6 +50,11 @@ button {
   background: var(--ink);
   color: var(--paper);
   cursor: pointer;
+}
+
+button.secondary {
+  background: var(--paper);
+  color: var(--ink);
 }
 
 button:disabled {
@@ -68,6 +81,10 @@ label {
   outline-offset: 2px;
 }
 
+.muted {
+  color: var(--muted);
+}
+
 .error {
   margin-bottom: 16px;
   color: var(--alert);
@@ -80,7 +97,7 @@ label {
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -160,4 +177,76 @@ main.login {
 
 .details dd {
   margin: 0;
+}
+
+.route {
+  margin-bottom: 32px;
+}
+
+.route-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stops {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stops li {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 56px;
+  padding: 0 0 24px 28px;
+}
+
+.stops button {
+  margin-top: -7px;
+}
+
+.stops li:last-child {
+  min-height: 0;
+  padding-bottom: 0;
+}
+
+.stops li::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 0;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.stops li::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  bottom: -5px;
+  left: 6px;
+  width: 2px;
+  background: var(--line);
+}
+
+.stops li:last-child::after {
+  display: none;
+}
+
+.stops li.reached::before {
+  border-color: var(--road);
+  background: var(--road);
+}
+
+.stops li.reached:has(+ li.reached)::after {
+  background: var(--road);
 }
