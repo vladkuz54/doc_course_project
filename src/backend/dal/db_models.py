@@ -226,8 +226,8 @@ class Routes(Base):
     def edit_stops(self, stops):
         self.state.edit_stops(self, stops)
 
-    def start(self):
-        self.state.start(self)
+    def start(self, started_at=None):
+        self.state.start(self, started_at)
 
     def arrive_at_stop(self, stop):
         self.state.arrive_at_stop(self, stop)
