@@ -10,6 +10,7 @@ from ...bll.services.routes_service import (
     RouteData,
     RouteDriverData,
     RoutesService,
+    RouteStartData,
     RouteStatusData,
     RouteStopsData,
     RouteVehicleData,
@@ -144,11 +145,17 @@ async def cancel(id: int, service: RoutesService = Depends(get_routes_service)):
 @router.post("/{id}/start", response_model=RouteResponse)
 async def start(
     id: int,
+    data: RouteStartData | None = None,
     driver_id: int | None = Depends(get_current_driver_id),
     service: RoutesService = Depends(get_routes_service),
 ):
     await _ensure_can_act(id, driver_id, service)
-    return await service.start(id)
+    started_at = data.started_at if data else None
+    if driver_id is not None and started_at is not None:
+        raise HTTPException(
+            status_code=403, detail="Only an admin can set the start time"
+        )
+    return await service.start(id, started_at)
 
 
 @router.post("/{id}/complete", response_model=RouteResponse)
