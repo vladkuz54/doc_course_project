@@ -1,10 +1,12 @@
+import type { Role } from "./products";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const TOKEN_KEY = "token";
 
 export type CurrentUser = {
   user_id: number;
   username: string;
-  role: string;
+  role: Role;
 };
 
 export class ApiError extends Error {
