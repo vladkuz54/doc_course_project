@@ -72,24 +72,21 @@ def get_driver_requests_service(
 
 def get_repair_records_service(
     session: AsyncSession = Depends(get_db_session),
+    notifications: NotificationsService = Depends(get_notifications_service),
 ) -> RepairRecordsService:
-    return RepairRecordsService(
+    service = RepairRecordsService(
         RepairRecordsRepository(session),
         VehiclesRepository(session),
         RoutesRepository(session),
     )
+    service.attach(notifications)
+    return service
 
 
 def get_vehicles_service(
     session: AsyncSession = Depends(get_db_session),
-    repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
-    notifications: NotificationsService = Depends(get_notifications_service),
 ) -> VehiclesService:
-    service = VehiclesService(
-        VehiclesRepository(session), RoutesRepository(session), repair_records_service
-    )
-    service.attach(notifications)
-    return service
+    return VehiclesService(VehiclesRepository(session), RoutesRepository(session))
 
 
 def get_insurance_policies_service(
