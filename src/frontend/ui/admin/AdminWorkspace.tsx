@@ -3,6 +3,7 @@
 import type { Workspace } from "../products";
 import { useHash } from "../shared/useHash";
 import { ADMIN_LINKS } from "./AdminMenu";
+import { RequestsPage } from "./RequestsPage";
 
 export class AdminWorkspace implements Workspace {
   render() {
@@ -12,6 +13,8 @@ export class AdminWorkspace implements Workspace {
 
 function AdminScreens() {
   const hash = useHash();
+  if (hash === "requests") return <RequestsPage />;
+
   const screen =
     ADMIN_LINKS.find((link) => link.page === hash) ?? ADMIN_LINKS[0];
 
