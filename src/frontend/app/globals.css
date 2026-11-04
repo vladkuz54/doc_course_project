@@ -39,7 +39,9 @@ p {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -57,12 +59,19 @@ button.secondary {
   color: var(--ink);
 }
 
+button.danger {
+  border-color: var(--alert);
+  color: var(--alert);
+}
+
 button:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-input {
+input,
+select,
+textarea {
   width: 100%;
   min-height: 40px;
   padding: 6px 8px;
@@ -88,6 +97,11 @@ label {
 .error {
   margin-bottom: 16px;
   color: var(--alert);
+}
+
+.notice {
+  margin-bottom: 16px;
+  color: var(--road);
 }
 
 .loading {
@@ -323,4 +337,105 @@ main.login {
   gap: 16px;
   margin-top: 4px;
   font-size: 14px;
+}
+
+.section-title {
+  margin: 40px 0 12px;
+}
+
+.panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  align-items: end;
+  gap: 16px;
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.form-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.actions {
+  padding-right: 0;
+  white-space: nowrap;
+}
+
+.actions button + button,
+.actions form + button {
+  margin-left: 8px;
+}
+
+.approve-medical {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.approve-medical label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.approve-medical .date-field {
+  width: 10rem;
+}
+
+.date-field {
+  position: relative;
+  display: block;
+}
+
+.date-field input {
+  padding-right: 36px;
+}
+
+.date-field .date-picker {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  min-height: 0;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.date-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: var(--ink);
 }
