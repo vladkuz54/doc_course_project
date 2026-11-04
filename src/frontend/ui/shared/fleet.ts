@@ -45,6 +45,16 @@ export type Vehicle = {
   status: "ACTIVE" | "DECOMMISSIONED";
 };
 
+export type DriverRequest = {
+  id: number;
+  driver_id: number;
+  type: "LICENSE_UPDATE" | "MEDICAL_CHECK";
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  new_license_category: string | null;
+  new_license_expiry_date: string | null;
+  created_at: string;
+};
+
 export const LICENSE_CATEGORIES = [
   "A1",
   "A",
@@ -69,6 +79,20 @@ export const STATUS_LABELS: Record<RouteStatus, string> = {
   CANCELLED: "Cancelled",
 };
 
+export const REQUEST_STATUS_LABELS: Record<DriverRequest["status"], string> = {
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+export function describeRequest(request: DriverRequest) {
+  if (request.type === "MEDICAL_CHECK") return "Medical check";
+  const expiry = request.new_license_expiry_date
+    ? `, valid until ${formatDate(request.new_license_expiry_date)}`
+    : "";
+  return `License category ${request.new_license_category}${expiry}`;
+}
+
 const STATUS_ORDER: RouteStatus[] = [
   "IN_PROGRESS",
   "PLANNED",
@@ -84,6 +108,11 @@ export function compareRoutes(a: Route, b: Route) {
   return a.status === "IN_PROGRESS" || a.status === "PLANNED"
     ? byDeparture
     : -byDeparture;
+}
+
+export function formatDate(value: string) {
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 export function formatDateTime(value: string) {
