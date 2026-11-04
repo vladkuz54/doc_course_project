@@ -5,7 +5,11 @@ from pydantic import BaseModel
 
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.users_interfaces import IUsersRepository
-from ..exceptions import BusinessRuleError, EntityAlreadyExistsError
+from ..exceptions import (
+    AccountDisabledError,
+    BusinessRuleError,
+    EntityAlreadyExistsError,
+)
 from ..interfaces.users_interface import IUsersService
 from .base_service import BaseService
 
@@ -31,6 +35,9 @@ class UsersService(IUsersService, BaseService):
             password.encode(), user.password_hash.encode()
         ):
             return None
+        driver = await self.drivers_repository.get_by_user_id(user.id)
+        if driver and driver.employment_status == "DISMISSED":
+            raise AccountDisabledError("This driver has been dismissed")
         return user
 
     async def _validate(self, data, id=None):
