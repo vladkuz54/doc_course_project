@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
 from ...bll.services.vehicles_service import (
-    MaintenanceData,
     TechnicalStateData,
     VehicleData,
     VehiclesService,
@@ -11,7 +10,6 @@ from ...bll.services.vehicles_service import (
 )
 from ..dependencies import get_vehicles_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
-from .repair_records_router import RepairRecordResponse
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
@@ -77,20 +75,6 @@ async def change_status(
     service: VehiclesService = Depends(get_vehicles_service),
 ):
     return await service.change_status(id, data.status)
-
-
-@router.post(
-    "/{id}/maintenance",
-    response_model=RepairRecordResponse,
-    status_code=201,
-    dependencies=[Depends(require_admin)],
-)
-async def schedule_maintenance(
-    id: int,
-    data: MaintenanceData,
-    service: VehiclesService = Depends(get_vehicles_service),
-):
-    return await service.schedule_maintenance(id, data.type, data.date)
 
 
 @router.patch(
