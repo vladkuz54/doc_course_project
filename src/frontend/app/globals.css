@@ -102,6 +102,26 @@ label {
   font-weight: 600;
 }
 
+.menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.menu a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.menu a:hover {
+  color: var(--road);
+}
+
+.menu a[aria-current="page"] {
+  color: var(--road);
+  font-weight: 600;
+}
+
 .topbar-actions {
   display: flex;
   gap: 16px;
@@ -132,5 +152,20 @@ main.login {
 }
 
 .login .error {
+  margin: 0;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 24px;
+  margin: 0 0 24px;
+}
+
+.details dt {
+  color: var(--muted);
+}
+
+.details dd {
   margin: 0;
 }
