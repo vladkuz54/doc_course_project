@@ -54,8 +54,13 @@ function changeStatus(driver: Driver, status: Driver["employment_status"]) {
 }
 
 export function DriversPage() {
-  const { data: drivers, error, notice, pending, run } = useData(loadDrivers);
+  const { data: drivers, error, notice, pending, run, clearMessages } = useData(loadDrivers);
   const [editing, setEditing] = useState<Driver | "new" | null>(null);
+
+  const openForm = (next: Driver | "new" | null) => {
+    clearMessages();
+    setEditing(next);
+  };
 
   useEffect(() => {
     if (error || editing) window.scrollTo(0, 0);
@@ -81,7 +86,7 @@ export function DriversPage() {
     <>
       <div className="page-header">
         <h1>Drivers</h1>
-        <button type="button" onClick={() => setEditing("new")}>
+        <button type="button" onClick={() => openForm("new")}>
           Add driver
         </button>
       </div>
@@ -102,7 +107,7 @@ export function DriversPage() {
           driver={editing === "new" ? null : editing}
           pending={pending}
           onSubmit={submit}
-          onCancel={() => setEditing(null)}
+          onCancel={() => openForm(null)}
         />
       )}
 
@@ -136,7 +141,7 @@ export function DriversPage() {
                 <button
                   type="button"
                   className="secondary"
-                  onClick={() => setEditing(driver)}
+                  onClick={() => openForm(driver)}
                 >
                   Edit
                 </button>
