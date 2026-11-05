@@ -46,9 +46,13 @@ async def get_report(
 ):
     report_service.set_strategy(
         {
-            "utilization": VehicleUtilizationReport(routes_service),
-            "maintenance": MaintenanceCostReport(repair_records_service),
-            "usage": UsageAnalyticsReport(routes_service, fuel_records_service),
+            "utilization": VehicleUtilizationReport(routes_service, vehicles_service),
+            "maintenance": MaintenanceCostReport(
+                repair_records_service, vehicles_service
+            ),
+            "usage": UsageAnalyticsReport(
+                routes_service, fuel_records_service, vehicles_service
+            ),
         }[kind]
     )
     vehicle = None

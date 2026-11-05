@@ -14,8 +14,13 @@ class ReportData(BaseModel):
     rows: list[dict]
 
 
-def _sorted_rows(rows_by_vehicle):
-    return [rows_by_vehicle[id] for id in sorted(rows_by_vehicle)]
+async def _named_rows(rows_by_vehicle, vehicles_service):
+    rows = []
+    for id in sorted(rows_by_vehicle):
+        vehicle = await vehicles_service.get_by_id(id)
+        row = {k: v for k, v in rows_by_vehicle[id].items() if k != "vehicle_id"}
+        rows.append({"vehicle": vehicle.make, **row})
+    return rows
 
 
 async def _completed_routes(routes_service, period_from, period_to, vehicle):
@@ -30,8 +35,9 @@ class ReportStrategy(ABC):
 
 
 class VehicleUtilizationReport(ReportStrategy):
-    def __init__(self, routes_service):
+    def __init__(self, routes_service, vehicles_service):
         self.routes_service = routes_service
+        self.vehicles_service = vehicles_service
 
     async def generate(self, period_from, period_to, vehicle=None):
         rows = {}
@@ -52,13 +58,14 @@ class VehicleUtilizationReport(ReportStrategy):
             title="Використання транспорту",
             period_from=period_from,
             period_to=period_to,
-            rows=_sorted_rows(rows),
+            rows=await _named_rows(rows, self.vehicles_service),
         )
 
 
 class MaintenanceCostReport(ReportStrategy):
-    def __init__(self, repair_records_service):
+    def __init__(self, repair_records_service, vehicles_service):
         self.repair_records_service = repair_records_service
+        self.vehicles_service = vehicles_service
 
     async def generate(self, period_from, period_to, vehicle=None):
         rows = {}
@@ -83,14 +90,15 @@ class MaintenanceCostReport(ReportStrategy):
             title="Витрати на обслуговування",
             period_from=period_from,
             period_to=period_to,
-            rows=_sorted_rows(rows),
+            rows=await _named_rows(rows, self.vehicles_service),
         )
 
 
 class UsageAnalyticsReport(ReportStrategy):
-    def __init__(self, routes_service, fuel_records_service):
+    def __init__(self, routes_service, fuel_records_service, vehicles_service):
         self.routes_service = routes_service
         self.fuel_records_service = fuel_records_service
+        self.vehicles_service = vehicles_service
 
     async def generate(self, period_from, period_to, vehicle=None):
         rows = {}
@@ -126,7 +134,7 @@ class UsageAnalyticsReport(ReportStrategy):
             title="Аналітика використання",
             period_from=period_from,
             period_to=period_to,
-            rows=_sorted_rows(rows),
+            rows=await _named_rows(rows, self.vehicles_service),
         )
 
 
