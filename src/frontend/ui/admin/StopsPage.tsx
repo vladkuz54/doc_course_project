@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { apiPut } from "../api";
 import {
   compareRoutes,
@@ -11,6 +11,7 @@ import {
   type RouteStop,
 } from "../shared/fleet";
 import { StopLine } from "../shared/StopLine";
+import { Messages } from "../shared/Messages";
 import { useData } from "../shared/useData";
 
 export function StopsPage() {
@@ -24,23 +25,10 @@ export function StopsPage() {
     sorted?.find((r) => r.status === "PLANNED") ??
     sorted?.[0];
 
-  useEffect(() => {
-    if (error) window.scrollTo(0, 0);
-  }, [error]);
-
   return (
     <>
       <h1>Stops</h1>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      <Messages error={error} notice={notice} onClose={clearMessages} />
       {routes?.length === 0 && <p className="muted">No routes yet.</p>}
       {route && (
         <>

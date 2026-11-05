@@ -9,6 +9,7 @@ import {
   MEDICAL_LABELS,
   type Driver,
 } from "../shared/fleet";
+import { Messages } from "../shared/Messages";
 import { useData } from "../shared/useData";
 
 const loadDrivers = () => apiGet<Driver[]>("/drivers/");
@@ -63,8 +64,8 @@ export function DriversPage() {
   };
 
   useEffect(() => {
-    if (error || editing) window.scrollTo(0, 0);
-  }, [error, editing]);
+    if (editing) window.scrollTo(0, 0);
+  }, [editing]);
 
   const submit = (form: FormData) => {
     const action =
@@ -90,16 +91,7 @@ export function DriversPage() {
           Add driver
         </button>
       </div>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      <Messages error={error} notice={notice} onClose={clearMessages} />
 
       {editing && (
         <DriverForm

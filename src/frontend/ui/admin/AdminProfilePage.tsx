@@ -2,6 +2,7 @@
 
 import { getMe } from "../api";
 import type { ProfilePage } from "../products";
+import { Messages } from "../shared/Messages";
 import { useData } from "../shared/useData";
 
 export class AdminProfilePage implements ProfilePage {
@@ -11,12 +12,12 @@ export class AdminProfilePage implements ProfilePage {
 }
 
 function AdminProfile() {
-  const { data: user, error } = useData(getMe);
+  const { data: user, error, clearMessages } = useData(getMe);
 
   return (
     <>
       <h1>Profile</h1>
-      {error && <p className="error" role="alert">{error}</p>}
+      <Messages error={error} onClose={clearMessages} />
       {user && (
         <dl className="details">
           <dt>Username</dt>

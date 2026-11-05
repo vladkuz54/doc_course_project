@@ -7,6 +7,7 @@ import {
   TECHNICAL_STATE_LABELS,
   type Vehicle,
 } from "../shared/fleet";
+import { Messages } from "../shared/Messages";
 import { useData } from "../shared/useData";
 
 const loadVehicles = () => apiGet<Vehicle[]>("/vehicles/");
@@ -34,8 +35,8 @@ export function VehiclesPage() {
   };
 
   useEffect(() => {
-    if (error || editing) window.scrollTo(0, 0);
-  }, [error, editing]);
+    if (editing) window.scrollTo(0, 0);
+  }, [editing]);
 
   const submit = (form: FormData) => {
     const action =
@@ -68,16 +69,7 @@ export function VehiclesPage() {
           Add vehicle
         </button>
       </div>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      <Messages error={error} notice={notice} onClose={clearMessages} />
 
       {editing && (
         <VehicleForm

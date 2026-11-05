@@ -11,6 +11,7 @@ import {
   type Route,
   type Vehicle,
 } from "../shared/fleet";
+import { Messages } from "../shared/Messages";
 import { useData } from "../shared/useData";
 
 type TimeAction = "start" | "close" | "complete";
@@ -84,8 +85,8 @@ export function RoutesPage() {
   const [routes, drivers, vehicles] = data ?? [];
 
   useEffect(() => {
-    if (error || editing) window.scrollTo(0, 0);
-  }, [error, editing]);
+    if (editing) window.scrollTo(0, 0);
+  }, [editing]);
 
   const save = (action: () => Promise<unknown>, doneNotice: string) => {
     run(action, doneNotice).then((saved) => {
@@ -109,16 +110,7 @@ export function RoutesPage() {
           Add route
         </button>
       </div>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      <Messages error={error} notice={notice} onClose={clearMessages} />
 
       {editing?.form === "new" && (
         <RouteForm

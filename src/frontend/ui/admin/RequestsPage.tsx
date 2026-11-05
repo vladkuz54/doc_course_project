@@ -10,6 +10,7 @@ import {
   type DriverRequest,
 } from "../shared/fleet";
 import { DateField, toIsoDate } from "../shared/DateField";
+import { Messages } from "../shared/Messages";
 import { useData } from "../shared/useData";
 
 const loadRequests = () =>
@@ -25,7 +26,7 @@ function pendingFirst(a: DriverRequest, b: DriverRequest) {
 }
 
 export function RequestsPage() {
-  const { data, error, notice, pending, run } = useData(loadRequests);
+  const { data, error, notice, pending, run, clearMessages } = useData(loadRequests);
   const [requests, drivers] = data ?? [];
 
   const approveMedical = (
@@ -48,16 +49,7 @@ export function RequestsPage() {
   return (
     <>
       <h1>Requests</h1>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      <Messages error={error} notice={notice} onClose={clearMessages} />
       {requests?.length === 0 && <p className="muted">No requests yet.</p>}
       {requests && requests.length > 0 && (
         <table>

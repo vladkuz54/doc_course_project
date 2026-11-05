@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { apiDelete, apiGet, apiPost, apiPut } from "../api";
 import { DateField, toIsoDate } from "../shared/DateField";
 import { formatDate, type Vehicle } from "../shared/fleet";
+import { Messages } from "../shared/Messages";
 import { useData } from "../shared/useData";
 
 type FuelRecord = {
@@ -99,8 +100,8 @@ function useRecords<T, E>(load: () => Promise<[T[], Vehicle[]]>) {
   const [editing, setEditing] = useState<E | "new" | null>(null);
 
   useEffect(() => {
-    if (error || editing) window.scrollTo(0, 0);
-  }, [error, editing]);
+    if (editing) window.scrollTo(0, 0);
+  }, [editing]);
 
   const openForm = (next: E | "new" | null) => {
     clearMessages();
@@ -126,6 +127,7 @@ function useRecords<T, E>(load: () => Promise<[T[], Vehicle[]]>) {
   return {
     records,
     run,
+    clearMessages,
     vehicles: vehicles ?? [],
     vehicleName,
     error,
@@ -136,23 +138,6 @@ function useRecords<T, E>(load: () => Promise<[T[], Vehicle[]]>) {
     save,
     remove,
   };
-}
-
-function Messages({ error, notice }: { error: string; notice: string }) {
-  return (
-    <>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
-    </>
-  );
 }
 
 function RecordForm({
@@ -297,7 +282,11 @@ function FuelTab() {
           Add fuel record
         </button>
       </div>
-      <Messages error={records.error} notice={records.notice} />
+      <Messages
+        error={records.error}
+        notice={records.notice}
+        onClose={records.clearMessages}
+      />
       {editing && (
         <RecordForm
           key={record?.id ?? "new"}
@@ -394,7 +383,11 @@ function InsuranceTab() {
           Add insurance policy
         </button>
       </div>
-      <Messages error={records.error} notice={records.notice} />
+      <Messages
+        error={records.error}
+        notice={records.notice}
+        onClose={records.clearMessages}
+      />
       {editing && (
         <RecordForm
           key={record?.id ?? "new"}
@@ -545,7 +538,11 @@ function RepairsTab() {
           Add repair
         </button>
       </div>
-      <Messages error={records.error} notice={records.notice} />
+      <Messages
+        error={records.error}
+        notice={records.notice}
+        onClose={records.clearMessages}
+      />
       {editing === "new" && (
         <NewRepairForm
           vehicles={vehicles}

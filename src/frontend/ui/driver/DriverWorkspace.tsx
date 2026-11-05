@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { apiPost } from "../api";
 import type { Workspace } from "../products";
 import {
@@ -10,6 +9,7 @@ import {
   STATUS_LABELS,
   stopsOf,
 } from "../shared/fleet";
+import { Messages } from "../shared/Messages";
 import { StopLine } from "../shared/StopLine";
 import { useData } from "../shared/useData";
 
@@ -20,24 +20,19 @@ export class DriverWorkspace implements Workspace {
 }
 
 function DriverRoutes() {
-  const { data, error, pending, run } = useData(loadRoutesAndStops);
-  const [actedOn, setActedOn] = useState<number | null>(null);
+  const { data, error, pending, run, clearMessages } =
+    useData(loadRoutesAndStops);
   const [routes, stops] = data ?? [];
   const sorted = routes?.toSorted(compareRoutes);
 
   const act = (routeId: number, path: string) => {
-    setActedOn(routeId);
     run(() => apiPost(`/routes/${routeId}${path}`));
   };
 
   return (
     <>
       <h1>Routes</h1>
-      {error && actedOn === null && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
+      <Messages error={error} onClose={clearMessages} />
       {routes?.length === 0 && <p className="muted">No routes assigned.</p>}
       {sorted?.map((route) => (
         <article key={route.id} className="route">
@@ -68,11 +63,6 @@ function DriverRoutes() {
               </button>
             )}
           </div>
-          {error && actedOn === route.id && (
-            <p className="error" role="alert">
-              {error}
-            </p>
-          )}
           <StopLine
             status={route.status}
             stops={stopsOf(stops, route.id)}

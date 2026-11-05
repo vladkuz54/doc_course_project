@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { apiDownload, apiGet } from "../api";
 import { DateField, nowForField, toIsoDate } from "../shared/DateField";
 import { formatDate, type Vehicle } from "../shared/fleet";
+import { Messages } from "../shared/Messages";
 import { useData } from "../shared/useData";
 
 type ReportRow = Record<string, string | number | null>;
@@ -47,7 +48,7 @@ function exportName(form: FormData, extension: string) {
 }
 
 export function ReportsPage() {
-  const { data: vehicles, error, pending, run } = useData(loadVehicles);
+  const { data: vehicles, error, pending, run, clearMessages } = useData(loadVehicles);
   const [report, setReport] = useState<Report | null>(null);
   const today = nowForField().slice(0, 10);
 
@@ -76,11 +77,7 @@ export function ReportsPage() {
   return (
     <>
       <h1>Reports</h1>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
+      <Messages error={error} onClose={clearMessages} />
       <form className="panel" onSubmit={submit}>
         <label>
           Report
