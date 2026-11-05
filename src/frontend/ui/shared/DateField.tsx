@@ -12,46 +12,69 @@ export function toIsoDate(text: string) {
   return date.toISOString().slice(0, 10) === iso ? iso : "";
 }
 
-function withSlashes(text: string) {
-  const digits = text.replace(/\D/g, "").slice(0, 8);
-  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)]
+export function toIsoDateTime(text: string) {
+  const match = /^(.{10}) ([01]\d|2[0-3]):([0-5]\d)$/.exec(text);
+  const date = match && toIsoDate(match[1]);
+  return date ? `${date}T${match[2]}:${match[3]}` : "";
+}
+
+export function nowForField() {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return `${date}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+function formatForField(iso: string, withTime: boolean) {
+  const date = formatDate(iso.slice(0, 10));
+  return withTime ? `${date} ${iso.slice(11, 16)}` : date;
+}
+
+function withSeparators(text: string, withTime: boolean) {
+  const digits = text.replace(/\D/g, "").slice(0, withTime ? 12 : 8);
+  const date = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)]
     .filter(Boolean)
     .join("/");
+  if (digits.length <= 8) return date;
+  const time = [digits.slice(8, 10), digits.slice(10)].filter(Boolean).join(":");
+  return `${date} ${time}`;
 }
 
 export function DateField({
   name,
   required,
   defaultValue,
+  withTime = false,
 }: {
   name: string;
   required?: boolean;
   defaultValue?: string;
+  withTime?: boolean;
 }) {
   const text = useRef<HTMLInputElement>(null);
   const picker = useRef<HTMLInputElement>(null);
+  const toIso = withTime ? toIsoDateTime : toIsoDate;
+  const format = withTime ? "dd/mm/yyyy hh:mm" : "dd/mm/yyyy";
 
   const typed = (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.target;
     if (input.selectionStart === input.value.length) {
-      input.value = withSlashes(input.value);
+      input.value = withSeparators(input.value, withTime);
     }
     input.setCustomValidity(
-      input.value && !toIsoDate(input.value)
-        ? "Enter a real date as dd/mm/yyyy"
-        : "",
+      input.value && !toIso(input.value) ? `Enter a real date as ${format}` : "",
     );
   };
 
   const picked = (event: ChangeEvent<HTMLInputElement>) => {
     if (!text.current) return;
-    text.current.value = formatDate(event.target.value);
+    text.current.value = formatForField(event.target.value, withTime);
     text.current.setCustomValidity("");
   };
 
   const openPicker = () => {
     if (!text.current || !picker.current) return;
-    picker.current.value = toIsoDate(text.current.value);
+    picker.current.value = toIso(text.current.value);
     picker.current.showPicker();
   };
 
@@ -60,16 +83,16 @@ export function DateField({
       <input
         ref={text}
         name={name}
-        placeholder="dd/mm/yyyy"
+        placeholder={format}
         inputMode="numeric"
         autoComplete="off"
         required={required}
-        defaultValue={defaultValue && formatDate(defaultValue)}
+        defaultValue={defaultValue && formatForField(defaultValue, withTime)}
         onChange={typed}
       />
       <input
         ref={picker}
-        type="date"
+        type={withTime ? "datetime-local" : "date"}
         className="date-picker"
         tabIndex={-1}
         aria-hidden="true"
