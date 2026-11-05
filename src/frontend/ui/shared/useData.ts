@@ -17,10 +17,10 @@ export function useData<T>(load: () => Promise<T>) {
     reload();
   }, [reload]);
 
-  const clearMessages = () => {
+  const clearMessages = useCallback(() => {
     setError("");
     setNotice("");
-  };
+  }, []);
 
   const run = (action: () => Promise<unknown>, doneNotice = "") => {
     clearMessages();
