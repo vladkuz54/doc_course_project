@@ -72,6 +72,12 @@ export const LICENSE_CATEGORIES = [
   "T",
 ];
 
+export const MEDICAL_LABELS: Record<Driver["medical_check_status"], string> = {
+  VALID: "Valid",
+  EXPIRED: "Expired",
+  PENDING: "Pending",
+};
+
 export const STATUS_LABELS: Record<RouteStatus, string> = {
   PLANNED: "Planned",
   IN_PROGRESS: "In progress",
