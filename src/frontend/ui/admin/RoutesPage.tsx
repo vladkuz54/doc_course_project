@@ -15,6 +15,12 @@ import { FormRow } from "../shared/FormRow";
 import { Messages } from "../shared/Messages";
 import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
+import {
+  EMPTY_STOP,
+  joinAddress,
+  StopFields,
+  type StopAddress,
+} from "./StopFields";
 
 type TimeAction = "start" | "close" | "complete";
 
@@ -70,13 +76,10 @@ function routeFields(form: FormData) {
   };
 }
 
-function createRoute(form: FormData) {
+function createRoute(form: FormData, stops: StopAddress[]) {
   return apiPost("/routes/", {
     ...routeFields(form),
-    stops: String(form.get("stops"))
-      .split("\n")
-      .map((address) => address.trim())
-      .filter(Boolean),
+    stops: stops.map(joinAddress),
   });
 }
 
@@ -162,7 +165,9 @@ export function RoutesPage() {
           drivers={drivers ?? []}
           vehicles={vehicles ?? []}
           pending={pending}
-          onSubmit={(form) => save(() => createRoute(form), "Route saved.")}
+          onSubmit={(form, stops) =>
+            save(() => createRoute(form, stops), "Route saved.")
+          }
           onCancel={() => openForm(null)}
         />
       )}
@@ -301,12 +306,14 @@ function RouteForm({
   drivers: Driver[];
   vehicles: Vehicle[];
   pending: boolean;
-  onSubmit: (form: FormData) => void;
+  onSubmit: (form: FormData, stops: StopAddress[]) => void;
   onCancel: () => void;
 }) {
+  const [stops, setStops] = useState<StopAddress[]>([EMPTY_STOP]);
+
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onSubmit(new FormData(event.currentTarget));
+    onSubmit(new FormData(event.currentTarget), stops);
   };
 
   return (
@@ -363,12 +370,7 @@ function RouteForm({
           required
         />
       </label>
-      {!route && (
-        <label className="wide">
-          Stops, one address per line
-          <textarea name="stops" rows={4} required />
-        </label>
-      )}
+      {!route && <StopFields stops={stops} onChange={setStops} />}
       <div className="form-actions">
         <button type="submit" disabled={pending}>
           Save route
