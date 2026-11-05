@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { apiGet, apiPatch } from "../api";
 import { formatDateTime } from "./fleet";
 import { useData } from "./useData";
@@ -14,6 +14,8 @@ type Notification = {
   created_at: string;
   is_read: boolean;
 };
+
+const REFRESH_MS = 15000;
 
 const loadNotifications = () => apiGet<Notification[]>("/notifications/");
 
@@ -30,6 +32,13 @@ export function NotificationsPopover({
   const panel = useRef<HTMLDivElement>(null);
   const unread = data?.filter((notification) => !notification.is_read) ?? [];
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!document.hidden) reload();
+    }, REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [reload]);
+
   const open = (notification: Notification) => {
     panel.current?.hidePopover();
     if (!notification.is_read) run(() => markAsRead(notification.id));
@@ -37,8 +46,27 @@ export function NotificationsPopover({
 
   return (
     <>
-      <button type="button" popoverTarget="notifications">
-        Notifications{unread.length > 0 && ` (${unread.length})`}
+      <button
+        type="button"
+        className="bell"
+        popoverTarget="notifications"
+        aria-label={
+          unread.length > 0
+            ? `Notifications (${unread.length})`
+            : "Notifications"
+        }
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M12 2a6 6 0 0 0-6 6v4.6L4 16v2h16v-2l-2-3.4V8a6 6 0 0 0-6-6zm-2.6 18a2.7 2.7 0 0 0 5.2 0H9.4z"
+          />
+        </svg>
+        {unread.length > 0 && (
+          <span className="bell-count">
+            {unread.length > 99 ? "99+" : unread.length}
+          </span>
+        )}
       </button>
       <div
         id="notifications"
