@@ -613,3 +613,11 @@ th {
 .status-section .route:last-child {
   margin-bottom: 0;
 }
+
+.form-row > td {
+  padding: 0;
+}
+
+.form-row .panel {
+  margin: 12px 0;
+}
