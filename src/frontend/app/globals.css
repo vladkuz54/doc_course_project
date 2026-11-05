@@ -621,3 +621,43 @@ th {
 .form-row .panel {
   margin: 12px 0;
 }
+
+.stop-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.stop-fields legend {
+  padding: 0 0 4px;
+  font-weight: 600;
+}
+
+.stop-fields ol {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.stop-fields li {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stop-fields label {
+  flex: 1;
+}
+
+.stop-fields .stop-street {
+  flex: 2;
+}
+
+.stop-fields .stop-number {
+  flex: 0 0 6rem;
+}
+
+.stop-fields li button {
+  min-height: 40px;
+}
