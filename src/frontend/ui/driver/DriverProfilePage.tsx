@@ -8,18 +8,13 @@ import {
   formatDate,
   formatDateTime,
   LICENSE_CATEGORIES,
+  MEDICAL_LABELS,
   REQUEST_STATUS_LABELS,
   type Driver,
   type DriverRequest,
 } from "../shared/fleet";
 import { DateField, toIsoDate } from "../shared/DateField";
 import { useData } from "../shared/useData";
-
-const MEDICAL_LABELS: Record<Driver["medical_check_status"], string> = {
-  VALID: "Valid",
-  EXPIRED: "Expired",
-  PENDING: "Pending",
-};
 
 const loadProfile = () =>
   Promise.all([
