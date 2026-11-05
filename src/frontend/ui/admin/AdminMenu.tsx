@@ -11,7 +11,6 @@ export const ADMIN_LINKS: MenuLink[] = [
   { page: "drivers", label: "Drivers" },
   { page: "requests", label: "Requests" },
   { page: "routes", label: "Routes" },
-  { page: "stops", label: "Stops" },
   { page: "vehicles", label: "Vehicles" },
   { page: "accounting", label: "Accounting" },
   { page: "reports", label: "Reports" },
