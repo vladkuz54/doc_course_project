@@ -25,8 +25,13 @@ function changeStatus(vehicle: Vehicle, status: Vehicle["status"]) {
 }
 
 export function VehiclesPage() {
-  const { data: vehicles, error, notice, pending, run } = useData(loadVehicles);
+  const { data: vehicles, error, notice, pending, run, clearMessages } = useData(loadVehicles);
   const [editing, setEditing] = useState<Vehicle | "new" | null>(null);
+
+  const openForm = (next: Vehicle | "new" | null) => {
+    clearMessages();
+    setEditing(next);
+  };
 
   useEffect(() => {
     if (error || editing) window.scrollTo(0, 0);
@@ -59,7 +64,7 @@ export function VehiclesPage() {
     <>
       <div className="page-header">
         <h1>Vehicles</h1>
-        <button type="button" onClick={() => setEditing("new")}>
+        <button type="button" onClick={() => openForm("new")}>
           Add vehicle
         </button>
       </div>
@@ -80,7 +85,7 @@ export function VehiclesPage() {
           vehicle={editing === "new" ? null : editing}
           pending={pending}
           onSubmit={submit}
-          onCancel={() => setEditing(null)}
+          onCancel={() => openForm(null)}
         />
       )}
 
@@ -111,7 +116,7 @@ export function VehiclesPage() {
                 <button
                   type="button"
                   className="secondary"
-                  onClick={() => setEditing(vehicle)}
+                  onClick={() => openForm(vehicle)}
                 >
                   Edit
                 </button>
