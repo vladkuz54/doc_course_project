@@ -547,32 +547,6 @@ th {
   color: var(--ink);
 }
 
-.route-picker {
-  max-width: 28rem;
-  margin-bottom: 24px;
-}
-
-.stops-note {
-  margin-bottom: 16px;
-}
-
-.stop-rows {
-  margin: 0 0 16px;
-  padding: 0;
-  list-style: none;
-}
-
-.stop-rows li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.stop-rows input {
-  flex: 1;
-}
-
 .tabs {
   display: flex;
   gap: 8px;
@@ -660,4 +634,8 @@ th {
 
 .stop-fields li button {
   min-height: 40px;
+}
+
+.stops-view {
+  padding: 12px 0 16px;
 }
