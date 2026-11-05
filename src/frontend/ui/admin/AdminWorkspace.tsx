@@ -2,6 +2,7 @@
 
 import type { Workspace } from "../products";
 import { useHash } from "../shared/useHash";
+import { AccountingPage } from "./AccountingPage";
 import { ADMIN_LINKS } from "./AdminMenu";
 import { DriversPage } from "./DriversPage";
 import { RequestsPage } from "./RequestsPage";
@@ -20,6 +21,7 @@ function AdminScreens() {
   if (hash === "requests") return <RequestsPage />;
   if (hash === "routes") return <RoutesPage />;
   if (hash === "stops") return <StopsPage />;
+  if (hash === "accounting") return <AccountingPage />;
 
   const screen =
     ADMIN_LINKS.find((link) => link.page === hash) ?? ADMIN_LINKS[0];
