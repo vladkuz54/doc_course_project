@@ -8,7 +8,13 @@ import {
   type Vehicle,
 } from "../shared/fleet";
 import { Messages } from "../shared/Messages";
+import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
+
+const VEHICLE_SECTIONS: { status: Vehicle["status"]; label: string }[] = [
+  { status: "ACTIVE", label: "Active" },
+  { status: "DECOMMISSIONED", label: "Decommissioned" },
+];
 
 const loadVehicles = () => apiGet<Vehicle[]>("/vehicles/");
 
@@ -26,7 +32,14 @@ function changeStatus(vehicle: Vehicle, status: Vehicle["status"]) {
 }
 
 export function VehiclesPage() {
-  const { data: vehicles, error, notice, pending, run, clearMessages } = useData(loadVehicles);
+  const {
+    data: vehicles,
+    error,
+    notice,
+    pending,
+    run,
+    clearMessages,
+  } = useData(loadVehicles);
   const [editing, setEditing] = useState<Vehicle | "new" | null>(null);
 
   const openForm = (next: Vehicle | "new" | null) => {
@@ -81,66 +94,70 @@ export function VehiclesPage() {
         />
       )}
 
-      <table>
-        <thead>
-          <tr>
-            <th>Vehicle</th>
-            <th>Year</th>
-            <th>VIN</th>
-            <th>License</th>
-            <th>Technical state</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {vehicles?.map((vehicle) => (
-            <tr key={vehicle.id}>
-              <td>{vehicle.make}</td>
-              <td>{vehicle.year}</td>
-              <td>{vehicle.vin}</td>
-              <td>{vehicle.required_license_category}</td>
-              <td>{TECHNICAL_STATE_LABELS[vehicle.technical_state]}</td>
-              <td>
-                {vehicle.status === "ACTIVE" ? "Active" : "Decommissioned"}
-              </td>
-              <td className="actions">
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => openForm(vehicle)}
-                >
-                  Edit
-                </button>
-                {vehicle.status === "ACTIVE" ? (
-                  <button
-                    type="button"
-                    className="secondary danger"
-                    disabled={pending}
-                    onClick={() => decommission(vehicle)}
-                  >
-                    Decommission
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="secondary"
-                    disabled={pending}
-                    onClick={() =>
-                      run(
-                        () => changeStatus(vehicle, "ACTIVE"),
-                        "Vehicle reactivated.",
-                      )
-                    }
-                  >
-                    Reactivate
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <StatusSections
+        items={vehicles}
+        statusOf={(vehicle) => vehicle.status}
+        sections={VEHICLE_SECTIONS}
+      >
+        {(rows) => (
+          <table>
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Year</th>
+                <th>VIN</th>
+                <th>License</th>
+                <th>Technical state</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((vehicle) => (
+                <tr key={vehicle.id}>
+                  <td>{vehicle.make}</td>
+                  <td>{vehicle.year}</td>
+                  <td>{vehicle.vin}</td>
+                  <td>{vehicle.required_license_category}</td>
+                  <td>{TECHNICAL_STATE_LABELS[vehicle.technical_state]}</td>
+                  <td className="actions">
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => openForm(vehicle)}
+                    >
+                      Edit
+                    </button>
+                    {vehicle.status === "ACTIVE" ? (
+                      <button
+                        type="button"
+                        className="secondary danger"
+                        disabled={pending}
+                        onClick={() => decommission(vehicle)}
+                      >
+                        Decommission
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={pending}
+                        onClick={() =>
+                          run(
+                            () => changeStatus(vehicle, "ACTIVE"),
+                            "Vehicle reactivated.",
+                          )
+                        }
+                      >
+                        Reactivate
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </StatusSections>
     </>
   );
 }

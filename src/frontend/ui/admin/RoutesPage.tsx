@@ -6,12 +6,13 @@ import { DateField, nowForField, toIsoDateTime } from "../shared/DateField";
 import {
   compareRoutes,
   formatDateTime,
-  STATUS_LABELS,
+  ROUTE_SECTIONS,
   type Driver,
   type Route,
   type Vehicle,
 } from "../shared/fleet";
 import { Messages } from "../shared/Messages";
+import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
 
 type TimeAction = "start" | "close" | "complete";
@@ -55,6 +56,10 @@ const loadRoutesPage = () =>
     apiGet<Vehicle[]>("/vehicles/"),
   ]);
 
+function isActive(route: Route) {
+  return route.status === "PLANNED" || route.status === "IN_PROGRESS";
+}
+
 function routeFields(form: FormData) {
   return {
     driver_id: Number(form.get("driver_id")) || null,
@@ -75,7 +80,8 @@ function createRoute(form: FormData) {
 }
 
 export function RoutesPage() {
-  const { data, error, notice, pending, run, clearMessages } = useData(loadRoutesPage);
+  const { data, error, notice, pending, run, clearMessages } =
+    useData(loadRoutesPage);
   const [editing, setEditing] = useState<Editing | null>(null);
 
   const openForm = (next: Editing | null) => {
@@ -159,108 +165,116 @@ export function RoutesPage() {
         />
       )}
 
-      <table>
-        <thead>
-          <tr>
-            <th>Route</th>
-            <th>Status</th>
-            <th>Departure</th>
-            <th>Distance</th>
-            <th>Driver</th>
-            <th>Vehicle</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {routes?.toSorted(compareRoutes).map((route) => (
-            <tr key={route.id}>
-              <td>{route.id}</td>
-              <td>{STATUS_LABELS[route.status]}</td>
-              <td>{formatDateTime(route.departure_at)}</td>
-              <td>{route.distance} km</td>
-              <td>
-                {drivers?.find((d) => d.id === route.driver_id)?.full_name ??
-                  "Not assigned"}
-              </td>
-              <td>
-                {vehicles?.find((v) => v.id === route.vehicle_id)?.make ??
-                  "Not assigned"}
-              </td>
-              <td className="actions">
-                {route.status === "PLANNED" && (
-                  <>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => openForm({ form: "edit", route })}
-                    >
-                      Edit
-                    </button>
-                    {route.driver_id !== null && route.vehicle_id !== null && (
+      <StatusSections
+        items={routes?.toSorted(compareRoutes)}
+        statusOf={(route) => route.status}
+        sections={ROUTE_SECTIONS}
+      >
+        {(rows) => (
+          <table>
+            <thead>
+              <tr>
+                <th>Route</th>
+                <th>Departure</th>
+                <th>Distance</th>
+                <th>Driver</th>
+                <th>Vehicle</th>
+                {isActive(rows[0]) && <th>Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((route) => (
+                <tr key={route.id}>
+                  <td>{route.id}</td>
+                  <td>{formatDateTime(route.departure_at)}</td>
+                  <td>{route.distance} km</td>
+                  <td>
+                    {drivers?.find((d) => d.id === route.driver_id)
+                      ?.full_name ?? "Not assigned"}
+                  </td>
+                  <td>
+                    {vehicles?.find((v) => v.id === route.vehicle_id)?.make ??
+                      "Not assigned"}
+                  </td>
+                  {isActive(route) && (
+                    <td className="actions">
+                      {route.status === "PLANNED" && (
+                        <>
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => openForm({ form: "edit", route })}
+                          >
+                            Edit
+                          </button>
+                          {route.driver_id !== null &&
+                            route.vehicle_id !== null && (
+                              <button
+                                type="button"
+                                className="secondary"
+                                onClick={() =>
+                                  openForm({ form: "start", route })
+                                }
+                              >
+                                Start
+                              </button>
+                            )}
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => openForm({ form: "close", route })}
+                          >
+                            Close
+                          </button>
+                        </>
+                      )}
+                      {route.status === "IN_PROGRESS" && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => openForm({ form: "complete", route })}
+                        >
+                          Complete
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className="secondary"
-                        onClick={() => openForm({ form: "start", route })}
+                        className="secondary danger"
+                        disabled={pending}
+                        onClick={() =>
+                          confirmed(
+                            `Cancel route ${route.id}?`,
+                            () => apiPost(`/routes/${route.id}/cancel`),
+                            "Route cancelled.",
+                          )
+                        }
                       >
-                        Start
+                        Cancel
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => openForm({ form: "close", route })}
-                    >
-                      Close
-                    </button>
-                  </>
-                )}
-                {route.status === "IN_PROGRESS" && (
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() => openForm({ form: "complete", route })}
-                  >
-                    Complete
-                  </button>
-                )}
-                {(route.status === "PLANNED" ||
-                  route.status === "IN_PROGRESS") && (
-                  <button
-                    type="button"
-                    className="secondary danger"
-                    disabled={pending}
-                    onClick={() =>
-                      confirmed(
-                        `Cancel route ${route.id}?`,
-                        () => apiPost(`/routes/${route.id}/cancel`),
-                        "Route cancelled.",
-                      )
-                    }
-                  >
-                    Cancel
-                  </button>
-                )}
-                {route.status === "PLANNED" && (
-                  <button
-                    type="button"
-                    className="secondary danger"
-                    disabled={pending}
-                    onClick={() =>
-                      confirmed(
-                        `Delete route ${route.id}?`,
-                        () => apiDelete(`/routes/${route.id}`),
-                        "Route deleted.",
-                      )
-                    }
-                  >
-                    Delete
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                      {route.status === "PLANNED" && (
+                        <button
+                          type="button"
+                          className="secondary danger"
+                          disabled={pending}
+                          onClick={() =>
+                            confirmed(
+                              `Delete route ${route.id}?`,
+                              () => apiDelete(`/routes/${route.id}`),
+                              "Route deleted.",
+                            )
+                          }
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </StatusSections>
     </>
   );
 }

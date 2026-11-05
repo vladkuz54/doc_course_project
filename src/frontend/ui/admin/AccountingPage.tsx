@@ -5,6 +5,7 @@ import { apiDelete, apiGet, apiPost, apiPut } from "../api";
 import { DateField, toIsoDate } from "../shared/DateField";
 import { formatDate, type Vehicle } from "../shared/fleet";
 import { Messages } from "../shared/Messages";
+import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
 
 type FuelRecord = {
@@ -50,6 +51,11 @@ const TABS = {
 
 type TabName = keyof typeof TABS;
 
+const REPAIR_SECTIONS: { status: RepairRecord["status"]; label: string }[] = [
+  { status: "PLANNED", label: "Planned" },
+  { status: "DONE", label: "Done" },
+];
+
 function withVehicles<T>(path: string) {
   return () =>
     Promise.all([apiGet<T[]>(path), apiGet<Vehicle[]>("/vehicles/")]);
@@ -61,12 +67,6 @@ const loadInsurance = withVehicles<InsurancePolicy>("/insurance-policies/");
 
 function newestFirst(a: { date: string }, b: { date: string }) {
   return b.date.localeCompare(a.date);
-}
-
-function plannedFirst(a: RepairRecord, b: RepairRecord) {
-  const byStatus =
-    Number(b.status === "PLANNED") - Number(a.status === "PLANNED");
-  return byStatus || newestFirst(a, b);
 }
 
 export function AccountingPage() {
@@ -320,34 +320,36 @@ function FuelTab() {
         <p className="muted">No fuel records yet.</p>
       )}
       {records.records && records.records.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Vehicle</th>
-              <th>Date</th>
-              <th>Amount</th>
-              <th>Liters</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.records.toSorted(newestFirst).map((row) => (
-              <tr key={row.id}>
-                <td>{records.vehicleName(row.vehicle_id)}</td>
-                <td>{formatDate(row.date)}</td>
-                <td>{row.amount}</td>
-                <td>{row.liters}</td>
-                <RowActions
-                  pending={pending}
-                  onEdit={() => openForm(row)}
-                  onDelete={() =>
-                    remove(`/fuel-records/${row.id}`, "Fuel record deleted.")
-                  }
-                />
+        <div className="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Liters</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {records.records.toSorted(newestFirst).map((row) => (
+                <tr key={row.id}>
+                  <td>{records.vehicleName(row.vehicle_id)}</td>
+                  <td>{formatDate(row.date)}</td>
+                  <td>{row.amount}</td>
+                  <td>{row.liters}</td>
+                  <RowActions
+                    pending={pending}
+                    onEdit={() => openForm(row)}
+                    onDelete={() =>
+                      remove(`/fuel-records/${row.id}`, "Fuel record deleted.")
+                    }
+                  />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </>
   );
@@ -432,39 +434,41 @@ function InsuranceTab() {
         <p className="muted">No insurance policies yet.</p>
       )}
       {records.records && records.records.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Vehicle</th>
-              <th>Payment date</th>
-              <th>Amount</th>
-              <th>Cover starts</th>
-              <th>Cover ends</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.records.toSorted(newestFirst).map((row) => (
-              <tr key={row.id}>
-                <td>{records.vehicleName(row.vehicle_id)}</td>
-                <td>{formatDate(row.date)}</td>
-                <td>{row.amount}</td>
-                <td>{formatDate(row.start_date)}</td>
-                <td>{formatDate(row.end_date)}</td>
-                <RowActions
-                  pending={pending}
-                  onEdit={() => openForm(row)}
-                  onDelete={() =>
-                    remove(
-                      `/insurance-policies/${row.id}`,
-                      "Insurance policy deleted.",
-                    )
-                  }
-                />
+        <div className="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Payment date</th>
+                <th>Amount</th>
+                <th>Cover starts</th>
+                <th>Cover ends</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {records.records.toSorted(newestFirst).map((row) => (
+                <tr key={row.id}>
+                  <td>{records.vehicleName(row.vehicle_id)}</td>
+                  <td>{formatDate(row.date)}</td>
+                  <td>{row.amount}</td>
+                  <td>{formatDate(row.start_date)}</td>
+                  <td>{formatDate(row.end_date)}</td>
+                  <RowActions
+                    pending={pending}
+                    onEdit={() => openForm(row)}
+                    onDelete={() =>
+                      remove(
+                        `/insurance-policies/${row.id}`,
+                        "Insurance policy deleted.",
+                      )
+                    }
+                  />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </>
   );
@@ -579,48 +583,54 @@ function RepairsTab() {
         <p className="muted">No repairs yet.</p>
       )}
       {records.records && records.records.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Vehicle</th>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Description</th>
-              <th>Status</th>
-              <th>Cost</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.records.toSorted(plannedFirst).map((row) => (
-              <tr key={row.id}>
-                <td>{records.vehicleName(row.vehicle_id)}</td>
-                <td>{formatDate(row.date)}</td>
-                <td>{REPAIR_TYPE_LABELS[row.type]}</td>
-                <td>{row.description}</td>
-                <td>{row.status === "PLANNED" ? "Planned" : "Done"}</td>
-                <td>{row.amount}</td>
-                <RowActions
-                  pending={pending}
-                  onEdit={() => open(row)}
-                  onDelete={() =>
-                    remove(`/repair-records/${row.id}`, "Repair deleted.")
-                  }
-                >
-                  {row.status === "PLANNED" && (
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => openCost(row)}
+        <StatusSections
+          items={records.records.toSorted(newestFirst)}
+          statusOf={(row) => row.status}
+          sections={REPAIR_SECTIONS}
+        >
+          {(rows) => (
+            <table>
+              <thead>
+                <tr>
+                  <th>Vehicle</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                  <th>Cost</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id}>
+                    <td>{records.vehicleName(row.vehicle_id)}</td>
+                    <td>{formatDate(row.date)}</td>
+                    <td>{REPAIR_TYPE_LABELS[row.type]}</td>
+                    <td>{row.description}</td>
+                    <td>{row.amount}</td>
+                    <RowActions
+                      pending={pending}
+                      onEdit={() => open(row)}
+                      onDelete={() =>
+                        remove(`/repair-records/${row.id}`, "Repair deleted.")
+                      }
                     >
-                      Record cost
-                    </button>
-                  )}
-                </RowActions>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                      {row.status === "PLANNED" && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => openCost(row)}
+                        >
+                          Record cost
+                        </button>
+                      )}
+                    </RowActions>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </StatusSections>
       )}
     </>
   );

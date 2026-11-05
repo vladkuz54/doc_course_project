@@ -5,12 +5,13 @@ import { apiGet, apiPost } from "../api";
 import {
   describeRequest,
   formatDateTime,
-  REQUEST_STATUS_LABELS,
+  REQUEST_SECTIONS,
   type Driver,
   type DriverRequest,
 } from "../shared/fleet";
 import { DateField, toIsoDate } from "../shared/DateField";
 import { Messages } from "../shared/Messages";
+import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
 
 const loadRequests = () =>
@@ -19,14 +20,13 @@ const loadRequests = () =>
     apiGet<Driver[]>("/drivers/"),
   ]);
 
-function pendingFirst(a: DriverRequest, b: DriverRequest) {
-  const byStatus =
-    Number(b.status === "PENDING") - Number(a.status === "PENDING");
-  return byStatus || b.created_at.localeCompare(a.created_at);
+function newestFirst(a: DriverRequest, b: DriverRequest) {
+  return b.created_at.localeCompare(a.created_at);
 }
 
 export function RequestsPage() {
-  const { data, error, notice, pending, run, clearMessages } = useData(loadRequests);
+  const { data, error, notice, pending, run, clearMessages } =
+    useData(loadRequests);
   const [requests, drivers] = data ?? [];
 
   const approveMedical = (
@@ -52,79 +52,94 @@ export function RequestsPage() {
       <Messages error={error} notice={notice} onClose={clearMessages} />
       {requests?.length === 0 && <p className="muted">No requests yet.</p>}
       {requests && requests.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Driver</th>
-              <th>Request</th>
-              <th>Submitted</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.toSorted(pendingFirst).map((request) => (
-              <tr key={request.id}>
-                <td>
-                  {drivers?.find((d) => d.id === request.driver_id)?.full_name}
-                </td>
-                <td>{describeRequest(request)}</td>
-                <td>{formatDateTime(request.created_at)}</td>
-                <td>{REQUEST_STATUS_LABELS[request.status]}</td>
-                <td className="actions">
-                  {request.status === "PENDING" && (
-                    <>
-                      {request.type === "MEDICAL_CHECK" ? (
-                        <form
-                          className="approve-medical"
-                          onSubmit={(event) => approveMedical(event, request)}
-                        >
-                          <label>
-                            Valid until
-                            <DateField name="valid_until" required />
-                          </label>
-                          <button type="submit" disabled={pending}>
-                            Approve
-                          </button>
-                        </form>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={pending}
-                          onClick={() =>
-                            run(
-                              () =>
-                                apiPost(
-                                  `/driver-requests/${request.id}/approve-license`,
-                                ),
-                              "Request approved.",
-                            )
-                          }
-                        >
-                          Approve
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className="secondary danger"
-                        disabled={pending}
-                        onClick={() =>
-                          run(
-                            () =>
-                              apiPost(`/driver-requests/${request.id}/reject`),
-                            "Request rejected.",
-                          )
-                        }
-                      >
-                        Reject
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <StatusSections
+          items={requests.toSorted(newestFirst)}
+          statusOf={(request) => request.status}
+          sections={REQUEST_SECTIONS}
+        >
+          {(rows) => (
+            <table>
+              <thead>
+                <tr>
+                  <th>Driver</th>
+                  <th>Request</th>
+                  <th>Submitted</th>
+                  {rows[0].status === "PENDING" && <th>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((request) => (
+                  <tr key={request.id}>
+                    <td>
+                      {
+                        drivers?.find((d) => d.id === request.driver_id)
+                          ?.full_name
+                      }
+                    </td>
+                    <td>{describeRequest(request)}</td>
+                    <td>{formatDateTime(request.created_at)}</td>
+                    {request.status === "PENDING" && (
+                      <td className="actions">
+                        {request.status === "PENDING" && (
+                          <>
+                            {request.type === "MEDICAL_CHECK" ? (
+                              <form
+                                className="approve-medical"
+                                onSubmit={(event) =>
+                                  approveMedical(event, request)
+                                }
+                              >
+                                <label>
+                                  Valid until
+                                  <DateField name="valid_until" required />
+                                </label>
+                                <button type="submit" disabled={pending}>
+                                  Approve
+                                </button>
+                              </form>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={pending}
+                                onClick={() =>
+                                  run(
+                                    () =>
+                                      apiPost(
+                                        `/driver-requests/${request.id}/approve-license`,
+                                      ),
+                                    "Request approved.",
+                                  )
+                                }
+                              >
+                                Approve
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="secondary danger"
+                              disabled={pending}
+                              onClick={() =>
+                                run(
+                                  () =>
+                                    apiPost(
+                                      `/driver-requests/${request.id}/reject`,
+                                    ),
+                                  "Request rejected.",
+                                )
+                              }
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </StatusSections>
       )}
     </>
   );

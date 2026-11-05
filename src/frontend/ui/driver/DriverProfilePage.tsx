@@ -9,12 +9,13 @@ import {
   formatDateTime,
   LICENSE_CATEGORIES,
   MEDICAL_LABELS,
-  REQUEST_STATUS_LABELS,
+  REQUEST_SECTIONS,
   type Driver,
   type DriverRequest,
 } from "../shared/fleet";
 import { DateField, toIsoDate } from "../shared/DateField";
 import { Messages } from "../shared/Messages";
+import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
 
 const loadProfile = () =>
@@ -50,7 +51,8 @@ export class DriverProfilePage implements ProfilePage {
 }
 
 function DriverProfile({ page }: { page: DriverProfilePage }) {
-  const { data, error, notice, pending, run, clearMessages } = useData(loadProfile);
+  const { data, error, notice, pending, run, clearMessages } =
+    useData(loadProfile);
   const [driver, requests] = data ?? [];
 
   const submitLicense = (event: FormEvent<HTMLFormElement>, id: number) => {
@@ -132,26 +134,30 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
 
           <h2 className="section-title">My requests</h2>
           {requests?.length === 0 && <p className="muted">No requests yet.</p>}
-          {requests && requests.length > 0 && (
-            <table>
-              <thead>
-                <tr>
-                  <th>Request</th>
-                  <th>Submitted</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.toSorted(newestFirst).map((request) => (
-                  <tr key={request.id}>
-                    <td>{describeRequest(request)}</td>
-                    <td>{formatDateTime(request.created_at)}</td>
-                    <td>{REQUEST_STATUS_LABELS[request.status]}</td>
+          <StatusSections
+            items={requests?.toSorted(newestFirst)}
+            statusOf={(request) => request.status}
+            sections={REQUEST_SECTIONS}
+          >
+            {(rows) => (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Request</th>
+                    <th>Submitted</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody>
+                  {rows.map((request) => (
+                    <tr key={request.id}>
+                      <td>{describeRequest(request)}</td>
+                      <td>{formatDateTime(request.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </StatusSections>
         </>
       )}
     </>

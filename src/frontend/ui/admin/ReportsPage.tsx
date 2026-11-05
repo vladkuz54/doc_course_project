@@ -48,7 +48,13 @@ function exportName(form: FormData, extension: string) {
 }
 
 export function ReportsPage() {
-  const { data: vehicles, error, pending, run, clearMessages } = useData(loadVehicles);
+  const {
+    data: vehicles,
+    error,
+    pending,
+    run,
+    clearMessages,
+  } = useData(loadVehicles);
   const [report, setReport] = useState<Report | null>(null);
   const today = nowForField().slice(0, 10);
 
@@ -59,7 +65,9 @@ export function ReportsPage() {
     const format = (submitter as HTMLButtonElement | null)?.value;
 
     if (format === "pdf" || format === "xlsx") {
-      run(() => apiDownload(reportPath(form, format), exportName(form, format)));
+      run(() =>
+        apiDownload(reportPath(form, format), exportName(form, format)),
+      );
       return;
     }
     setReport(null);
@@ -136,7 +144,7 @@ export function ReportsPage() {
       </form>
 
       {report && (
-        <>
+        <section className="table-box">
           <h2>{report.title}</h2>
           <p className="muted report-period">
             {formatDate(report.period_from)} to {formatDate(report.period_to)}
@@ -164,7 +172,7 @@ export function ReportsPage() {
               </tbody>
             </table>
           )}
-        </>
+        </section>
       )}
     </>
   );

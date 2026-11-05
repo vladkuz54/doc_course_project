@@ -10,7 +10,16 @@ import {
   type Driver,
 } from "../shared/fleet";
 import { Messages } from "../shared/Messages";
+import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
+
+const DRIVER_SECTIONS: {
+  status: Driver["employment_status"];
+  label: string;
+}[] = [
+  { status: "ACTIVE", label: "Active" },
+  { status: "DISMISSED", label: "Dismissed" },
+];
 
 const loadDrivers = () => apiGet<Driver[]>("/drivers/");
 
@@ -55,7 +64,14 @@ function changeStatus(driver: Driver, status: Driver["employment_status"]) {
 }
 
 export function DriversPage() {
-  const { data: drivers, error, notice, pending, run, clearMessages } = useData(loadDrivers);
+  const {
+    data: drivers,
+    error,
+    notice,
+    pending,
+    run,
+    clearMessages,
+  } = useData(loadDrivers);
   const [editing, setEditing] = useState<Driver | "new" | null>(null);
 
   const openForm = (next: Driver | "new" | null) => {
@@ -103,69 +119,73 @@ export function DriversPage() {
         />
       )}
 
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Categories</th>
-            <th>Experience</th>
-            <th>License until</th>
-            <th>Medical check</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {drivers?.map((driver) => (
-            <tr key={driver.id}>
-              <td>{driver.full_name}</td>
-              <td>{driver.license_categories.join(", ")}</td>
-              <td>{driver.experience_years} years</td>
-              <td>{formatDate(driver.license_expiry_date)}</td>
-              <td>
-                {MEDICAL_LABELS[driver.medical_check_status]}, until{" "}
-                {formatDate(driver.medical_valid_until)}
-              </td>
-              <td>
-                {driver.employment_status === "ACTIVE" ? "Active" : "Dismissed"}
-              </td>
-              <td className="actions">
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => openForm(driver)}
-                >
-                  Edit
-                </button>
-                {driver.employment_status === "ACTIVE" ? (
-                  <button
-                    type="button"
-                    className="secondary danger"
-                    disabled={pending}
-                    onClick={() => dismiss(driver)}
-                  >
-                    Dismiss
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="secondary"
-                    disabled={pending}
-                    onClick={() =>
-                      run(
-                        () => changeStatus(driver, "ACTIVE"),
-                        "Driver reinstated.",
-                      )
-                    }
-                  >
-                    Reinstate
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <StatusSections
+        items={drivers}
+        statusOf={(driver) => driver.employment_status}
+        sections={DRIVER_SECTIONS}
+      >
+        {(rows) => (
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Categories</th>
+                <th>Experience</th>
+                <th>License until</th>
+                <th>Medical check</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((driver) => (
+                <tr key={driver.id}>
+                  <td>{driver.full_name}</td>
+                  <td>{driver.license_categories.join(", ")}</td>
+                  <td>{driver.experience_years} years</td>
+                  <td>{formatDate(driver.license_expiry_date)}</td>
+                  <td>
+                    {MEDICAL_LABELS[driver.medical_check_status]}, until{" "}
+                    {formatDate(driver.medical_valid_until)}
+                  </td>
+                  <td className="actions">
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => openForm(driver)}
+                    >
+                      Edit
+                    </button>
+                    {driver.employment_status === "ACTIVE" ? (
+                      <button
+                        type="button"
+                        className="secondary danger"
+                        disabled={pending}
+                        onClick={() => dismiss(driver)}
+                      >
+                        Dismiss
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={pending}
+                        onClick={() =>
+                          run(
+                            () => changeStatus(driver, "ACTIVE"),
+                            "Driver reinstated.",
+                          )
+                        }
+                      >
+                        Reinstate
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </StatusSections>
     </>
   );
 }
