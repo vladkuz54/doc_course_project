@@ -100,6 +100,10 @@ export const REQUEST_STATUS_LABELS: Record<DriverRequest["status"], string> = {
   REJECTED: "Rejected",
 };
 
+export const REQUEST_SECTIONS = (
+  ["PENDING", "APPROVED", "REJECTED"] as const
+).map((status) => ({ status, label: REQUEST_STATUS_LABELS[status] }));
+
 export function describeRequest(request: DriverRequest) {
   if (request.type === "MEDICAL_CHECK") return "Medical check";
   const expiry = request.new_license_expiry_date
@@ -114,6 +118,11 @@ const STATUS_ORDER: RouteStatus[] = [
   "COMPLETED",
   "CANCELLED",
 ];
+
+export const ROUTE_SECTIONS = STATUS_ORDER.map((status) => ({
+  status,
+  label: STATUS_LABELS[status],
+}));
 
 export function compareRoutes(a: Route, b: Route) {
   const byStatus =
@@ -137,7 +146,10 @@ export function formatDateTime(value: string) {
   });
 }
 
-export function stopsOf(stops: RouteStop[] | null | undefined, routeId: number) {
+export function stopsOf(
+  stops: RouteStop[] | null | undefined,
+  routeId: number,
+) {
   return (stops ?? [])
     .filter((stop) => stop.route_id === routeId)
     .sort((a, b) => a.order_no - b.order_no);
