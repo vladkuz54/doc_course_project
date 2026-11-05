@@ -32,9 +32,16 @@ export function logout() {
   sessionStorage.removeItem(TOKEN_KEY);
 }
 
+type ValidationItem = { loc: (string | number)[]; msg: string };
+
+function validationText({ loc, msg }: ValidationItem) {
+  const field = String(loc[loc.length - 1]).replaceAll("_", " ");
+  return `${field}: ${msg}`;
+}
+
 function detailText(detail: unknown, fallback: string): string {
   if (typeof detail === "string") return detail;
-  if (Array.isArray(detail)) return detail.map((item) => item.msg).join("; ");
+  if (Array.isArray(detail)) return detail.map(validationText).join("; ");
   return fallback;
 }
 
