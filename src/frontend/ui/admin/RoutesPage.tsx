@@ -394,6 +394,7 @@ function RouteForm({
           name="distance"
           type="number"
           min="0.1"
+          max="100000"
           step="any"
           defaultValue={route?.distance}
           required

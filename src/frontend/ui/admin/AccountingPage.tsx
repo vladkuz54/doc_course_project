@@ -207,10 +207,12 @@ function VehicleSelect({
 function NumberField({
   label,
   name,
+  min,
   defaultValue,
 }: {
   label: string;
   name: string;
+  min: string;
   defaultValue?: string | number;
 }) {
   return (
@@ -220,6 +222,7 @@ function NumberField({
         name={name}
         type="number"
         step="any"
+        min={min}
         defaultValue={defaultValue}
         required
       />
@@ -296,8 +299,18 @@ function FuelTab() {
         Date
         <DateField name="date" defaultValue={record?.date} required />
       </label>
-      <NumberField label="Amount" name="amount" defaultValue={record?.amount} />
-      <NumberField label="Liters" name="liters" defaultValue={record?.liters} />
+      <NumberField
+        label="Amount"
+        name="amount"
+        min="0"
+        defaultValue={record?.amount}
+      />
+      <NumberField
+        label="Liters"
+        name="liters"
+        min="0.01"
+        defaultValue={record?.liters}
+      />
     </RecordForm>
   );
 
@@ -398,7 +411,12 @@ function InsuranceTab() {
         Payment date
         <DateField name="date" defaultValue={record?.date} required />
       </label>
-      <NumberField label="Amount" name="amount" defaultValue={record?.amount} />
+      <NumberField
+        label="Amount"
+        name="amount"
+        min="0"
+        defaultValue={record?.amount}
+      />
       <label>
         Cover starts
         <DateField
@@ -546,7 +564,7 @@ function RepairsTab() {
       onSubmit={(form) => recordCost(costing, form)}
       onCancel={() => open(null)}
     >
-      <NumberField label="Cost" name="cost" />
+      <NumberField label="Cost" name="cost" min="0" />
     </RecordForm>
   );
 
@@ -719,7 +737,7 @@ function NewRepairForm({
         }
       />
       <RepairFields />
-      {status === "DONE" && <NumberField label="Cost" name="amount" />}
+      {status === "DONE" && <NumberField label="Cost" name="amount" min="0" />}
     </RecordForm>
   );
 }

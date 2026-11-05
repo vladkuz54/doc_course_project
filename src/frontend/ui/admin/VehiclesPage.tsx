@@ -201,6 +201,7 @@ function VehicleForm({
           name="year"
           type="number"
           min="1980"
+          max={new Date().getFullYear() + 1}
           defaultValue={vehicle?.year}
           required
         />
