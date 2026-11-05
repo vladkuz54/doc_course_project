@@ -35,13 +35,15 @@ export type RouteStop = {
   arrived_at: string | null;
 };
 
+export type TechnicalState = "GOOD" | "NEEDS_SERVICE" | "IN_REPAIR" | "FAULTY";
+
 export type Vehicle = {
   id: number;
   make: string;
   year: number;
   vin: string;
   required_license_category: string;
-  technical_state: string;
+  technical_state: TechnicalState;
   status: "ACTIVE" | "DECOMMISSIONED";
 };
 
@@ -76,6 +78,13 @@ export const MEDICAL_LABELS: Record<Driver["medical_check_status"], string> = {
   VALID: "Valid",
   EXPIRED: "Expired",
   PENDING: "Pending",
+};
+
+export const TECHNICAL_STATE_LABELS: Record<TechnicalState, string> = {
+  GOOD: "Справний",
+  NEEDS_SERVICE: "Потребує ТО",
+  IN_REPAIR: "На ремонті",
+  FAULTY: "Несправний",
 };
 
 export const STATUS_LABELS: Record<RouteStatus, string> = {
