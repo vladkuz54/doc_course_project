@@ -9,7 +9,14 @@ export function useData<T>(load: () => Promise<T>) {
   const [pending, setPending] = useState(false);
 
   const reload = useCallback(
-    () => load().then(setData, (e: Error) => setError(e.message)),
+    () =>
+      load().then(
+        (loaded) => {
+          setData(loaded);
+          setError("");
+        },
+        (e: Error) => setError(e.message),
+      ),
     [load],
   );
 
