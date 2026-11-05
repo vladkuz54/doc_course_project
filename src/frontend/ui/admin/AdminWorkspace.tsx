@@ -5,6 +5,7 @@ import { useHash } from "../shared/useHash";
 import { AccountingPage } from "./AccountingPage";
 import { ADMIN_LINKS } from "./AdminMenu";
 import { DriversPage } from "./DriversPage";
+import { ReportsPage } from "./ReportsPage";
 import { RequestsPage } from "./RequestsPage";
 import { RoutesPage } from "./RoutesPage";
 import { StopsPage } from "./StopsPage";
@@ -22,6 +23,7 @@ function AdminScreens() {
   if (hash === "routes") return <RoutesPage />;
   if (hash === "stops") return <StopsPage />;
   if (hash === "accounting") return <AccountingPage />;
+  if (hash === "reports") return <ReportsPage />;
 
   const screen =
     ADMIN_LINKS.find((link) => link.page === hash) ?? ADMIN_LINKS[0];
