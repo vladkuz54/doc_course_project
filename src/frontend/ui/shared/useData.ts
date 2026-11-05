@@ -17,9 +17,13 @@ export function useData<T>(load: () => Promise<T>) {
     reload();
   }, [reload]);
 
-  const run = (action: () => Promise<unknown>, doneNotice = "") => {
+  const clearMessages = () => {
     setError("");
     setNotice("");
+  };
+
+  const run = (action: () => Promise<unknown>, doneNotice = "") => {
+    clearMessages();
     setPending(true);
     return action()
       .then(reload)
@@ -34,5 +38,5 @@ export function useData<T>(load: () => Promise<T>) {
       .finally(() => setPending(false));
   };
 
-  return { data, error, notice, pending, reload, run };
+  return { data, error, notice, pending, reload, run, clearMessages };
 }
