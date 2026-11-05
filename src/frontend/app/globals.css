@@ -216,6 +216,10 @@ main.login {
 
 .login .error {
   margin: 0;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: var(--alert);
+  color: var(--paper);
 }
 
 .details {
@@ -477,7 +481,7 @@ td {
   padding: 10px 12px 10px 0;
   border-bottom: 1px solid var(--line);
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 th {
@@ -509,7 +513,12 @@ th {
 }
 
 .approve-medical .date-field {
-  width: 10rem;
+  width: 9rem;
+}
+
+.approve-medical input:not(.date-picker) {
+  min-height: 0;
+  height: 38px;
 }
 
 .date-field {
