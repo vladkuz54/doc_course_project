@@ -5,6 +5,7 @@ import { useHash } from "../shared/useHash";
 import { ADMIN_LINKS } from "./AdminMenu";
 import { DriversPage } from "./DriversPage";
 import { RequestsPage } from "./RequestsPage";
+import { VehiclesPage } from "./VehiclesPage";
 
 export class AdminWorkspace implements Workspace {
   render() {
@@ -20,6 +21,7 @@ function AdminScreens() {
     ADMIN_LINKS.find((link) => link.page === hash) ?? ADMIN_LINKS[0];
 
   if (screen.page === "drivers") return <DriversPage />;
+  if (screen.page === "vehicles") return <VehiclesPage />;
 
   return <h1>{screen.label}</h1>;
 }
