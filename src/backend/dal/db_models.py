@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import (
     Boolean,
@@ -41,6 +41,7 @@ LICENSE_CATEGORIES = (
     "T",
 )
 TECHNICAL_STATES = ("GOOD", "NEEDS_SERVICE", "IN_REPAIR", "FAULTY")
+WARNING_DAYS = 14
 MIN_VEHICLE_YEAR = 1980
 ACTIVE_ROUTE_STATUSES = ("PLANNED", "IN_PROGRESS")
 AVERAGE_SPEED_KMH = 60
@@ -160,9 +161,6 @@ class Vehicles(Base):
     required_license_category = Column(
         StrEnum(*LICENSE_CATEGORIES, name="required_license_category"), nullable=False
     )
-    technical_state = Column(
-        StrEnum(*TECHNICAL_STATES, name="technical_state"), nullable=False
-    )
     status = Column(
         StrEnum("ACTIVE", "DECOMMISSIONED", name="vehicle_status"),
         nullable=False,
@@ -174,11 +172,26 @@ class Vehicles(Base):
         "FuelRecords", back_populates="vehicle", passive_deletes="all"
     )
     repair_records = relationship(
-        "RepairRecords", back_populates="vehicle", passive_deletes="all"
+        "RepairRecords",
+        back_populates="vehicle",
+        passive_deletes="all",
+        lazy="selectin",
     )
     insurance_policies = relationship(
         "InsurancePolicies", back_populates="vehicle", passive_deletes="all"
     )
+
+    @property
+    def technical_state(self):
+        if self.status == "DECOMMISSIONED":
+            return "FAULTY"
+        planned = [r.date for r in self.repair_records if r.status == "PLANNED"]
+        today = date.today()
+        if today in planned:
+            return "IN_REPAIR"
+        if any(d <= today + timedelta(days=WARNING_DAYS) for d in planned):
+            return "NEEDS_SERVICE"
+        return "GOOD"
 
 
 class Routes(Base):
