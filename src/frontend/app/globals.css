@@ -362,6 +362,7 @@ main.login {
 }
 
 .panel-title,
+.panel .wide,
 .categories,
 .form-actions {
   grid-column: 1 / -1;
