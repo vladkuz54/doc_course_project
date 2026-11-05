@@ -1,13 +1,15 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
 from ...bll.services.vehicles_service import (
-    TechnicalStateData,
     VehicleData,
     VehiclesService,
     VehicleStatusData,
     VehicleUpdateData,
 )
+from ...dal.db_models import TECHNICAL_STATES
 from ..dependencies import get_vehicles_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
@@ -16,6 +18,7 @@ router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
 class VehicleResponse(VehicleData):
     id: int
+    technical_state: Literal[TECHNICAL_STATES]
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -75,19 +78,6 @@ async def change_status(
     service: VehiclesService = Depends(get_vehicles_service),
 ):
     return await service.change_status(id, data.status)
-
-
-@router.patch(
-    "/{id}/technical-state",
-    response_model=VehicleResponse,
-    dependencies=[Depends(require_admin)],
-)
-async def update_technical_state(
-    id: int,
-    data: TechnicalStateData,
-    service: VehiclesService = Depends(get_vehicles_service),
-):
-    return await service.update_technical_state(id, data.technical_state)
 
 
 @router.delete(
