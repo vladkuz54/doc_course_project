@@ -45,7 +45,7 @@ function detailText(detail: unknown, fallback: string): string {
   return fallback;
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function fetchOk(path: string, init: RequestInit = {}) {
   const token = sessionStorage.getItem(TOKEN_KEY);
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -66,6 +66,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       detailText(body?.detail, response.statusText),
     );
   }
+  return response;
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetchOk(path, init);
   return response.json();
 }
 
@@ -109,4 +114,14 @@ export function apiPatch<T>(path: string, body?: unknown): Promise<T> {
 
 export function apiDelete<T>(path: string): Promise<T> {
   return send<T>("DELETE", path);
+}
+
+export async function apiDownload(path: string, filename: string) {
+  const response = await fetchOk(path);
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
