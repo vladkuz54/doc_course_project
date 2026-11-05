@@ -35,6 +35,12 @@ h2 {
   font-weight: 600;
 }
 
+h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
 p {
   margin: 0;
 }
@@ -581,4 +587,29 @@ th {
 
 .report-period {
   margin-bottom: 12px;
+}
+
+.status-section,
+.table-box {
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.status-section > h2 {
+  margin-bottom: 12px;
+}
+
+.status-section > h2 .muted {
+  font-weight: 400;
+}
+
+.status-section tbody tr:last-child td,
+.table-box tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.status-section .route:last-child {
+  margin-bottom: 0;
 }
