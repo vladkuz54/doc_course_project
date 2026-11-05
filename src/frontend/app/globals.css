@@ -299,6 +299,36 @@ main.login {
   background: var(--road);
 }
 
+.bell {
+  position: relative;
+  display: flex;
+  padding: 6px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink);
+}
+
+.bell:hover {
+  background: var(--line);
+}
+
+.bell-count {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 20px;
+  padding: 0 5px;
+  border: 2px solid var(--paper);
+  border-radius: 10px;
+  background: var(--alert);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+}
+
 .notifications {
   position: fixed;
   inset: 68px max(16px, calc(50% - 32rem + 16px)) auto auto;
