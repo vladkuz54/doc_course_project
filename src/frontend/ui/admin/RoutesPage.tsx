@@ -7,17 +7,21 @@ import {
   compareRoutes,
   formatDateTime,
   ROUTE_SECTIONS,
+  stopsOf,
   type Driver,
   type Route,
+  type RouteStop,
   type Vehicle,
 } from "../shared/fleet";
 import { FormRow } from "../shared/FormRow";
 import { Messages } from "../shared/Messages";
 import { StatusSections } from "../shared/StatusSections";
+import { StopLine } from "../shared/StopLine";
 import { useData } from "../shared/useData";
 import {
   EMPTY_STOP,
   joinAddress,
+  splitAddress,
   StopFields,
   type StopAddress,
 } from "./StopFields";
@@ -61,11 +65,8 @@ const loadRoutesPage = () =>
     apiGet<Route[]>("/routes/"),
     apiGet<Driver[]>("/drivers/"),
     apiGet<Vehicle[]>("/vehicles/"),
+    apiGet<RouteStop[]>("/route-stops/"),
   ]);
-
-function isActive(route: Route) {
-  return route.status === "PLANNED" || route.status === "IN_PROGRESS";
-}
 
 function routeFields(form: FormData) {
   return {
@@ -84,15 +85,30 @@ function createRoute(form: FormData, stops: StopAddress[]) {
 }
 
 export function RoutesPage() {
-  const { data, error, notice, pending, run, clearMessages } =
+  const { data, error, notice, pending, reload, run, clearMessages } =
     useData(loadRoutesPage);
   const [editing, setEditing] = useState<Editing | null>(null);
+  const [stopsOpen, setStopsOpen] = useState<number | null>(null);
 
   const openForm = (next: Editing | null) => {
     clearMessages();
     setEditing(next);
   };
-  const [routes, drivers, vehicles] = data ?? [];
+  const [routes, drivers, vehicles, stops] = data ?? [];
+
+  const updateRoute = async (
+    route: Route,
+    form: FormData,
+    edited: StopAddress[],
+  ) => {
+    await apiPut(`/routes/${route.id}`, routeFields(form));
+    await reload();
+    const addresses = edited.map(joinAddress);
+    const current = stopsOf(stops, route.id).map((stop) => stop.address);
+    if (addresses.join("\n") !== current.join("\n")) {
+      await apiPut(`/routes/${route.id}/stops`, { stops: addresses });
+    }
+  };
 
   useEffect(() => {
     if (editing?.form === "new") window.scrollTo(0, 0);
@@ -117,14 +133,14 @@ export function RoutesPage() {
       <RouteForm
         key={editing.route.id}
         route={editing.route}
+        initialStops={stopsOf(stops, editing.route.id).map((stop) =>
+          splitAddress(stop.address),
+        )}
         drivers={drivers ?? []}
         vehicles={vehicles ?? []}
         pending={pending}
-        onSubmit={(form) =>
-          save(
-            () => apiPut(`/routes/${editing.route.id}`, routeFields(form)),
-            "Route saved.",
-          )
+        onSubmit={(form, edited) =>
+          save(() => updateRoute(editing.route, form, edited), "Route saved.")
         }
         onCancel={() => openForm(null)}
       />
@@ -162,6 +178,7 @@ export function RoutesPage() {
         <RouteForm
           key="new"
           route={null}
+          initialStops={[EMPTY_STOP]}
           drivers={drivers ?? []}
           vehicles={vehicles ?? []}
           pending={pending}
@@ -185,7 +202,7 @@ export function RoutesPage() {
                 <th>Distance</th>
                 <th>Driver</th>
                 <th>Vehicle</th>
-                {isActive(rows[0]) && <th>Actions</th>}
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -203,49 +220,58 @@ export function RoutesPage() {
                       {vehicles?.find((v) => v.id === route.vehicle_id)?.make ??
                         "Not assigned"}
                     </td>
-                    {isActive(route) && (
-                      <td className="actions">
-                        {route.status === "PLANNED" && (
-                          <>
-                            <button
-                              type="button"
-                              className="secondary"
-                              onClick={() => openForm({ form: "edit", route })}
-                            >
-                              Edit
-                            </button>
-                            {route.driver_id !== null &&
-                              route.vehicle_id !== null && (
-                                <button
-                                  type="button"
-                                  className="secondary"
-                                  onClick={() =>
-                                    openForm({ form: "start", route })
-                                  }
-                                >
-                                  Start
-                                </button>
-                              )}
-                            <button
-                              type="button"
-                              className="secondary"
-                              onClick={() => openForm({ form: "close", route })}
-                            >
-                              Close
-                            </button>
-                          </>
-                        )}
-                        {route.status === "IN_PROGRESS" && (
+                    <td className="actions">
+                      <button
+                        type="button"
+                        className="secondary"
+                        aria-expanded={stopsOpen === route.id}
+                        onClick={() =>
+                          setStopsOpen(stopsOpen === route.id ? null : route.id)
+                        }
+                      >
+                        Stops
+                      </button>
+                      {route.status === "PLANNED" && (
+                        <>
                           <button
                             type="button"
                             className="secondary"
-                            onClick={() =>
-                              openForm({ form: "complete", route })
-                            }
+                            onClick={() => openForm({ form: "edit", route })}
                           >
-                            Complete
+                            Edit
                           </button>
-                        )}
+                          {route.driver_id !== null &&
+                            route.vehicle_id !== null && (
+                              <button
+                                type="button"
+                                className="secondary"
+                                onClick={() =>
+                                  openForm({ form: "start", route })
+                                }
+                              >
+                                Start
+                              </button>
+                            )}
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => openForm({ form: "close", route })}
+                          >
+                            Close
+                          </button>
+                        </>
+                      )}
+                      {route.status === "IN_PROGRESS" && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => openForm({ form: "complete", route })}
+                        >
+                          Complete
+                        </button>
+                      )}
+                      {(route.status === "PLANNED" ||
+                        route.status === "IN_PROGRESS") && (
                         <button
                           type="button"
                           className="secondary danger"
@@ -260,25 +286,35 @@ export function RoutesPage() {
                         >
                           Cancel
                         </button>
-                        {route.status === "PLANNED" && (
-                          <button
-                            type="button"
-                            className="secondary danger"
-                            disabled={pending}
-                            onClick={() =>
-                              confirmed(
-                                `Delete route ${route.id}?`,
-                                () => apiDelete(`/routes/${route.id}`),
-                                "Route deleted.",
-                              )
-                            }
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </td>
-                    )}
+                      )}
+                      {route.status === "PLANNED" && (
+                        <button
+                          type="button"
+                          className="secondary danger"
+                          disabled={pending}
+                          onClick={() =>
+                            confirmed(
+                              `Delete route ${route.id}?`,
+                              () => apiDelete(`/routes/${route.id}`),
+                              "Route deleted.",
+                            )
+                          }
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </td>
                   </tr>
+                  {stopsOpen === route.id && (
+                    <FormRow colSpan={6}>
+                      <div className="stops-view">
+                        <StopLine
+                          status={route.status}
+                          stops={stopsOf(stops, route.id)}
+                        />
+                      </div>
+                    </FormRow>
+                  )}
                   {editing &&
                     editing.form !== "new" &&
                     editing.route.id === route.id && (
@@ -296,6 +332,7 @@ export function RoutesPage() {
 
 function RouteForm({
   route,
+  initialStops,
   drivers,
   vehicles,
   pending,
@@ -303,13 +340,14 @@ function RouteForm({
   onCancel,
 }: {
   route: Route | null;
+  initialStops: StopAddress[];
   drivers: Driver[];
   vehicles: Vehicle[];
   pending: boolean;
   onSubmit: (form: FormData, stops: StopAddress[]) => void;
   onCancel: () => void;
 }) {
-  const [stops, setStops] = useState<StopAddress[]>([EMPTY_STOP]);
+  const [stops, setStops] = useState(initialStops);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -370,7 +408,7 @@ function RouteForm({
           required
         />
       </label>
-      {!route && <StopFields stops={stops} onChange={setStops} />}
+      <StopFields stops={stops} onChange={setStops} />
       <div className="form-actions">
         <button type="submit" disabled={pending}>
           Save route
