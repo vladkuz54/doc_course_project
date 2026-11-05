@@ -8,7 +8,6 @@ import { DriversPage } from "./DriversPage";
 import { ReportsPage } from "./ReportsPage";
 import { RequestsPage } from "./RequestsPage";
 import { RoutesPage } from "./RoutesPage";
-import { StopsPage } from "./StopsPage";
 import { VehiclesPage } from "./VehiclesPage";
 
 export class AdminWorkspace implements Workspace {
@@ -21,7 +20,6 @@ function AdminScreens() {
   const hash = useHash();
   if (hash === "requests") return <RequestsPage />;
   if (hash === "routes") return <RoutesPage />;
-  if (hash === "stops") return <StopsPage />;
   if (hash === "accounting") return <AccountingPage />;
   if (hash === "reports") return <ReportsPage />;
 
