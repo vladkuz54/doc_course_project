@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { apiGet, apiPatch, apiPost, apiPut } from "../api";
 import {
   LICENSE_CATEGORIES,
   TECHNICAL_STATE_LABELS,
   type Vehicle,
 } from "../shared/fleet";
+import { FormRow } from "../shared/FormRow";
 import { Messages } from "../shared/Messages";
 import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
@@ -48,7 +49,7 @@ export function VehiclesPage() {
   };
 
   useEffect(() => {
-    if (editing) window.scrollTo(0, 0);
+    if (editing === "new") window.scrollTo(0, 0);
   }, [editing]);
 
   const submit = (form: FormData) => {
@@ -74,6 +75,16 @@ export function VehiclesPage() {
     }
   };
 
+  const form = editing && (
+    <VehicleForm
+      key={editing === "new" ? "new" : editing.id}
+      vehicle={editing === "new" ? null : editing}
+      pending={pending}
+      onSubmit={submit}
+      onCancel={() => openForm(null)}
+    />
+  );
+
   return (
     <>
       <div className="page-header">
@@ -84,15 +95,7 @@ export function VehiclesPage() {
       </div>
       <Messages error={error} notice={notice} onClose={clearMessages} />
 
-      {editing && (
-        <VehicleForm
-          key={editing === "new" ? "new" : editing.id}
-          vehicle={editing === "new" ? null : editing}
-          pending={pending}
-          onSubmit={submit}
-          onCancel={() => openForm(null)}
-        />
-      )}
+      {editing === "new" && form}
 
       <StatusSections
         items={vehicles}
@@ -113,46 +116,51 @@ export function VehiclesPage() {
             </thead>
             <tbody>
               {rows.map((vehicle) => (
-                <tr key={vehicle.id}>
-                  <td>{vehicle.make}</td>
-                  <td>{vehicle.year}</td>
-                  <td>{vehicle.vin}</td>
-                  <td>{vehicle.required_license_category}</td>
-                  <td>{TECHNICAL_STATE_LABELS[vehicle.technical_state]}</td>
-                  <td className="actions">
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => openForm(vehicle)}
-                    >
-                      Edit
-                    </button>
-                    {vehicle.status === "ACTIVE" ? (
-                      <button
-                        type="button"
-                        className="secondary danger"
-                        disabled={pending}
-                        onClick={() => decommission(vehicle)}
-                      >
-                        Decommission
-                      </button>
-                    ) : (
+                <Fragment key={vehicle.id}>
+                  <tr>
+                    <td>{vehicle.make}</td>
+                    <td>{vehicle.year}</td>
+                    <td>{vehicle.vin}</td>
+                    <td>{vehicle.required_license_category}</td>
+                    <td>{TECHNICAL_STATE_LABELS[vehicle.technical_state]}</td>
+                    <td className="actions">
                       <button
                         type="button"
                         className="secondary"
-                        disabled={pending}
-                        onClick={() =>
-                          run(
-                            () => changeStatus(vehicle, "ACTIVE"),
-                            "Vehicle reactivated.",
-                          )
-                        }
+                        onClick={() => openForm(vehicle)}
                       >
-                        Reactivate
+                        Edit
                       </button>
-                    )}
-                  </td>
-                </tr>
+                      {vehicle.status === "ACTIVE" ? (
+                        <button
+                          type="button"
+                          className="secondary danger"
+                          disabled={pending}
+                          onClick={() => decommission(vehicle)}
+                        >
+                          Decommission
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="secondary"
+                          disabled={pending}
+                          onClick={() =>
+                            run(
+                              () => changeStatus(vehicle, "ACTIVE"),
+                              "Vehicle reactivated.",
+                            )
+                          }
+                        >
+                          Reactivate
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                  {editing !== "new" && editing?.id === vehicle.id && (
+                    <FormRow colSpan={6}>{form}</FormRow>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>

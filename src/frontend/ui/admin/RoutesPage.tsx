@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { apiDelete, apiGet, apiPost, apiPut } from "../api";
 import { DateField, nowForField, toIsoDateTime } from "../shared/DateField";
 import {
@@ -11,6 +11,7 @@ import {
   type Route,
   type Vehicle,
 } from "../shared/fleet";
+import { FormRow } from "../shared/FormRow";
 import { Messages } from "../shared/Messages";
 import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
@@ -91,7 +92,7 @@ export function RoutesPage() {
   const [routes, drivers, vehicles] = data ?? [];
 
   useEffect(() => {
-    if (editing) window.scrollTo(0, 0);
+    if (editing?.form === "new") window.scrollTo(0, 0);
   }, [editing]);
 
   const save = (action: () => Promise<unknown>, doneNotice: string) => {
@@ -107,6 +108,42 @@ export function RoutesPage() {
   ) => {
     if (window.confirm(message)) run(action, doneNotice);
   };
+
+  const rowForm =
+    editing?.form === "edit" ? (
+      <RouteForm
+        key={editing.route.id}
+        route={editing.route}
+        drivers={drivers ?? []}
+        vehicles={vehicles ?? []}
+        pending={pending}
+        onSubmit={(form) =>
+          save(
+            () => apiPut(`/routes/${editing.route.id}`, routeFields(form)),
+            "Route saved.",
+          )
+        }
+        onCancel={() => openForm(null)}
+      />
+    ) : editing && editing.form !== "new" ? (
+      <RouteTimeForm
+        key={`${editing.form}-${editing.route.id}`}
+        action={editing.form}
+        route={editing.route}
+        pending={pending}
+        onSubmit={(time) => {
+          const { path, field, notice: done } = TIME_ACTIONS[editing.form];
+          save(
+            () =>
+              apiPost(`/routes/${editing.route.id}/${path}`, {
+                [field]: time,
+              }),
+            done,
+          );
+        }}
+        onCancel={() => openForm(null)}
+      />
+    ) : null;
 
   return (
     <>
@@ -129,42 +166,6 @@ export function RoutesPage() {
           onCancel={() => openForm(null)}
         />
       )}
-      {editing?.form === "edit" && (
-        <RouteForm
-          key={editing.route.id}
-          route={editing.route}
-          drivers={drivers ?? []}
-          vehicles={vehicles ?? []}
-          pending={pending}
-          onSubmit={(form) =>
-            save(
-              () => apiPut(`/routes/${editing.route.id}`, routeFields(form)),
-              "Route saved.",
-            )
-          }
-          onCancel={() => openForm(null)}
-        />
-      )}
-      {editing && editing.form !== "new" && editing.form !== "edit" && (
-        <RouteTimeForm
-          key={`${editing.form}-${editing.route.id}`}
-          action={editing.form}
-          route={editing.route}
-          pending={pending}
-          onSubmit={(time) => {
-            const { path, field, notice: done } = TIME_ACTIONS[editing.form];
-            save(
-              () =>
-                apiPost(`/routes/${editing.route.id}/${path}`, {
-                  [field]: time,
-                }),
-              done,
-            );
-          }}
-          onCancel={() => openForm(null)}
-        />
-      )}
-
       <StatusSections
         items={routes?.toSorted(compareRoutes)}
         statusOf={(route) => route.status}
@@ -184,92 +185,101 @@ export function RoutesPage() {
             </thead>
             <tbody>
               {rows.map((route) => (
-                <tr key={route.id}>
-                  <td>{route.id}</td>
-                  <td>{formatDateTime(route.departure_at)}</td>
-                  <td>{route.distance} km</td>
-                  <td>
-                    {drivers?.find((d) => d.id === route.driver_id)
-                      ?.full_name ?? "Not assigned"}
-                  </td>
-                  <td>
-                    {vehicles?.find((v) => v.id === route.vehicle_id)?.make ??
-                      "Not assigned"}
-                  </td>
-                  {isActive(route) && (
-                    <td className="actions">
-                      {route.status === "PLANNED" && (
-                        <>
+                <Fragment key={route.id}>
+                  <tr>
+                    <td>{route.id}</td>
+                    <td>{formatDateTime(route.departure_at)}</td>
+                    <td>{route.distance} km</td>
+                    <td>
+                      {drivers?.find((d) => d.id === route.driver_id)
+                        ?.full_name ?? "Not assigned"}
+                    </td>
+                    <td>
+                      {vehicles?.find((v) => v.id === route.vehicle_id)?.make ??
+                        "Not assigned"}
+                    </td>
+                    {isActive(route) && (
+                      <td className="actions">
+                        {route.status === "PLANNED" && (
+                          <>
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => openForm({ form: "edit", route })}
+                            >
+                              Edit
+                            </button>
+                            {route.driver_id !== null &&
+                              route.vehicle_id !== null && (
+                                <button
+                                  type="button"
+                                  className="secondary"
+                                  onClick={() =>
+                                    openForm({ form: "start", route })
+                                  }
+                                >
+                                  Start
+                                </button>
+                              )}
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => openForm({ form: "close", route })}
+                            >
+                              Close
+                            </button>
+                          </>
+                        )}
+                        {route.status === "IN_PROGRESS" && (
                           <button
                             type="button"
                             className="secondary"
-                            onClick={() => openForm({ form: "edit", route })}
+                            onClick={() =>
+                              openForm({ form: "complete", route })
+                            }
                           >
-                            Edit
+                            Complete
                           </button>
-                          {route.driver_id !== null &&
-                            route.vehicle_id !== null && (
-                              <button
-                                type="button"
-                                className="secondary"
-                                onClick={() =>
-                                  openForm({ form: "start", route })
-                                }
-                              >
-                                Start
-                              </button>
-                            )}
-                          <button
-                            type="button"
-                            className="secondary"
-                            onClick={() => openForm({ form: "close", route })}
-                          >
-                            Close
-                          </button>
-                        </>
-                      )}
-                      {route.status === "IN_PROGRESS" && (
-                        <button
-                          type="button"
-                          className="secondary"
-                          onClick={() => openForm({ form: "complete", route })}
-                        >
-                          Complete
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className="secondary danger"
-                        disabled={pending}
-                        onClick={() =>
-                          confirmed(
-                            `Cancel route ${route.id}?`,
-                            () => apiPost(`/routes/${route.id}/cancel`),
-                            "Route cancelled.",
-                          )
-                        }
-                      >
-                        Cancel
-                      </button>
-                      {route.status === "PLANNED" && (
+                        )}
                         <button
                           type="button"
                           className="secondary danger"
                           disabled={pending}
                           onClick={() =>
                             confirmed(
-                              `Delete route ${route.id}?`,
-                              () => apiDelete(`/routes/${route.id}`),
-                              "Route deleted.",
+                              `Cancel route ${route.id}?`,
+                              () => apiPost(`/routes/${route.id}/cancel`),
+                              "Route cancelled.",
                             )
                           }
                         >
-                          Delete
+                          Cancel
                         </button>
-                      )}
-                    </td>
-                  )}
-                </tr>
+                        {route.status === "PLANNED" && (
+                          <button
+                            type="button"
+                            className="secondary danger"
+                            disabled={pending}
+                            onClick={() =>
+                              confirmed(
+                                `Delete route ${route.id}?`,
+                                () => apiDelete(`/routes/${route.id}`),
+                                "Route deleted.",
+                              )
+                            }
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                  {editing &&
+                    editing.form !== "new" &&
+                    editing.route.id === route.id && (
+                      <FormRow colSpan={6}>{rowForm}</FormRow>
+                    )}
+                </Fragment>
               ))}
             </tbody>
           </table>

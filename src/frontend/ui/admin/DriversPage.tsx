@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "../api";
 import { DateField, toIsoDate } from "../shared/DateField";
 import {
@@ -9,6 +9,7 @@ import {
   MEDICAL_LABELS,
   type Driver,
 } from "../shared/fleet";
+import { FormRow } from "../shared/FormRow";
 import { Messages } from "../shared/Messages";
 import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
@@ -80,7 +81,7 @@ export function DriversPage() {
   };
 
   useEffect(() => {
-    if (editing) window.scrollTo(0, 0);
+    if (editing === "new") window.scrollTo(0, 0);
   }, [editing]);
 
   const submit = (form: FormData) => {
@@ -99,6 +100,16 @@ export function DriversPage() {
     }
   };
 
+  const form = editing && (
+    <DriverForm
+      key={editing === "new" ? "new" : editing.id}
+      driver={editing === "new" ? null : editing}
+      pending={pending}
+      onSubmit={submit}
+      onCancel={() => openForm(null)}
+    />
+  );
+
   return (
     <>
       <div className="page-header">
@@ -109,15 +120,7 @@ export function DriversPage() {
       </div>
       <Messages error={error} notice={notice} onClose={clearMessages} />
 
-      {editing && (
-        <DriverForm
-          key={editing === "new" ? "new" : editing.id}
-          driver={editing === "new" ? null : editing}
-          pending={pending}
-          onSubmit={submit}
-          onCancel={() => openForm(null)}
-        />
-      )}
+      {editing === "new" && form}
 
       <StatusSections
         items={drivers}
@@ -138,49 +141,54 @@ export function DriversPage() {
             </thead>
             <tbody>
               {rows.map((driver) => (
-                <tr key={driver.id}>
-                  <td>{driver.full_name}</td>
-                  <td>{driver.license_categories.join(", ")}</td>
-                  <td>{driver.experience_years} years</td>
-                  <td>{formatDate(driver.license_expiry_date)}</td>
-                  <td>
-                    {MEDICAL_LABELS[driver.medical_check_status]}, until{" "}
-                    {formatDate(driver.medical_valid_until)}
-                  </td>
-                  <td className="actions">
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => openForm(driver)}
-                    >
-                      Edit
-                    </button>
-                    {driver.employment_status === "ACTIVE" ? (
-                      <button
-                        type="button"
-                        className="secondary danger"
-                        disabled={pending}
-                        onClick={() => dismiss(driver)}
-                      >
-                        Dismiss
-                      </button>
-                    ) : (
+                <Fragment key={driver.id}>
+                  <tr>
+                    <td>{driver.full_name}</td>
+                    <td>{driver.license_categories.join(", ")}</td>
+                    <td>{driver.experience_years} years</td>
+                    <td>{formatDate(driver.license_expiry_date)}</td>
+                    <td>
+                      {MEDICAL_LABELS[driver.medical_check_status]}, until{" "}
+                      {formatDate(driver.medical_valid_until)}
+                    </td>
+                    <td className="actions">
                       <button
                         type="button"
                         className="secondary"
-                        disabled={pending}
-                        onClick={() =>
-                          run(
-                            () => changeStatus(driver, "ACTIVE"),
-                            "Driver reinstated.",
-                          )
-                        }
+                        onClick={() => openForm(driver)}
                       >
-                        Reinstate
+                        Edit
                       </button>
-                    )}
-                  </td>
-                </tr>
+                      {driver.employment_status === "ACTIVE" ? (
+                        <button
+                          type="button"
+                          className="secondary danger"
+                          disabled={pending}
+                          onClick={() => dismiss(driver)}
+                        >
+                          Dismiss
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="secondary"
+                          disabled={pending}
+                          onClick={() =>
+                            run(
+                              () => changeStatus(driver, "ACTIVE"),
+                              "Driver reinstated.",
+                            )
+                          }
+                        >
+                          Reinstate
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                  {editing !== "new" && editing?.id === driver.id && (
+                    <FormRow colSpan={6}>{form}</FormRow>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
