@@ -40,6 +40,7 @@ LICENSE_CATEGORIES = (
     "DE",
     "T",
 )
+TECHNICAL_STATES = ("GOOD", "NEEDS_SERVICE", "IN_REPAIR", "FAULTY")
 MIN_VEHICLE_YEAR = 1980
 ACTIVE_ROUTE_STATUSES = ("PLANNED", "IN_PROGRESS")
 AVERAGE_SPEED_KMH = 60
@@ -159,7 +160,9 @@ class Vehicles(Base):
     required_license_category = Column(
         StrEnum(*LICENSE_CATEGORIES, name="required_license_category"), nullable=False
     )
-    technical_state = Column(String, nullable=False)
+    technical_state = Column(
+        StrEnum(*TECHNICAL_STATES, name="technical_state"), nullable=False
+    )
     status = Column(
         StrEnum("ACTIVE", "DECOMMISSIONED", name="vehicle_status"),
         nullable=False,

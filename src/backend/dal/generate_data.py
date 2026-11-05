@@ -92,35 +92,35 @@ def build():
         year=2019,
         vin="WMA06XZZ9KP123456",
         required_license_category="C",
-        technical_state="Справний",
+        technical_state="GOOD",
     )
     renault = Vehicles(
         make="Renault Master",
         year=2021,
         vin="VF1MA000965432101",
         required_license_category="B",
-        technical_state="Справний",
+        technical_state="GOOD",
     )
     volvo = Vehicles(
         make="Volvo FH16",
         year=2017,
         vin="YV2RT40A9HB765432",
         required_license_category="CE",
-        technical_state="Потребує ТО",
+        technical_state="NEEDS_SERVICE",
     )
     sprinter = Vehicles(
         make="Mercedes Sprinter",
         year=2020,
         vin="WDB9066331S246810",
         required_license_category="B",
-        technical_state="Справний",
+        technical_state="GOOD",
     )
     gazel = Vehicles(
         make="ГАЗ 3302",
         year=2008,
         vin="X9633020082468013",
         required_license_category="B",
-        technical_state="Списаний",
+        technical_state="FAULTY",
         status="DECOMMISSIONED",
     )
 

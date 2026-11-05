@@ -3,7 +3,12 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from ...dal.db_models import ACTIVE_ROUTE_STATUSES, LICENSE_CATEGORIES, MIN_VEHICLE_YEAR
+from ...dal.db_models import (
+    ACTIVE_ROUTE_STATUSES,
+    LICENSE_CATEGORIES,
+    MIN_VEHICLE_YEAR,
+    TECHNICAL_STATES,
+)
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityAlreadyExistsError
@@ -16,7 +21,7 @@ class VehicleData(BaseModel):
     year: int = Field(ge=MIN_VEHICLE_YEAR)
     vin: str = Field(pattern=r"^[A-HJ-NPR-Z0-9]{17}$")
     required_license_category: Literal[LICENSE_CATEGORIES]
-    technical_state: str
+    technical_state: Literal[TECHNICAL_STATES]
     status: Literal["ACTIVE", "DECOMMISSIONED"] = "ACTIVE"
 
     @field_validator("year")
@@ -36,7 +41,7 @@ class VehicleStatusData(BaseModel):
 
 
 class TechnicalStateData(BaseModel):
-    technical_state: str
+    technical_state: Literal[TECHNICAL_STATES]
 
 
 class VehiclesService(IVehiclesService, EntityManagement):
