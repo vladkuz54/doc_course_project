@@ -514,3 +514,7 @@ th {
   justify-content: flex-end;
   margin-bottom: 16px;
 }
+
+.report-period {
+  margin-bottom: 12px;
+}
