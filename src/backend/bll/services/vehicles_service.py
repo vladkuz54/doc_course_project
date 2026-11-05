@@ -7,7 +7,6 @@ from ...dal.db_models import (
     ACTIVE_ROUTE_STATUSES,
     LICENSE_CATEGORIES,
     MIN_VEHICLE_YEAR,
-    TECHNICAL_STATES,
 )
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
@@ -21,7 +20,6 @@ class VehicleData(BaseModel):
     year: int = Field(ge=MIN_VEHICLE_YEAR)
     vin: str = Field(pattern=r"^[A-HJ-NPR-Z0-9]{17}$")
     required_license_category: Literal[LICENSE_CATEGORIES]
-    technical_state: Literal[TECHNICAL_STATES]
     status: Literal["ACTIVE", "DECOMMISSIONED"] = "ACTIVE"
 
     @field_validator("year")
@@ -38,10 +36,6 @@ class VehicleUpdateData(VehicleData):
 
 class VehicleStatusData(BaseModel):
     status: Literal["ACTIVE", "DECOMMISSIONED"]
-
-
-class TechnicalStateData(BaseModel):
-    technical_state: Literal[TECHNICAL_STATES]
 
 
 class VehiclesService(IVehiclesService, EntityManagement):
@@ -68,8 +62,3 @@ class VehiclesService(IVehiclesService, EntityManagement):
 
     async def get_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)
-
-    async def update_technical_state(self, vehicle_id, state):
-        vehicle = await self.get_by_id(vehicle_id)
-        vehicle.technical_state = state
-        return await self.repository.update(vehicle)
