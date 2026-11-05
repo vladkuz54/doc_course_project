@@ -14,6 +14,7 @@ import {
   type DriverRequest,
 } from "../shared/fleet";
 import { DateField, toIsoDate } from "../shared/DateField";
+import { Messages } from "../shared/Messages";
 import { useData } from "../shared/useData";
 
 const loadProfile = () =>
@@ -49,7 +50,7 @@ export class DriverProfilePage implements ProfilePage {
 }
 
 function DriverProfile({ page }: { page: DriverProfilePage }) {
-  const { data, error, notice, pending, run } = useData(loadProfile);
+  const { data, error, notice, pending, run, clearMessages } = useData(loadProfile);
   const [driver, requests] = data ?? [];
 
   const submitLicense = (event: FormEvent<HTMLFormElement>, id: number) => {
@@ -72,16 +73,7 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
   return (
     <>
       <h1>Profile</h1>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
+      <Messages error={error} notice={notice} onClose={clearMessages} />
       {driver && (
         <>
           <dl className="details">
