@@ -70,7 +70,7 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
           String(fields.get("category")),
           toIsoDate(String(fields.get("expiry"))) || null,
         ),
-      "License update requested.",
+      "Запит на оновлення посвідчення надіслано.",
     ).then((saved) => {
       if (saved) form.reset();
     });
@@ -78,22 +78,22 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
 
   return (
     <>
-      <h1>Profile</h1>
+      <h1>Профіль</h1>
       <Messages error={error} notice={notice} onClose={clearMessages} />
       {driver && (
         <>
           <dl className="details">
-            <dt>Name</dt>
+            <dt>ПІБ</dt>
             <dd>{driver.full_name}</dd>
-            <dt>Experience</dt>
-            <dd>{driver.experience_years} years</dd>
-            <dt>License categories</dt>
+            <dt>Стаж</dt>
+            <dd>{driver.experience_years} р.</dd>
+            <dt>Категорії посвідчення</dt>
             <dd>{driver.license_categories.join(", ")}</dd>
-            <dt>License valid until</dt>
+            <dt>Посвідчення дійсне до</dt>
             <dd>{formatDate(driver.license_expiry_date)}</dd>
-            <dt>Medical check</dt>
+            <dt>Медогляд</dt>
             <dd>
-              {MEDICAL_LABELS[driver.medical_check_status]}, until{" "}
+              {MEDICAL_LABELS[driver.medical_check_status]}, до{" "}
               {formatDate(driver.medical_valid_until)}
             </dd>
           </dl>
@@ -104,11 +104,11 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
             onClick={() =>
               run(
                 () => page.requestMedicalCheck(driver.id),
-                "Medical check requested.",
+                "Запит на підтвердження медогляду надіслано.",
               )
             }
           >
-            Request medical check
+            Подати запит на медогляд
           </button>
 
           <form
@@ -116,7 +116,7 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
             onSubmit={(event) => submitLicense(event, driver.id)}
           >
             <label>
-              New license category
+              Нова категорія посвідчення
               <select name="category" required>
                 {LICENSE_CATEGORIES.filter(
                   (category) => !driver.license_categories.includes(category),
@@ -126,18 +126,18 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
               </select>
             </label>
             <label>
-              New expiry date (optional)
+              Новий термін дії (необов’язково)
               <DateField name="expiry" />
             </label>
             <div className="form-actions">
               <button type="submit" disabled={pending}>
-                Request license update
+                Подати запит на оновлення посвідчення
               </button>
             </div>
           </form>
 
-          <h2 className="section-title">My requests</h2>
-          {requests?.length === 0 && <p className="muted">No requests yet.</p>}
+          <h2 className="section-title">Мої запити</h2>
+          {requests?.length === 0 && <p className="muted">Запитів ще немає.</p>}
           <StatusSections
             items={requests?.toSorted(newestFirst)}
             statusOf={(request) => request.status}
@@ -147,8 +147,8 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
               <table>
                 <thead>
                   <tr>
-                    <th>Request</th>
-                    <th>Submitted</th>
+                    <th>Запит</th>
+                    <th>Подано</th>
                   </tr>
                 </thead>
                 <tbody>

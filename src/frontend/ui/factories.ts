@@ -16,7 +16,7 @@ export abstract class RoleUIFactory {
       case "ADMIN":
         return new AdminUIFactory();
       default:
-        throw new Error(`Unknown role: ${role}`);
+        throw new Error(`Невідома роль: ${role}`);
     }
   }
 

@@ -45,22 +45,22 @@ type RepairRecord = {
 };
 
 const REPAIR_TYPE_LABELS: Record<RepairType, string> = {
-  SERVICE_TO: "Service",
-  INSPECTION: "Inspection",
-  REPAIR: "Repair",
+  SERVICE_TO: "ТО",
+  INSPECTION: "Техогляд",
+  REPAIR: "Ремонт",
 };
 
 const TABS = {
-  fuel: { label: "Fuel", Tab: FuelTab },
-  repairs: { label: "Repairs", Tab: RepairsTab },
-  insurance: { label: "Insurance", Tab: InsuranceTab },
+  fuel: { label: "Пальне", Tab: FuelTab },
+  repairs: { label: "Обслуговування", Tab: RepairsTab },
+  insurance: { label: "Страхування", Tab: InsuranceTab },
 };
 
 type TabName = keyof typeof TABS;
 
 const REPAIR_SECTIONS: { status: RepairRecord["status"]; label: string }[] = [
-  { status: "PLANNED", label: "Planned" },
-  { status: "DONE", label: "Done" },
+  { status: "PLANNED", label: "Заплановано" },
+  { status: "DONE", label: "Виконано" },
 ];
 
 function withVehicles<T>(path: string) {
@@ -82,7 +82,7 @@ export function AccountingPage() {
 
   return (
     <>
-      <h1>Accounting</h1>
+      <h1>Облік</h1>
       <div className="tabs" role="tablist">
         {(Object.keys(TABS) as TabName[]).map((name) => (
           <button
@@ -122,7 +122,7 @@ function useRecords<T, E>(load: () => Promise<[T[], Vehicle[]]>) {
   };
 
   const remove = (path: string, doneNotice: string) => {
-    if (window.confirm("Delete this record?")) {
+    if (window.confirm("Видалити цей запис?")) {
       run(() => apiDelete(path), doneNotice);
     }
   };
@@ -176,7 +176,7 @@ function RecordForm({
           {saveLabel}
         </button>
         <button type="button" className="secondary" onClick={onCancel}>
-          Cancel
+          Скасувати
         </button>
       </div>
     </form>
@@ -192,7 +192,7 @@ function VehicleSelect({
 }) {
   return (
     <label>
-      Vehicle
+      Транспорт
       <select name="vehicle_id" defaultValue={defaultValue} required>
         {vehicles.map((vehicle) => (
           <option key={vehicle.id} value={vehicle.id}>
@@ -245,7 +245,7 @@ function RowActions({
     <td className="actions">
       {children}
       <button type="button" className="secondary" onClick={onEdit}>
-        Edit
+        Редагувати
       </button>
       <button
         type="button"
@@ -253,7 +253,7 @@ function RowActions({
         disabled={pending}
         onClick={onDelete}
       >
-        Delete
+        Видалити
       </button>
     </td>
   );
@@ -280,7 +280,7 @@ function FuelTab() {
         editing && editing !== "new"
           ? apiPut(`/fuel-records/${editing.id}`, fields(form))
           : apiPost("/fuel-records/", fields(form)),
-      "Fuel record saved.",
+      "Запис про пальне збережено.",
     );
 
   const record = editing && editing !== "new" ? editing : null;
@@ -288,25 +288,25 @@ function FuelTab() {
   const form = editing && (
     <RecordForm
       key={record?.id ?? "new"}
-      title={record ? "Edit fuel record" : "New fuel record"}
-      saveLabel="Save record"
+      title={record ? "Редагування запису про пальне" : "Новий запис про пальне"}
+      saveLabel="Зберегти запис"
       pending={pending}
       onSubmit={submit}
       onCancel={() => openForm(null)}
     >
       <VehicleSelect vehicles={vehicles} defaultValue={record?.vehicle_id} />
       <label>
-        Date
+        Дата
         <DateField name="date" defaultValue={record?.date} required />
       </label>
       <NumberField
-        label="Amount"
+        label="Сума"
         name="amount"
         min="0"
         defaultValue={record?.amount}
       />
       <NumberField
-        label="Liters"
+        label="Літри"
         name="liters"
         min="0.01"
         defaultValue={record?.liters}
@@ -318,7 +318,7 @@ function FuelTab() {
     <>
       <div className="tab-actions">
         <button type="button" onClick={() => openForm("new")}>
-          Add fuel record
+          Додати запис про пальне
         </button>
       </div>
       <Messages
@@ -328,18 +328,18 @@ function FuelTab() {
       />
       {editing === "new" && form}
       {records.records?.length === 0 && (
-        <p className="muted">No fuel records yet.</p>
+        <p className="muted">Записів про пальне ще немає.</p>
       )}
       {records.records && records.records.length > 0 && (
         <div className="table-box">
           <table>
             <thead>
               <tr>
-                <th>Vehicle</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Liters</th>
-                <th>Actions</th>
+                <th>Транспорт</th>
+                <th>Дата</th>
+                <th>Сума</th>
+                <th>Літри</th>
+                <th>Дії</th>
               </tr>
             </thead>
             <tbody>
@@ -356,7 +356,7 @@ function FuelTab() {
                       onDelete={() =>
                         remove(
                           `/fuel-records/${row.id}`,
-                          "Fuel record deleted.",
+                          "Запис про пальне видалено.",
                         )
                       }
                     />
@@ -392,7 +392,7 @@ function InsuranceTab() {
         editing && editing !== "new"
           ? apiPut(`/insurance-policies/${editing.id}`, fields(form))
           : apiPost("/insurance-policies/", fields(form)),
-      "Insurance policy saved.",
+      "Страховий поліс збережено.",
     );
 
   const record = editing && editing !== "new" ? editing : null;
@@ -400,25 +400,25 @@ function InsuranceTab() {
   const form = editing && (
     <RecordForm
       key={record?.id ?? "new"}
-      title={record ? "Edit insurance policy" : "New insurance policy"}
-      saveLabel="Save policy"
+      title={record ? "Редагування страхового поліса" : "Новий страховий поліс"}
+      saveLabel="Зберегти поліс"
       pending={pending}
       onSubmit={submit}
       onCancel={() => openForm(null)}
     >
       <VehicleSelect vehicles={vehicles} defaultValue={record?.vehicle_id} />
       <label>
-        Payment date
+        Дата оплати
         <DateField name="date" defaultValue={record?.date} required />
       </label>
       <NumberField
-        label="Amount"
+        label="Сума"
         name="amount"
         min="0"
         defaultValue={record?.amount}
       />
       <label>
-        Cover starts
+        Початок покриття
         <DateField
           name="start_date"
           defaultValue={record?.start_date}
@@ -426,7 +426,7 @@ function InsuranceTab() {
         />
       </label>
       <label>
-        Cover ends
+        Кінець покриття
         <DateField name="end_date" defaultValue={record?.end_date} required />
       </label>
     </RecordForm>
@@ -436,7 +436,7 @@ function InsuranceTab() {
     <>
       <div className="tab-actions">
         <button type="button" onClick={() => openForm("new")}>
-          Add insurance policy
+          Додати страховий поліс
         </button>
       </div>
       <Messages
@@ -446,19 +446,19 @@ function InsuranceTab() {
       />
       {editing === "new" && form}
       {records.records?.length === 0 && (
-        <p className="muted">No insurance policies yet.</p>
+        <p className="muted">Страхових полісів ще немає.</p>
       )}
       {records.records && records.records.length > 0 && (
         <div className="table-box">
           <table>
             <thead>
               <tr>
-                <th>Vehicle</th>
-                <th>Payment date</th>
-                <th>Amount</th>
-                <th>Cover starts</th>
-                <th>Cover ends</th>
-                <th>Actions</th>
+                <th>Транспорт</th>
+                <th>Дата оплати</th>
+                <th>Сума</th>
+                <th>Початок покриття</th>
+                <th>Кінець покриття</th>
+                <th>Дії</th>
               </tr>
             </thead>
             <tbody>
@@ -476,7 +476,7 @@ function InsuranceTab() {
                       onDelete={() =>
                         remove(
                           `/insurance-policies/${row.id}`,
-                          "Insurance policy deleted.",
+                          "Страховий поліс видалено.",
                         )
                       }
                     />
@@ -525,7 +525,7 @@ function RepairsTab() {
           amount:
             form.get("status") === "DONE" ? Number(form.get("amount")) : null,
         }),
-      "Repair saved.",
+      "Обслуговування збережено.",
     );
 
   const update = (repair: RepairRecord, form: FormData) =>
@@ -537,7 +537,7 @@ function RepairsTab() {
           status: repair.status,
           amount: repair.amount,
         }),
-      "Repair saved.",
+      "Обслуговування збережено.",
     );
 
   const recordCost = (repair: RepairRecord, form: FormData) =>
@@ -547,7 +547,7 @@ function RepairsTab() {
           apiPost(`/repair-records/${repair.id}/cost`, {
             cost: Number(form.get("cost")),
           }),
-        "Repair cost recorded.",
+        "Вартість обслуговування внесено.",
       )
       .then((saved) => {
         if (saved) setCosting(null);
@@ -558,21 +558,21 @@ function RepairsTab() {
   const costForm = costing && (
     <RecordForm
       key={`cost-${costing.id}`}
-      title={`Record the cost of ${REPAIR_TYPE_LABELS[costing.type].toLowerCase()}, ${records.vehicleName(costing.vehicle_id)}`}
-      saveLabel="Record cost"
+      title={`Внесення вартості: ${REPAIR_TYPE_LABELS[costing.type]}, ${records.vehicleName(costing.vehicle_id)}`}
+      saveLabel="Внести вартість"
       pending={pending}
       onSubmit={(form) => recordCost(costing, form)}
       onCancel={() => open(null)}
     >
-      <NumberField label="Cost" name="cost" min="0" />
+      <NumberField label="Вартість" name="cost" min="0" />
     </RecordForm>
   );
 
   const editForm = editingRepair && (
     <RecordForm
       key={editingRepair.id}
-      title={`Edit repair of ${records.vehicleName(editingRepair.vehicle_id)}`}
-      saveLabel="Save repair"
+      title={`Редагування обслуговування: ${records.vehicleName(editingRepair.vehicle_id)}`}
+      saveLabel="Зберегти обслуговування"
       pending={pending}
       onSubmit={(form) => update(editingRepair, form)}
       onCancel={() => open(null)}
@@ -585,7 +585,7 @@ function RepairsTab() {
     <>
       <div className="tab-actions">
         <button type="button" onClick={() => open("new")}>
-          Add repair
+          Додати обслуговування
         </button>
       </div>
       <Messages
@@ -602,7 +602,7 @@ function RepairsTab() {
         />
       )}
       {records.records?.length === 0 && (
-        <p className="muted">No repairs yet.</p>
+        <p className="muted">Записів про обслуговування ще немає.</p>
       )}
       {records.records && records.records.length > 0 && (
         <StatusSections
@@ -614,12 +614,12 @@ function RepairsTab() {
             <table>
               <thead>
                 <tr>
-                  <th>Vehicle</th>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Description</th>
-                  {rows[0].status === "DONE" && <th>Cost</th>}
-                  <th>Actions</th>
+                  <th>Транспорт</th>
+                  <th>Дата</th>
+                  <th>Тип</th>
+                  <th>Опис</th>
+                  {rows[0].status === "DONE" && <th>Вартість</th>}
+                  <th>Дії</th>
                 </tr>
               </thead>
               <tbody>
@@ -635,7 +635,7 @@ function RepairsTab() {
                         pending={pending}
                         onEdit={() => open(row)}
                         onDelete={() =>
-                          remove(`/repair-records/${row.id}`, "Repair deleted.")
+                          remove(`/repair-records/${row.id}`, "Обслуговування видалено.")
                         }
                       >
                         {row.status === "PLANNED" && (
@@ -644,7 +644,7 @@ function RepairsTab() {
                             className="secondary"
                             onClick={() => openCost(row)}
                           >
-                            Record cost
+                            Внести вартість
                           </button>
                         )}
                       </RowActions>
@@ -674,11 +674,11 @@ function RepairFields({ repair }: { repair?: RepairRecord }) {
   return (
     <>
       <label>
-        Date
+        Дата
         <DateField name="date" defaultValue={repair?.date} required />
       </label>
       <label>
-        Type
+        Тип
         <select name="type" defaultValue={repair?.type}>
           {Object.entries(REPAIR_TYPE_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
@@ -688,7 +688,7 @@ function RepairFields({ repair }: { repair?: RepairRecord }) {
         </select>
       </label>
       <label>
-        Description
+        Опис
         <input name="description" defaultValue={repair?.description} />
       </label>
     </>
@@ -710,14 +710,14 @@ function NewRepairForm({
 
   return (
     <RecordForm
-      title="New repair"
-      saveLabel="Save repair"
+      title="Нове обслуговування"
+      saveLabel="Зберегти обслуговування"
       pending={pending}
       onSubmit={onSubmit}
       onCancel={onCancel}
     >
       <label>
-        Status
+        Статус
         <select
           name="status"
           value={status}
@@ -725,8 +725,8 @@ function NewRepairForm({
             setStatus(event.target.value as RepairRecord["status"])
           }
         >
-          <option value="PLANNED">Planned</option>
-          <option value="DONE">Done</option>
+          <option value="PLANNED">Заплановано</option>
+          <option value="DONE">Виконано</option>
         </select>
       </label>
       <VehicleSelect
@@ -737,7 +737,7 @@ function NewRepairForm({
         }
       />
       <RepairFields />
-      {status === "DONE" && <NumberField label="Cost" name="amount" min="0" />}
+      {status === "DONE" && <NumberField label="Вартість" name="amount" min="0" />}
     </RecordForm>
   );
 }

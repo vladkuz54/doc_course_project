@@ -32,9 +32,9 @@ function DriverRoutes() {
 
   return (
     <>
-      <h1>Routes</h1>
+      <h1>Маршрути</h1>
       <Messages error={error} onClose={clearMessages} />
-      {routes?.length === 0 && <p className="muted">No routes assigned.</p>}
+      {routes?.length === 0 && <p className="muted">Маршрутів не призначено.</p>}
       <StatusSections
         items={sorted}
         statusOf={(route) => route.status}
@@ -46,9 +46,9 @@ function DriverRoutes() {
               <article key={route.id} className="route">
                 <div className="route-header">
                   <div>
-                    <h3>Route {route.id}</h3>
+                    <h3>Маршрут №{route.id}</h3>
                     <p className="muted">
-                      {formatDateTime(route.departure_at)}, {route.distance} km
+                      {formatDateTime(route.departure_at)}, {route.distance} км
                     </p>
                   </div>
                   {route.status === "PLANNED" && route.vehicle_id !== null && (
@@ -57,7 +57,7 @@ function DriverRoutes() {
                       disabled={pending}
                       onClick={() => act(route.id, "/start")}
                     >
-                      Start
+                      Розпочати
                     </button>
                   )}
                   {route.status === "IN_PROGRESS" && (
@@ -66,7 +66,7 @@ function DriverRoutes() {
                       disabled={pending}
                       onClick={() => act(route.id, "/complete")}
                     >
-                      Returned
+                      Повернувся
                     </button>
                   )}
                 </div>

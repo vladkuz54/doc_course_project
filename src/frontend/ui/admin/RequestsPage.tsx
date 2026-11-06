@@ -42,15 +42,15 @@ export function RequestsPage() {
         apiPost(`/driver-requests/${request.id}/approve-medical`, {
           valid_until: validUntil,
         }),
-      "Request approved.",
+      "Запит схвалено.",
     );
   };
 
   return (
     <>
-      <h1>Requests</h1>
+      <h1>Запити</h1>
       <Messages error={error} notice={notice} onClose={clearMessages} />
-      {requests?.length === 0 && <p className="muted">No requests yet.</p>}
+      {requests?.length === 0 && <p className="muted">Запитів ще немає.</p>}
       {requests && requests.length > 0 && (
         <StatusSections
           items={requests.toSorted(newestFirst)}
@@ -61,10 +61,10 @@ export function RequestsPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Driver</th>
-                  <th>Request</th>
-                  <th>Submitted</th>
-                  {rows[0].status === "PENDING" && <th>Actions</th>}
+                  <th>Водій</th>
+                  <th>Запит</th>
+                  <th>Подано</th>
+                  {rows[0].status === "PENDING" && <th>Дії</th>}
                 </tr>
               </thead>
               <tbody>
@@ -90,11 +90,11 @@ export function RequestsPage() {
                                 }
                               >
                                 <label>
-                                  Valid until
+                                  Дійсний до
                                   <DateField name="valid_until" required />
                                 </label>
                                 <button type="submit" disabled={pending}>
-                                  Approve
+                                  Схвалити
                                 </button>
                               </form>
                             ) : (
@@ -107,11 +107,11 @@ export function RequestsPage() {
                                       apiPost(
                                         `/driver-requests/${request.id}/approve-license`,
                                       ),
-                                    "Request approved.",
+                                    "Запит схвалено.",
                                   )
                                 }
                               >
-                                Approve
+                                Схвалити
                               </button>
                             )}
                             <button
@@ -124,11 +124,11 @@ export function RequestsPage() {
                                     apiPost(
                                       `/driver-requests/${request.id}/reject`,
                                     ),
-                                  "Request rejected.",
+                                  "Запит відхилено.",
                                 )
                               }
                             >
-                              Reject
+                              Відхилити
                             </button>
                           </>
                         )}

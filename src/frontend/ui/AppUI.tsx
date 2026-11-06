@@ -65,7 +65,7 @@ export class AppUI extends Component<object, AppUIState> {
   render() {
     const { phase, message } = this.state;
 
-    if (phase === "loading") return <p className="loading">Loading...</p>;
+    if (phase === "loading") return <p className="loading">Завантаження...</p>;
     if (phase === "login" || !this.factory) {
       return <LoginForm message={message} onLoggedIn={this.loadUser} />;
     }
@@ -73,11 +73,11 @@ export class AppUI extends Component<object, AppUIState> {
     return (
       <>
         <header className="topbar">
-          <span className="brand">Fleet</span>
+          <span className="brand">Автопарк</span>
           {this.factory.createMenu().render()}
           <div className="topbar-actions">
             <button type="button" onClick={this.signOut}>
-              Sign out
+              Вийти
             </button>
           </div>
         </header>
@@ -131,14 +131,14 @@ function LoginForm({
 
   return (
     <main className="login">
-      <h1>Fleet</h1>
+      <h1>Автопарк</h1>
       <form onSubmit={submit}>
         <label>
-          Username
+          Ім’я користувача
           <input name="username" autoComplete="username" required />
         </label>
         <label>
-          Password
+          Пароль
           <input
             name="password"
             type="password"
@@ -152,7 +152,7 @@ function LoginForm({
           </p>
         )}
         <button type="submit" disabled={pending}>
-          Sign in
+          Увійти
         </button>
       </form>
     </main>

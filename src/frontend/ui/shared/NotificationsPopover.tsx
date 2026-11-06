@@ -52,8 +52,8 @@ export function NotificationsPopover({
         popoverTarget="notifications"
         aria-label={
           unread.length > 0
-            ? `Notifications (${unread.length})`
-            : "Notifications"
+            ? `Сповіщення (${unread.length})`
+            : "Сповіщення"
         }
       >
         <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
@@ -73,13 +73,13 @@ export function NotificationsPopover({
         ref={panel}
         popover="auto"
         className="notifications"
-        aria-label="Notifications"
+        aria-label="Сповіщення"
         onToggle={(event) => {
           if (event.newState === "open") reload();
         }}
       >
         <div className="notifications-header">
-          <h2>Notifications</h2>
+          <h2>Сповіщення</h2>
           <div className="notifications-actions">
             {canCheckDeadlines && (
               <button
@@ -90,7 +90,7 @@ export function NotificationsPopover({
                   run(() => apiGet("/notifications/check-deadlines"))
                 }
               >
-                Check deadlines
+                Перевірити терміни
               </button>
             )}
             {unread.length > 0 && (
@@ -100,7 +100,7 @@ export function NotificationsPopover({
                 disabled={pending}
                 onClick={() => run(() => apiPatch("/notifications/read-all"))}
               >
-                Mark all as read
+                Позначити всі прочитаними
               </button>
             )}
           </div>
@@ -110,7 +110,7 @@ export function NotificationsPopover({
             {error}
           </p>
         )}
-        {data?.length === 0 && <p className="muted">No notifications.</p>}
+        {data?.length === 0 && <p className="muted">Сповіщень немає.</p>}
         <ul>
           {data?.map((notification) => {
             const page = openPage(notification.related_entity);
@@ -131,7 +131,7 @@ export function NotificationsPopover({
                         className="link-button"
                         onClick={() => open(notification)}
                       >
-                        Open
+                        Відкрити
                       </a>
                     )}
                     {!notification.is_read && (
@@ -141,7 +141,7 @@ export function NotificationsPopover({
                         disabled={pending}
                         onClick={() => run(() => markAsRead(notification.id))}
                       >
-                        Mark as read
+                        Позначити прочитаним
                       </button>
                     )}
                   </span>

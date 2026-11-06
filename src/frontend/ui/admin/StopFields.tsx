@@ -16,9 +16,9 @@ export function splitAddress(address: string): StopAddress {
 }
 
 const FIELDS: { key: keyof StopAddress; label: string }[] = [
-  { key: "street", label: "Street" },
-  { key: "number", label: "Number" },
-  { key: "city", label: "City" },
+  { key: "street", label: "Вулиця" },
+  { key: "number", label: "Номер" },
+  { key: "city", label: "Місто" },
 ];
 
 export function StopFields({
@@ -42,7 +42,7 @@ export function StopFields({
 
   return (
     <fieldset className="wide stop-fields">
-      <legend>Stops</legend>
+      <legend>Зупинки</legend>
       <ol>
         {stops.map((stop, index) => (
           <li key={index}>
@@ -50,10 +50,10 @@ export function StopFields({
               <label key={key} className={`stop-${key}`}>
                 {label}
                 <input
-                  aria-label={`Stop ${index + 1} ${label.toLowerCase()}`}
+                  aria-label={`Зупинка ${index + 1}: ${label.toLowerCase()}`}
                   value={stop[key]}
                   pattern=".*\S.*"
-                  title={`Enter the ${label.toLowerCase()}`}
+                  title={`Вкажіть: ${label.toLowerCase()}`}
                   required
                   onChange={(event) => edit(index, key, event.target.value)}
                 />
@@ -65,7 +65,7 @@ export function StopFields({
               disabled={index === 0}
               onClick={() => move(index, index - 1)}
             >
-              Up
+              Вгору
             </button>
             <button
               type="button"
@@ -73,7 +73,7 @@ export function StopFields({
               disabled={index === stops.length - 1}
               onClick={() => move(index, index + 1)}
             >
-              Down
+              Вниз
             </button>
             <button
               type="button"
@@ -81,7 +81,7 @@ export function StopFields({
               disabled={stops.length === 1}
               onClick={() => onChange(stops.filter((_, i) => i !== index))}
             >
-              Remove
+              Прибрати
             </button>
           </li>
         ))}
@@ -91,7 +91,7 @@ export function StopFields({
         className="secondary"
         onClick={() => onChange([...stops, EMPTY_STOP])}
       >
-        Add stop
+        Додати зупинку
       </button>
     </fieldset>
   );

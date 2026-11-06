@@ -13,8 +13,8 @@ import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
 
 const VEHICLE_SECTIONS: { status: Vehicle["status"]; label: string }[] = [
-  { status: "ACTIVE", label: "Active" },
-  { status: "DECOMMISSIONED", label: "Decommissioned" },
+  { status: "ACTIVE", label: "Активний" },
+  { status: "DECOMMISSIONED", label: "Списаний" },
 ];
 
 const loadVehicles = () => apiGet<Vehicle[]>("/vehicles/");
@@ -61,16 +61,16 @@ export function VehiclesPage() {
               status: editing.status,
             })
         : () => apiPost("/vehicles/", vehicleFields(form));
-    run(action, "Vehicle saved.").then((saved) => {
+    run(action, "Транспорт збережено.").then((saved) => {
       if (saved) setEditing(null);
     });
   };
 
   const decommission = (vehicle: Vehicle) => {
-    if (window.confirm(`Decommission ${vehicle.make}?`)) {
+    if (window.confirm(`Списати ${vehicle.make}?`)) {
       run(
         () => changeStatus(vehicle, "DECOMMISSIONED"),
-        "Vehicle decommissioned.",
+        "Транспорт списано.",
       );
     }
   };
@@ -88,9 +88,9 @@ export function VehiclesPage() {
   return (
     <>
       <div className="page-header">
-        <h1>Vehicles</h1>
+        <h1>Транспорт</h1>
         <button type="button" onClick={() => openForm("new")}>
-          Add vehicle
+          Додати транспорт
         </button>
       </div>
       <Messages error={error} notice={notice} onClose={clearMessages} />
@@ -106,12 +106,12 @@ export function VehiclesPage() {
           <table>
             <thead>
               <tr>
-                <th>Vehicle</th>
-                <th>Year</th>
+                <th>Транспорт</th>
+                <th>Рік</th>
                 <th>VIN</th>
-                <th>License</th>
-                <th>Technical state</th>
-                <th>Actions</th>
+                <th>Категорія</th>
+                <th>Технічний стан</th>
+                <th>Дії</th>
               </tr>
             </thead>
             <tbody>
@@ -129,7 +129,7 @@ export function VehiclesPage() {
                         className="secondary"
                         onClick={() => openForm(vehicle)}
                       >
-                        Edit
+                        Редагувати
                       </button>
                       {vehicle.status === "ACTIVE" ? (
                         <button
@@ -138,7 +138,7 @@ export function VehiclesPage() {
                           disabled={pending}
                           onClick={() => decommission(vehicle)}
                         >
-                          Decommission
+                          Списати
                         </button>
                       ) : (
                         <button
@@ -148,11 +148,11 @@ export function VehiclesPage() {
                           onClick={() =>
                             run(
                               () => changeStatus(vehicle, "ACTIVE"),
-                              "Vehicle reactivated.",
+                              "Транспорт повернуто в роботу.",
                             )
                           }
                         >
-                          Reactivate
+                          Повернути в роботу
                         </button>
                       )}
                     </td>
@@ -189,14 +189,14 @@ function VehicleForm({
   return (
     <form className="panel" onSubmit={submit}>
       <h2 className="panel-title">
-        {vehicle ? `Edit ${vehicle.make}` : "New vehicle"}
+        {vehicle ? `Редагування: ${vehicle.make}` : "Новий транспорт"}
       </h2>
       <label>
-        Make and model
+        Марка й модель
         <input name="make" defaultValue={vehicle?.make} required />
       </label>
       <label>
-        Year
+        Рік
         <input
           name="year"
           type="number"
@@ -211,13 +211,13 @@ function VehicleForm({
         <input
           name="vin"
           pattern="[A-HJ-NPR-Z0-9]{17}"
-          title="17 capital letters and digits, without I, O or Q"
+          title="17 символів: великі латинські літери (крім I, O, Q) і цифри"
           defaultValue={vehicle?.vin}
           required
         />
       </label>
       <label>
-        Required license
+        Потрібна категорія
         <select
           name="required_license_category"
           defaultValue={vehicle?.required_license_category ?? "B"}
@@ -229,10 +229,10 @@ function VehicleForm({
       </label>
       <div className="form-actions">
         <button type="submit" disabled={pending}>
-          Save vehicle
+          Зберегти транспорт
         </button>
         <button type="button" className="secondary" onClick={onCancel}>
-          Cancel
+          Скасувати
         </button>
       </div>
     </form>

@@ -27,7 +27,7 @@ export function Messages({
       role={error ? "alert" : "status"}
     >
       <span>{error || notice}</span>
-      <button type="button" aria-label="Close message" onClick={onClose}>
+      <button type="button" aria-label="Закрити повідомлення" onClick={onClose}>
         <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
           <path
             stroke="currentColor"

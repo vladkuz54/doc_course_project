@@ -18,8 +18,8 @@ const DRIVER_SECTIONS: {
   status: Driver["employment_status"];
   label: string;
 }[] = [
-  { status: "ACTIVE", label: "Active" },
-  { status: "DISMISSED", label: "Dismissed" },
+  { status: "ACTIVE", label: "Працюють" },
+  { status: "DISMISSED", label: "Звільнені" },
 ];
 
 const loadDrivers = () => apiGet<Driver[]>("/drivers/");
@@ -89,14 +89,14 @@ export function DriversPage() {
       editing && editing !== "new"
         ? () => updateDriver(editing, form)
         : () => createDriver(form);
-    run(action, "Driver saved.").then((saved) => {
+    run(action, "Водія збережено.").then((saved) => {
       if (saved) setEditing(null);
     });
   };
 
   const dismiss = (driver: Driver) => {
-    if (window.confirm(`Dismiss ${driver.full_name}?`)) {
-      run(() => changeStatus(driver, "DISMISSED"), "Driver dismissed.");
+    if (window.confirm(`Звільнити водія ${driver.full_name}?`)) {
+      run(() => changeStatus(driver, "DISMISSED"), "Водія звільнено.");
     }
   };
 
@@ -113,9 +113,9 @@ export function DriversPage() {
   return (
     <>
       <div className="page-header">
-        <h1>Drivers</h1>
+        <h1>Водії</h1>
         <button type="button" onClick={() => openForm("new")}>
-          Add driver
+          Додати водія
         </button>
       </div>
       <Messages error={error} notice={notice} onClose={clearMessages} />
@@ -131,12 +131,12 @@ export function DriversPage() {
           <table>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Categories</th>
-                <th>Experience</th>
-                <th>License until</th>
-                <th>Medical check</th>
-                <th>Actions</th>
+                <th>ПІБ</th>
+                <th>Категорії</th>
+                <th>Стаж</th>
+                <th>Посвідчення до</th>
+                <th>Медогляд</th>
+                <th>Дії</th>
               </tr>
             </thead>
             <tbody>
@@ -145,10 +145,10 @@ export function DriversPage() {
                   <tr>
                     <td>{driver.full_name}</td>
                     <td>{driver.license_categories.join(", ")}</td>
-                    <td>{driver.experience_years} years</td>
+                    <td>{driver.experience_years} р.</td>
                     <td>{formatDate(driver.license_expiry_date)}</td>
                     <td>
-                      {MEDICAL_LABELS[driver.medical_check_status]}, until{" "}
+                      {MEDICAL_LABELS[driver.medical_check_status]}, до{" "}
                       {formatDate(driver.medical_valid_until)}
                     </td>
                     <td className="actions">
@@ -157,7 +157,7 @@ export function DriversPage() {
                         className="secondary"
                         onClick={() => openForm(driver)}
                       >
-                        Edit
+                        Редагувати
                       </button>
                       {driver.employment_status === "ACTIVE" ? (
                         <button
@@ -166,7 +166,7 @@ export function DriversPage() {
                           disabled={pending}
                           onClick={() => dismiss(driver)}
                         >
-                          Dismiss
+                          Звільнити
                         </button>
                       ) : (
                         <button
@@ -176,11 +176,11 @@ export function DriversPage() {
                           onClick={() =>
                             run(
                               () => changeStatus(driver, "ACTIVE"),
-                              "Driver reinstated.",
+                              "Водія поновлено.",
                             )
                           }
                         >
-                          Reinstate
+                          Поновити
                         </button>
                       )}
                     </td>
@@ -217,16 +217,16 @@ function DriverForm({
   return (
     <form className="panel" onSubmit={submit}>
       <h2 className="panel-title">
-        {driver ? `Edit ${driver.full_name}` : "New driver"}
+        {driver ? `Редагування: ${driver.full_name}` : "Новий водій"}
       </h2>
       {!driver && (
         <>
           <label>
-            Username
+            Ім’я користувача
             <input name="username" autoComplete="off" required />
           </label>
           <label>
-            Password
+            Пароль
             <input
               name="password"
               type="password"
@@ -237,11 +237,11 @@ function DriverForm({
         </>
       )}
       <label>
-        Full name
+        ПІБ
         <input name="full_name" defaultValue={driver?.full_name} required />
       </label>
       <label>
-        Experience, years
+        Стаж, років
         <input
           name="experience_years"
           type="number"
@@ -252,7 +252,7 @@ function DriverForm({
         />
       </label>
       <label>
-        License valid until
+        Посвідчення дійсне до
         <DateField
           name="license_expiry_date"
           defaultValue={driver?.license_expiry_date}
@@ -260,7 +260,7 @@ function DriverForm({
         />
       </label>
       <label>
-        Medical check date
+        Дата медогляду
         <DateField
           name="medical_check_date"
           defaultValue={driver?.medical_check_date}
@@ -268,7 +268,7 @@ function DriverForm({
         />
       </label>
       <label>
-        Medical valid until
+        Медогляд дійсний до
         <DateField
           name="medical_valid_until"
           defaultValue={driver?.medical_valid_until}
@@ -277,7 +277,7 @@ function DriverForm({
       </label>
       {driver && (
         <label>
-          Medical status
+          Стан медогляду
           <select
             name="medical_check_status"
             defaultValue={driver.medical_check_status}
@@ -291,7 +291,7 @@ function DriverForm({
         </label>
       )}
       <fieldset className="categories">
-        <legend>License categories</legend>
+        <legend>Категорії посвідчення</legend>
         {LICENSE_CATEGORIES.map((category) => (
           <label key={category}>
             <input
@@ -306,10 +306,10 @@ function DriverForm({
       </fieldset>
       <div className="form-actions">
         <button type="submit" disabled={pending}>
-          Save driver
+          Зберегти водія
         </button>
         <button type="button" className="secondary" onClick={onCancel}>
-          Cancel
+          Скасувати
         </button>
       </div>
     </form>

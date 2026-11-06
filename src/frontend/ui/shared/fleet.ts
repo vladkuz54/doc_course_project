@@ -75,9 +75,9 @@ export const LICENSE_CATEGORIES = [
 ];
 
 export const MEDICAL_LABELS: Record<Driver["medical_check_status"], string> = {
-  VALID: "Valid",
-  EXPIRED: "Expired",
-  PENDING: "Pending",
+  VALID: "Дійсний",
+  EXPIRED: "Прострочений",
+  PENDING: "Очікує підтвердження",
 };
 
 export const TECHNICAL_STATE_LABELS: Record<TechnicalState, string> = {
@@ -88,16 +88,16 @@ export const TECHNICAL_STATE_LABELS: Record<TechnicalState, string> = {
 };
 
 export const STATUS_LABELS: Record<RouteStatus, string> = {
-  PLANNED: "Planned",
-  IN_PROGRESS: "In progress",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
+  PLANNED: "Заплановано",
+  IN_PROGRESS: "У дорозі",
+  COMPLETED: "Завершено",
+  CANCELLED: "Скасовано",
 };
 
 export const REQUEST_STATUS_LABELS: Record<DriverRequest["status"], string> = {
-  PENDING: "Pending",
-  APPROVED: "Approved",
-  REJECTED: "Rejected",
+  PENDING: "Очікують розгляду",
+  APPROVED: "Схвалено",
+  REJECTED: "Відхилено",
 };
 
 export const REQUEST_SECTIONS = (
@@ -105,11 +105,11 @@ export const REQUEST_SECTIONS = (
 ).map((status) => ({ status, label: REQUEST_STATUS_LABELS[status] }));
 
 export function describeRequest(request: DriverRequest) {
-  if (request.type === "MEDICAL_CHECK") return "Medical check";
+  if (request.type === "MEDICAL_CHECK") return "Підтвердження медогляду";
   const expiry = request.new_license_expiry_date
-    ? `, valid until ${formatDate(request.new_license_expiry_date)}`
+    ? `, дійсне до ${formatDate(request.new_license_expiry_date)}`
     : "";
-  return `License category ${request.new_license_category}${expiry}`;
+  return `Категорія посвідчення ${request.new_license_category}${expiry}`;
 }
 
 const STATUS_ORDER: RouteStatus[] = [

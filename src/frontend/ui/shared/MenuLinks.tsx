@@ -11,7 +11,7 @@ export function MenuLinks({ links }: { links: MenuLink[] }) {
     : links[0].page;
 
   return (
-    <nav aria-label="Main" className="menu">
+    <nav aria-label="Головне меню" className="menu">
       {links.map((link) => (
         <a
           key={link.page}

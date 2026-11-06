@@ -38,7 +38,7 @@ export function StopLine({
               disabled={disabled}
               onClick={() => onArrive(stop)}
             >
-              Arrived
+              Прибув
             </button>
           )}
         </li>

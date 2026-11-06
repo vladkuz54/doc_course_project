@@ -8,8 +8,8 @@ import {
 } from "../shared/NotificationsPopover";
 
 const LINKS: MenuLink[] = [
-  { page: "routes", label: "Routes" },
-  { page: "profile", label: "Profile" },
+  { page: "routes", label: "Маршрути" },
+  { page: "profile", label: "Профіль" },
 ];
 
 const OPEN_PAGES: Record<RelatedEntity, string | null> = {

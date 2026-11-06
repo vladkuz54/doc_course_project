@@ -17,17 +17,28 @@ type Report = {
 };
 
 const REPORT_KINDS = {
-  utilization: "Vehicle utilization",
-  maintenance: "Maintenance cost",
-  usage: "Usage analytics",
+  utilization: "Використання транспорту",
+  maintenance: "Витрати на обслуговування",
+  usage: "Аналітика використання",
 };
 
 const loadVehicles = () => apiGet<Vehicle[]>("/vehicles/");
 
+// Same labels as the PDF and Excel exports (backend bll/exports.py)
+const COLUMN_LABELS: Record<string, string> = {
+  vehicle: "Транспорт",
+  completed_routes: "Завершені маршрути",
+  total_distance: "Загальна відстань, км",
+  done_repairs: "Виконане обслуговування",
+  planned_repairs: "Заплановане обслуговування",
+  total_cost: "Загальна вартість",
+  liters: "Літри",
+  fuel_cost: "Вартість пального",
+  liters_per_100km: "Літрів на 100 км",
+};
+
 function columnLabel(key: string) {
-  if (key === "vehicle_id") return "Vehicle";
-  const label = key.replaceAll("_", " ");
-  return label[0].toUpperCase() + label.slice(1);
+  return COLUMN_LABELS[key] ?? key;
 }
 
 function reportPath(form: FormData, format?: string) {
@@ -96,7 +107,7 @@ export function ReportsPage() {
 
   return (
     <>
-      <h1>Reports</h1>
+      <h1>Звіти</h1>
       <Messages error={error} onClose={clearMessages} />
       <form
         ref={form}
@@ -108,7 +119,7 @@ export function ReportsPage() {
         }}
       >
         <label>
-          Report
+          Звіт
           <select name="kind">
             {Object.entries(REPORT_KINDS).map(([value, label]) => (
               <option key={value} value={value}>
@@ -118,7 +129,7 @@ export function ReportsPage() {
           </select>
         </label>
         <label>
-          From
+          З
           <DateField
             name="period_from"
             defaultValue={`${today.slice(0, 4)}-01-01`}
@@ -126,13 +137,13 @@ export function ReportsPage() {
           />
         </label>
         <label>
-          To
+          По
           <DateField name="period_to" defaultValue={today} required />
         </label>
         <label>
-          Vehicle (optional)
+          Транспорт (необов’язково)
           <select name="vehicle_id">
-            <option value="">All vehicles</option>
+            <option value="">Увесь транспорт</option>
             {vehicles?.map((vehicle) => (
               <option key={vehicle.id} value={vehicle.id}>
                 {vehicle.make}
@@ -147,7 +158,7 @@ export function ReportsPage() {
             disabled={pending}
             onClick={() => download("pdf")}
           >
-            Export PDF
+            Експорт у PDF
           </button>
           <button
             type="button"
@@ -155,7 +166,7 @@ export function ReportsPage() {
             disabled={pending}
             onClick={() => download("xlsx")}
           >
-            Export Excel
+            Експорт в Excel
           </button>
         </div>
       </form>
@@ -164,10 +175,10 @@ export function ReportsPage() {
         <section className="table-box">
           <h2>{report.title}</h2>
           <p className="muted report-period">
-            {formatDate(report.period_from)} to {formatDate(report.period_to)}
+            з {formatDate(report.period_from)} по {formatDate(report.period_to)}
           </p>
           {report.rows.length === 0 && (
-            <p className="muted">No data for this period.</p>
+            <p className="muted">За цей період даних немає.</p>
           )}
           {report.rows.length > 0 && (
             <table>

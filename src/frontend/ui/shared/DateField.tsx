@@ -54,7 +54,7 @@ export function DateField({
   const text = useRef<HTMLInputElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const toIso = withTime ? toIsoDateTime : toIsoDate;
-  const format = withTime ? "dd/mm/yyyy hh:mm" : "dd/mm/yyyy";
+  const format = withTime ? "дд/мм/рррр гг:хх" : "дд/мм/рррр";
 
   const typed = (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.target;
@@ -101,7 +101,7 @@ export function DateField({
       <button
         type="button"
         className="date-button"
-        aria-label="Choose a date"
+        aria-label="Обрати дату"
         onClick={openPicker}
       >
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">

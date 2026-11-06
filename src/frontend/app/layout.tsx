@@ -8,13 +8,13 @@ const plexSans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Fleet",
-  description: "Fleet management",
+  title: "Автопарк",
+  description: "Керування автопарком",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={plexSans.className}>
+    <html lang="uk" className={plexSans.className}>
       <body>{children}</body>
     </html>
   );

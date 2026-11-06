@@ -16,14 +16,14 @@ function AdminProfile() {
 
   return (
     <>
-      <h1>Profile</h1>
+      <h1>Профіль</h1>
       <Messages error={error} onClose={clearMessages} />
       {user && (
         <dl className="details">
-          <dt>Username</dt>
+          <dt>Ім’я користувача</dt>
           <dd>{user.username}</dd>
-          <dt>Role</dt>
-          <dd>Administrator</dd>
+          <dt>Роль</dt>
+          <dd>Адміністратор</dd>
         </dl>
       )}
     </>

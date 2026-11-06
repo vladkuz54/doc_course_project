@@ -38,25 +38,25 @@ const TIME_ACTIONS: Record<
   { title: string; label: string; path: string; field: string; notice: string }
 > = {
   start: {
-    title: "Start route",
-    label: "Start time",
+    title: "Розпочати маршрут",
+    label: "Час початку",
     path: "start",
     field: "started_at",
-    notice: "Route started.",
+    notice: "Маршрут розпочато.",
   },
   close: {
-    title: "Close route",
-    label: "Return time",
+    title: "Закрити маршрут",
+    label: "Час повернення",
     path: "complete",
     field: "returned_at",
-    notice: "Route closed.",
+    notice: "Маршрут закрито.",
   },
   complete: {
-    title: "Complete route",
-    label: "Return time",
+    title: "Завершити маршрут",
+    label: "Час повернення",
     path: "complete",
     field: "returned_at",
-    notice: "Route completed.",
+    notice: "Маршрут завершено.",
   },
 };
 
@@ -140,7 +140,7 @@ export function RoutesPage() {
         vehicles={vehicles ?? []}
         pending={pending}
         onSubmit={(form, edited) =>
-          save(() => updateRoute(editing.route, form, edited), "Route saved.")
+          save(() => updateRoute(editing.route, form, edited), "Маршрут збережено.")
         }
         onCancel={() => openForm(null)}
       />
@@ -167,9 +167,9 @@ export function RoutesPage() {
   return (
     <>
       <div className="page-header">
-        <h1>Routes</h1>
+        <h1>Маршрути</h1>
         <button type="button" onClick={() => openForm({ form: "new" })}>
-          Add route
+          Додати маршрут
         </button>
       </div>
       <Messages error={error} notice={notice} onClose={clearMessages} />
@@ -183,7 +183,7 @@ export function RoutesPage() {
           vehicles={vehicles ?? []}
           pending={pending}
           onSubmit={(form, stops) =>
-            save(() => createRoute(form, stops), "Route saved.")
+            save(() => createRoute(form, stops), "Маршрут збережено.")
           }
           onCancel={() => openForm(null)}
         />
@@ -197,12 +197,12 @@ export function RoutesPage() {
           <table>
             <thead>
               <tr>
-                <th>Route</th>
-                <th>Departure</th>
-                <th>Distance</th>
-                <th>Driver</th>
-                <th>Vehicle</th>
-                <th>Actions</th>
+                <th>Маршрут</th>
+                <th>Виїзд</th>
+                <th>Відстань</th>
+                <th>Водій</th>
+                <th>Транспорт</th>
+                <th>Дії</th>
               </tr>
             </thead>
             <tbody>
@@ -211,14 +211,14 @@ export function RoutesPage() {
                   <tr>
                     <td>{route.id}</td>
                     <td>{formatDateTime(route.departure_at)}</td>
-                    <td>{route.distance} km</td>
+                    <td>{route.distance} км</td>
                     <td>
                       {drivers?.find((d) => d.id === route.driver_id)
-                        ?.full_name ?? "Not assigned"}
+                        ?.full_name ?? "Не призначено"}
                     </td>
                     <td>
                       {vehicles?.find((v) => v.id === route.vehicle_id)?.make ??
-                        "Not assigned"}
+                        "Не призначено"}
                     </td>
                     <td className="actions">
                       <button
@@ -229,7 +229,7 @@ export function RoutesPage() {
                           setStopsOpen(stopsOpen === route.id ? null : route.id)
                         }
                       >
-                        Stops
+                        Зупинки
                       </button>
                       {route.status === "PLANNED" && (
                         <>
@@ -238,7 +238,7 @@ export function RoutesPage() {
                             className="secondary"
                             onClick={() => openForm({ form: "edit", route })}
                           >
-                            Edit
+                            Редагувати
                           </button>
                           {route.driver_id !== null &&
                             route.vehicle_id !== null && (
@@ -249,7 +249,7 @@ export function RoutesPage() {
                                   openForm({ form: "start", route })
                                 }
                               >
-                                Start
+                                Розпочати
                               </button>
                             )}
                           <button
@@ -257,7 +257,7 @@ export function RoutesPage() {
                             className="secondary"
                             onClick={() => openForm({ form: "close", route })}
                           >
-                            Close
+                            Закрити
                           </button>
                         </>
                       )}
@@ -267,7 +267,7 @@ export function RoutesPage() {
                           className="secondary"
                           onClick={() => openForm({ form: "complete", route })}
                         >
-                          Complete
+                          Завершити
                         </button>
                       )}
                       {(route.status === "PLANNED" ||
@@ -278,13 +278,13 @@ export function RoutesPage() {
                           disabled={pending}
                           onClick={() =>
                             confirmed(
-                              `Cancel route ${route.id}?`,
+                              `Скасувати маршрут №${route.id}?`,
                               () => apiPost(`/routes/${route.id}/cancel`),
-                              "Route cancelled.",
+                              "Маршрут скасовано.",
                             )
                           }
                         >
-                          Cancel
+                          Скасувати
                         </button>
                       )}
                       {route.status === "PLANNED" && (
@@ -294,13 +294,13 @@ export function RoutesPage() {
                           disabled={pending}
                           onClick={() =>
                             confirmed(
-                              `Delete route ${route.id}?`,
+                              `Видалити маршрут №${route.id}?`,
                               () => apiDelete(`/routes/${route.id}`),
-                              "Route deleted.",
+                              "Маршрут видалено.",
                             )
                           }
                         >
-                          Delete
+                          Видалити
                         </button>
                       )}
                     </td>
@@ -357,12 +357,12 @@ function RouteForm({
   return (
     <form className="panel" onSubmit={submit}>
       <h2 className="panel-title">
-        {route ? `Edit route ${route.id}` : "New route"}
+        {route ? `Редагування маршруту №${route.id}` : "Новий маршрут"}
       </h2>
       <label>
-        Driver
+        Водій
         <select name="driver_id" defaultValue={route?.driver_id ?? ""}>
-          {!route?.driver_id && <option value="">Not assigned</option>}
+          {!route?.driver_id && <option value="">Не призначено</option>}
           {drivers
             .filter(
               (d) =>
@@ -376,9 +376,9 @@ function RouteForm({
         </select>
       </label>
       <label>
-        Vehicle
+        Транспорт
         <select name="vehicle_id" defaultValue={route?.vehicle_id ?? ""}>
-          {!route?.vehicle_id && <option value="">Not assigned</option>}
+          {!route?.vehicle_id && <option value="">Не призначено</option>}
           {vehicles
             .filter((v) => v.status === "ACTIVE" || v.id === route?.vehicle_id)
             .map((v) => (
@@ -389,7 +389,7 @@ function RouteForm({
         </select>
       </label>
       <label>
-        Distance, km
+        Відстань, км
         <input
           name="distance"
           type="number"
@@ -401,7 +401,7 @@ function RouteForm({
         />
       </label>
       <label>
-        Departure
+        Виїзд
         <DateField
           name="departure_at"
           withTime
@@ -412,10 +412,10 @@ function RouteForm({
       <StopFields stops={stops} onChange={setStops} />
       <div className="form-actions">
         <button type="submit" disabled={pending}>
-          Save route
+          Зберегти маршрут
         </button>
         <button type="button" className="secondary" onClick={onCancel}>
-          Cancel
+          Скасувати
         </button>
       </div>
     </form>
@@ -446,7 +446,7 @@ function RouteTimeForm({
   return (
     <form className="panel" onSubmit={submit}>
       <h2 className="panel-title">
-        {title} {route.id}
+        {title} №{route.id}
       </h2>
       <label>
         {label}
@@ -462,7 +462,7 @@ function RouteTimeForm({
           {title}
         </button>
         <button type="button" className="secondary" onClick={onCancel}>
-          Back
+          Назад
         </button>
       </div>
     </form>
