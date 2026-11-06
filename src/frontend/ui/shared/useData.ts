@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+export const REFRESH_EVENT = "fleet:refresh";
+
 export function useData<T>(load: () => Promise<T>) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState("");
@@ -22,6 +24,8 @@ export function useData<T>(load: () => Promise<T>) {
 
   useEffect(() => {
     reload();
+    window.addEventListener(REFRESH_EVENT, reload);
+    return () => window.removeEventListener(REFRESH_EVENT, reload);
   }, [reload]);
 
   const clearMessages = useCallback(() => {

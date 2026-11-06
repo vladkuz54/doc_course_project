@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { apiGet, apiPatch } from "../api";
 import { formatDateTime } from "./fleet";
-import { useData } from "./useData";
+import { REFRESH_EVENT, useData } from "./useData";
 
 export type RelatedEntity = "drivers" | "vehicles" | "routes" | "driver_requests";
 
@@ -31,6 +31,7 @@ export function NotificationsPopover({
   const { data, error, pending, reload, run } = useData(loadNotifications);
   const panel = useRef<HTMLDivElement>(null);
   const unread = data?.filter((notification) => !notification.is_read) ?? [];
+  const newestId = useRef<number | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -39,8 +40,19 @@ export function NotificationsPopover({
     return () => clearInterval(timer);
   }, [reload]);
 
+  // A new notification means data changed elsewhere: reload the open page.
+  useEffect(() => {
+    if (!data) return;
+    const newest = Math.max(0, ...data.map((notification) => notification.id));
+    if (newestId.current !== null && newest > newestId.current) {
+      window.dispatchEvent(new Event(REFRESH_EVENT));
+    }
+    newestId.current = newest;
+  }, [data]);
+
   const open = (notification: Notification) => {
     panel.current?.hidePopover();
+    window.dispatchEvent(new Event(REFRESH_EVENT));
     if (!notification.is_read) run(() => markAsRead(notification.id));
   };
 
