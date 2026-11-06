@@ -16,7 +16,7 @@ class FuelRecordData(BaseModel):
 
 
 class FuelRecordsService(IFuelRecordsService, AccountingService):
-    entity_name = "Fuel record"
+    entity_name = "Запис про пальне"
 
     async def _validate(self, data, id=None):
         await self._ensure_vehicle_exists(data.vehicle_id)

@@ -29,7 +29,9 @@ class AccountingService(IAccountingService, BaseService):
 
     async def _ensure_vehicle_exists(self, vehicle_id):
         if not await self.vehicles_repository.get_by_id(vehicle_id):
-            raise EntityNotFoundError(f"Vehicle with ID {vehicle_id} not found")
+            raise EntityNotFoundError(
+                "Обраний транспорт не знайдено. Оновіть сторінку й оберіть інший."
+            )
 
     async def _save(self, data):
         return await self.repository.create(self._create_record(data))

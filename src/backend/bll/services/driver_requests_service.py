@@ -17,7 +17,7 @@ class DriverRequestData(BaseModel):
 
 
 class DriverRequestsService(IDriverRequestsService):
-    entity_name = "Driver request"
+    entity_name = "Запит"
 
     def __init__(self, repository: IDriverRequestsRepository):
         self.repository = repository
@@ -28,7 +28,10 @@ class DriverRequestsService(IDriverRequestsService):
     async def get_by_id(self, id):
         obj = await self.repository.get_by_id(id)
         if not obj:
-            raise EntityNotFoundError(f"{self.entity_name} with ID {id} not found")
+            raise EntityNotFoundError(
+                f"{self.entity_name} не знайдено. Можливо, запис уже видалено — "
+                "оновіть сторінку."
+            )
         return obj
 
     async def get_by_driver(self, driver_id):

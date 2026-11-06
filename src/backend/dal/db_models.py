@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import (
     Boolean,
@@ -40,6 +40,8 @@ LICENSE_CATEGORIES = (
     "DE",
     "T",
 )
+TECHNICAL_STATES = ("GOOD", "NEEDS_SERVICE", "IN_REPAIR", "FAULTY")
+WARNING_DAYS = 14
 MIN_VEHICLE_YEAR = 1980
 ACTIVE_ROUTE_STATUSES = ("PLANNED", "IN_PROGRESS")
 AVERAGE_SPEED_KMH = 60
@@ -132,7 +134,7 @@ class DriverRequests(Base):
         StrEnum("LICENSE_UPDATE", "MEDICAL_CHECK", name="request_type"), nullable=False
     )
     status = Column(
-        StrEnum("PENDING", "APPROVED", name="request_status"),
+        StrEnum("PENDING", "APPROVED", "REJECTED", name="request_status"),
         nullable=False,
         default="PENDING",
     )
@@ -159,7 +161,6 @@ class Vehicles(Base):
     required_license_category = Column(
         StrEnum(*LICENSE_CATEGORIES, name="required_license_category"), nullable=False
     )
-    technical_state = Column(String, nullable=False)
     status = Column(
         StrEnum("ACTIVE", "DECOMMISSIONED", name="vehicle_status"),
         nullable=False,
@@ -171,11 +172,26 @@ class Vehicles(Base):
         "FuelRecords", back_populates="vehicle", passive_deletes="all"
     )
     repair_records = relationship(
-        "RepairRecords", back_populates="vehicle", passive_deletes="all"
+        "RepairRecords",
+        back_populates="vehicle",
+        passive_deletes="all",
+        lazy="selectin",
     )
     insurance_policies = relationship(
         "InsurancePolicies", back_populates="vehicle", passive_deletes="all"
     )
+
+    @property
+    def technical_state(self):
+        if self.status == "DECOMMISSIONED":
+            return "FAULTY"
+        planned = [r.date for r in self.repair_records if r.status == "PLANNED"]
+        today = date.today()
+        if today in planned:
+            return "IN_REPAIR"
+        if any(d <= today + timedelta(days=WARNING_DAYS) for d in planned):
+            return "NEEDS_SERVICE"
+        return "GOOD"
 
 
 class Routes(Base):
@@ -226,8 +242,8 @@ class Routes(Base):
     def edit_stops(self, stops):
         self.state.edit_stops(self, stops)
 
-    def start(self):
-        self.state.start(self)
+    def start(self, started_at=None):
+        self.state.start(self, started_at)
 
     def arrive_at_stop(self, stop):
         self.state.arrive_at_stop(self, stop)
@@ -248,7 +264,9 @@ class Routes(Base):
                 minutes=MINUTES_PER_STOP * len(self.stops),
             )
         except OverflowError:
-            raise RouteActionNotAllowed("The departure time is too far in the future")
+            raise RouteActionNotAllowed(
+                "Час виїзду надто далеко в майбутньому. Перевірте дату."
+            )
 
 
 class RouteStops(Base):
@@ -328,6 +346,8 @@ class Notifications(Base):
             "LICENSE_EXPIRING",
             "MEDICAL_CHECK_DUE",
             "ROUTE_ASSIGNED",
+            "REQUEST_APPROVED",
+            "REQUEST_REJECTED",
             name="notification_type",
         ),
         nullable=False,

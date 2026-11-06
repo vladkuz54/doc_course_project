@@ -1,0 +1,743 @@
+"use client";
+
+import {
+  Fragment,
+  useEffect,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import { apiDelete, apiGet, apiPost, apiPut } from "../api";
+import { DateField, toIsoDate } from "../shared/DateField";
+import { formatDate, type Vehicle } from "../shared/fleet";
+import { FormRow } from "../shared/FormRow";
+import { Messages } from "../shared/Messages";
+import { StatusSections } from "../shared/StatusSections";
+import { useData } from "../shared/useData";
+
+type FuelRecord = {
+  id: number;
+  vehicle_id: number;
+  date: string;
+  amount: string;
+  liters: number;
+};
+
+type InsurancePolicy = {
+  id: number;
+  vehicle_id: number;
+  date: string;
+  amount: string;
+  start_date: string;
+  end_date: string;
+};
+
+type RepairType = "SERVICE_TO" | "INSPECTION" | "REPAIR";
+
+type RepairRecord = {
+  id: number;
+  vehicle_id: number;
+  date: string;
+  amount: string | null;
+  type: RepairType;
+  description: string;
+  status: "PLANNED" | "DONE";
+};
+
+const REPAIR_TYPE_LABELS: Record<RepairType, string> = {
+  SERVICE_TO: "ТО",
+  INSPECTION: "Техогляд",
+  REPAIR: "Ремонт",
+};
+
+const TABS = {
+  fuel: { label: "Пальне", Tab: FuelTab },
+  repairs: { label: "Обслуговування", Tab: RepairsTab },
+  insurance: { label: "Страхування", Tab: InsuranceTab },
+};
+
+type TabName = keyof typeof TABS;
+
+const REPAIR_SECTIONS: { status: RepairRecord["status"]; label: string }[] = [
+  { status: "PLANNED", label: "Заплановано" },
+  { status: "DONE", label: "Виконано" },
+];
+
+function withVehicles<T>(path: string) {
+  return () =>
+    Promise.all([apiGet<T[]>(path), apiGet<Vehicle[]>("/vehicles/")]);
+}
+
+const loadFuel = withVehicles<FuelRecord>("/fuel-records/");
+const loadRepairs = withVehicles<RepairRecord>("/repair-records/");
+const loadInsurance = withVehicles<InsurancePolicy>("/insurance-policies/");
+
+function newestFirst(a: { date: string }, b: { date: string }) {
+  return b.date.localeCompare(a.date);
+}
+
+export function AccountingPage() {
+  const [tab, setTab] = useState<TabName>("fuel");
+  const { Tab } = TABS[tab];
+
+  return (
+    <>
+      <h1>Облік</h1>
+      <div className="tabs" role="tablist">
+        {(Object.keys(TABS) as TabName[]).map((name) => (
+          <button
+            key={name}
+            type="button"
+            role="tab"
+            aria-selected={name === tab}
+            className={name === tab ? undefined : "secondary"}
+            onClick={() => setTab(name)}
+          >
+            {TABS[name].label}
+          </button>
+        ))}
+      </div>
+      <Tab key={tab} />
+    </>
+  );
+}
+
+function useRecords<T, E>(load: () => Promise<[T[], Vehicle[]]>) {
+  const { data, error, notice, pending, run, clearMessages } = useData(load);
+  const [editing, setEditing] = useState<E | "new" | null>(null);
+
+  useEffect(() => {
+    if (editing === "new") window.scrollTo(0, 0);
+  }, [editing]);
+
+  const openForm = (next: E | "new" | null) => {
+    clearMessages();
+    setEditing(next);
+  };
+
+  const save = (action: () => Promise<unknown>, doneNotice: string) => {
+    run(action, doneNotice).then((saved) => {
+      if (saved) setEditing(null);
+    });
+  };
+
+  const remove = (path: string, doneNotice: string) => {
+    if (window.confirm("Видалити цей запис?")) {
+      run(() => apiDelete(path), doneNotice);
+    }
+  };
+
+  const [records, vehicles] = data ?? [];
+  const vehicleName = (id: number) =>
+    vehicles?.find((vehicle) => vehicle.id === id)?.make;
+
+  return {
+    records,
+    run,
+    clearMessages,
+    vehicles: vehicles ?? [],
+    vehicleName,
+    error,
+    notice,
+    pending,
+    editing,
+    openForm,
+    save,
+    remove,
+  };
+}
+
+function RecordForm({
+  title,
+  saveLabel,
+  pending,
+  onSubmit,
+  onCancel,
+  children,
+}: {
+  title: string;
+  saveLabel: string;
+  pending: boolean;
+  onSubmit: (form: FormData) => void;
+  onCancel: () => void;
+  children: ReactNode;
+}) {
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSubmit(new FormData(event.currentTarget));
+  };
+
+  return (
+    <form className="panel" onSubmit={submit}>
+      <h2 className="panel-title">{title}</h2>
+      {children}
+      <div className="form-actions">
+        <button type="submit" disabled={pending}>
+          {saveLabel}
+        </button>
+        <button type="button" className="secondary" onClick={onCancel}>
+          Скасувати
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function VehicleSelect({
+  vehicles,
+  defaultValue,
+}: {
+  vehicles: Vehicle[];
+  defaultValue?: number;
+}) {
+  return (
+    <label>
+      Транспорт
+      <select name="vehicle_id" defaultValue={defaultValue} required>
+        {vehicles.map((vehicle) => (
+          <option key={vehicle.id} value={vehicle.id}>
+            {vehicle.make}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function NumberField({
+  label,
+  name,
+  min,
+  defaultValue,
+}: {
+  label: string;
+  name: string;
+  min: string;
+  defaultValue?: string | number;
+}) {
+  return (
+    <label>
+      {label}
+      <input
+        name={name}
+        type="number"
+        step="any"
+        min={min}
+        defaultValue={defaultValue}
+        required
+      />
+    </label>
+  );
+}
+
+function RowActions({
+  pending,
+  onEdit,
+  onDelete,
+  children,
+}: {
+  pending: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  children?: ReactNode;
+}) {
+  return (
+    <td className="actions">
+      {children}
+      <button type="button" className="secondary" onClick={onEdit}>
+        Редагувати
+      </button>
+      <button
+        type="button"
+        className="secondary danger"
+        disabled={pending}
+        onClick={onDelete}
+      >
+        Видалити
+      </button>
+    </td>
+  );
+}
+
+function dateOf(form: FormData, name: string) {
+  return toIsoDate(String(form.get(name)));
+}
+
+function FuelTab() {
+  const records = useRecords<FuelRecord, FuelRecord>(loadFuel);
+  const { editing, openForm, save, remove, pending, vehicles } = records;
+
+  const fields = (form: FormData) => ({
+    vehicle_id: Number(form.get("vehicle_id")),
+    date: dateOf(form, "date"),
+    amount: Number(form.get("amount")),
+    liters: Number(form.get("liters")),
+  });
+
+  const submit = (form: FormData) =>
+    save(
+      () =>
+        editing && editing !== "new"
+          ? apiPut(`/fuel-records/${editing.id}`, fields(form))
+          : apiPost("/fuel-records/", fields(form)),
+      "Запис про пальне збережено.",
+    );
+
+  const record = editing && editing !== "new" ? editing : null;
+
+  const form = editing && (
+    <RecordForm
+      key={record?.id ?? "new"}
+      title={record ? "Редагування запису про пальне" : "Новий запис про пальне"}
+      saveLabel="Зберегти запис"
+      pending={pending}
+      onSubmit={submit}
+      onCancel={() => openForm(null)}
+    >
+      <VehicleSelect vehicles={vehicles} defaultValue={record?.vehicle_id} />
+      <label>
+        Дата
+        <DateField name="date" defaultValue={record?.date} required />
+      </label>
+      <NumberField
+        label="Сума"
+        name="amount"
+        min="0"
+        defaultValue={record?.amount}
+      />
+      <NumberField
+        label="Літри"
+        name="liters"
+        min="0.01"
+        defaultValue={record?.liters}
+      />
+    </RecordForm>
+  );
+
+  return (
+    <>
+      <div className="tab-actions">
+        <button type="button" onClick={() => openForm("new")}>
+          Додати запис про пальне
+        </button>
+      </div>
+      <Messages
+        error={records.error}
+        notice={records.notice}
+        onClose={records.clearMessages}
+      />
+      {editing === "new" && form}
+      {records.records?.length === 0 && (
+        <p className="muted">Записів про пальне ще немає.</p>
+      )}
+      {records.records && records.records.length > 0 && (
+        <div className="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Транспорт</th>
+                <th>Дата</th>
+                <th>Сума</th>
+                <th>Літри</th>
+                <th>Дії</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.records.toSorted(newestFirst).map((row) => (
+                <Fragment key={row.id}>
+                  <tr>
+                    <td>{records.vehicleName(row.vehicle_id)}</td>
+                    <td>{formatDate(row.date)}</td>
+                    <td>{row.amount}</td>
+                    <td>{row.liters}</td>
+                    <RowActions
+                      pending={pending}
+                      onEdit={() => openForm(row)}
+                      onDelete={() =>
+                        remove(
+                          `/fuel-records/${row.id}`,
+                          "Запис про пальне видалено.",
+                        )
+                      }
+                    />
+                  </tr>
+                  {record?.id === row.id && (
+                    <FormRow colSpan={5}>{form}</FormRow>
+                  )}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
+function InsuranceTab() {
+  const records = useRecords<InsurancePolicy, InsurancePolicy>(loadInsurance);
+  const { editing, openForm, save, remove, pending, vehicles } = records;
+
+  const fields = (form: FormData) => ({
+    vehicle_id: Number(form.get("vehicle_id")),
+    date: dateOf(form, "date"),
+    amount: Number(form.get("amount")),
+    start_date: dateOf(form, "start_date"),
+    end_date: dateOf(form, "end_date"),
+  });
+
+  const submit = (form: FormData) =>
+    save(
+      () =>
+        editing && editing !== "new"
+          ? apiPut(`/insurance-policies/${editing.id}`, fields(form))
+          : apiPost("/insurance-policies/", fields(form)),
+      "Страховий поліс збережено.",
+    );
+
+  const record = editing && editing !== "new" ? editing : null;
+
+  const form = editing && (
+    <RecordForm
+      key={record?.id ?? "new"}
+      title={record ? "Редагування страхового поліса" : "Новий страховий поліс"}
+      saveLabel="Зберегти поліс"
+      pending={pending}
+      onSubmit={submit}
+      onCancel={() => openForm(null)}
+    >
+      <VehicleSelect vehicles={vehicles} defaultValue={record?.vehicle_id} />
+      <label>
+        Дата оплати
+        <DateField name="date" defaultValue={record?.date} required />
+      </label>
+      <NumberField
+        label="Сума"
+        name="amount"
+        min="0"
+        defaultValue={record?.amount}
+      />
+      <label>
+        Початок покриття
+        <DateField
+          name="start_date"
+          defaultValue={record?.start_date}
+          required
+        />
+      </label>
+      <label>
+        Кінець покриття
+        <DateField name="end_date" defaultValue={record?.end_date} required />
+      </label>
+    </RecordForm>
+  );
+
+  return (
+    <>
+      <div className="tab-actions">
+        <button type="button" onClick={() => openForm("new")}>
+          Додати страховий поліс
+        </button>
+      </div>
+      <Messages
+        error={records.error}
+        notice={records.notice}
+        onClose={records.clearMessages}
+      />
+      {editing === "new" && form}
+      {records.records?.length === 0 && (
+        <p className="muted">Страхових полісів ще немає.</p>
+      )}
+      {records.records && records.records.length > 0 && (
+        <div className="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Транспорт</th>
+                <th>Дата оплати</th>
+                <th>Сума</th>
+                <th>Початок покриття</th>
+                <th>Кінець покриття</th>
+                <th>Дії</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.records.toSorted(newestFirst).map((row) => (
+                <Fragment key={row.id}>
+                  <tr>
+                    <td>{records.vehicleName(row.vehicle_id)}</td>
+                    <td>{formatDate(row.date)}</td>
+                    <td>{row.amount}</td>
+                    <td>{formatDate(row.start_date)}</td>
+                    <td>{formatDate(row.end_date)}</td>
+                    <RowActions
+                      pending={pending}
+                      onEdit={() => openForm(row)}
+                      onDelete={() =>
+                        remove(
+                          `/insurance-policies/${row.id}`,
+                          "Страховий поліс видалено.",
+                        )
+                      }
+                    />
+                  </tr>
+                  {record?.id === row.id && (
+                    <FormRow colSpan={6}>{form}</FormRow>
+                  )}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
+function RepairsTab() {
+  const records = useRecords<RepairRecord, RepairRecord>(loadRepairs);
+  const { editing, openForm, save, remove, pending, vehicles } = records;
+  const [costing, setCosting] = useState<RepairRecord | null>(null);
+
+  const open = (next: RepairRecord | "new" | null) => {
+    setCosting(null);
+    openForm(next);
+  };
+
+  const openCost = (repair: RepairRecord) => {
+    openForm(null);
+    setCosting(repair);
+  };
+
+  const shared = (form: FormData) => ({
+    date: dateOf(form, "date"),
+    type: form.get("type"),
+    description: form.get("description"),
+  });
+
+  const add = (form: FormData) =>
+    save(
+      () =>
+        apiPost("/repair-records/", {
+          ...shared(form),
+          vehicle_id: Number(form.get("vehicle_id")),
+          status: form.get("status"),
+          amount:
+            form.get("status") === "DONE" ? Number(form.get("amount")) : null,
+        }),
+      "Обслуговування збережено.",
+    );
+
+  const update = (repair: RepairRecord, form: FormData) =>
+    save(
+      () =>
+        apiPut(`/repair-records/${repair.id}`, {
+          ...shared(form),
+          vehicle_id: repair.vehicle_id,
+          status: repair.status,
+          amount: repair.amount,
+        }),
+      "Обслуговування збережено.",
+    );
+
+  const recordCost = (repair: RepairRecord, form: FormData) =>
+    records
+      .run(
+        () =>
+          apiPost(`/repair-records/${repair.id}/cost`, {
+            cost: Number(form.get("cost")),
+          }),
+        "Вартість обслуговування внесено.",
+      )
+      .then((saved) => {
+        if (saved) setCosting(null);
+      });
+
+  const editingRepair = editing && editing !== "new" ? editing : null;
+
+  const costForm = costing && (
+    <RecordForm
+      key={`cost-${costing.id}`}
+      title={`Внесення вартості: ${REPAIR_TYPE_LABELS[costing.type]}, ${records.vehicleName(costing.vehicle_id)}`}
+      saveLabel="Внести вартість"
+      pending={pending}
+      onSubmit={(form) => recordCost(costing, form)}
+      onCancel={() => open(null)}
+    >
+      <NumberField label="Вартість" name="cost" min="0" />
+    </RecordForm>
+  );
+
+  const editForm = editingRepair && (
+    <RecordForm
+      key={editingRepair.id}
+      title={`Редагування обслуговування: ${records.vehicleName(editingRepair.vehicle_id)}`}
+      saveLabel="Зберегти обслуговування"
+      pending={pending}
+      onSubmit={(form) => update(editingRepair, form)}
+      onCancel={() => open(null)}
+    >
+      <RepairFields repair={editingRepair} />
+    </RecordForm>
+  );
+
+  return (
+    <>
+      <div className="tab-actions">
+        <button type="button" onClick={() => open("new")}>
+          Додати обслуговування
+        </button>
+      </div>
+      <Messages
+        error={records.error}
+        notice={records.notice}
+        onClose={records.clearMessages}
+      />
+      {editing === "new" && (
+        <NewRepairForm
+          vehicles={vehicles}
+          pending={pending}
+          onSubmit={add}
+          onCancel={() => open(null)}
+        />
+      )}
+      {records.records?.length === 0 && (
+        <p className="muted">Записів про обслуговування ще немає.</p>
+      )}
+      {records.records && records.records.length > 0 && (
+        <StatusSections
+          items={records.records.toSorted(newestFirst)}
+          statusOf={(row) => row.status}
+          sections={REPAIR_SECTIONS}
+        >
+          {(rows) => (
+            <table>
+              <thead>
+                <tr>
+                  <th>Транспорт</th>
+                  <th>Дата</th>
+                  <th>Тип</th>
+                  <th>Опис</th>
+                  {rows[0].status === "DONE" && <th>Вартість</th>}
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <Fragment key={row.id}>
+                    <tr>
+                      <td>{records.vehicleName(row.vehicle_id)}</td>
+                      <td>{formatDate(row.date)}</td>
+                      <td>{REPAIR_TYPE_LABELS[row.type]}</td>
+                      <td>{row.description}</td>
+                      {row.status === "DONE" && <td>{row.amount}</td>}
+                      <RowActions
+                        pending={pending}
+                        onEdit={() => open(row)}
+                        onDelete={() =>
+                          remove(`/repair-records/${row.id}`, "Обслуговування видалено.")
+                        }
+                      >
+                        {row.status === "PLANNED" && (
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => openCost(row)}
+                          >
+                            Внести вартість
+                          </button>
+                        )}
+                      </RowActions>
+                    </tr>
+                    {editingRepair?.id === row.id && (
+                      <FormRow colSpan={row.status === "DONE" ? 6 : 5}>
+                        {editForm}
+                      </FormRow>
+                    )}
+                    {costing?.id === row.id && (
+                      <FormRow colSpan={row.status === "DONE" ? 6 : 5}>
+                        {costForm}
+                      </FormRow>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </StatusSections>
+      )}
+    </>
+  );
+}
+
+function RepairFields({ repair }: { repair?: RepairRecord }) {
+  return (
+    <>
+      <label>
+        Дата
+        <DateField name="date" defaultValue={repair?.date} required />
+      </label>
+      <label>
+        Тип
+        <select name="type" defaultValue={repair?.type}>
+          {Object.entries(REPAIR_TYPE_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Опис
+        <input name="description" defaultValue={repair?.description} />
+      </label>
+    </>
+  );
+}
+
+function NewRepairForm({
+  vehicles,
+  pending,
+  onSubmit,
+  onCancel,
+}: {
+  vehicles: Vehicle[];
+  pending: boolean;
+  onSubmit: (form: FormData) => void;
+  onCancel: () => void;
+}) {
+  const [status, setStatus] = useState<RepairRecord["status"]>("PLANNED");
+
+  return (
+    <RecordForm
+      title="Нове обслуговування"
+      saveLabel="Зберегти обслуговування"
+      pending={pending}
+      onSubmit={onSubmit}
+      onCancel={onCancel}
+    >
+      <label>
+        Статус
+        <select
+          name="status"
+          value={status}
+          onChange={(event) =>
+            setStatus(event.target.value as RepairRecord["status"])
+          }
+        >
+          <option value="PLANNED">Заплановано</option>
+          <option value="DONE">Виконано</option>
+        </select>
+      </label>
+      <VehicleSelect
+        vehicles={
+          status === "PLANNED"
+            ? vehicles.filter((vehicle) => vehicle.status === "ACTIVE")
+            : vehicles
+        }
+      />
+      <RepairFields />
+      {status === "DONE" && <NumberField label="Вартість" name="amount" min="0" />}
+    </RecordForm>
+  );
+}

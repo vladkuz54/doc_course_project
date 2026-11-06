@@ -14,6 +14,17 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 from .exceptions import BusinessRuleError
 
 PDF_FONT = "DejaVuSans"
+COLUMN_LABELS = {
+    "vehicle": "Транспорт",
+    "completed_routes": "Завершені маршрути",
+    "total_distance": "Загальна відстань, км",
+    "done_repairs": "Виконане обслуговування",
+    "planned_repairs": "Заплановане обслуговування",
+    "total_cost": "Загальна вартість",
+    "liters": "Літри",
+    "fuel_cost": "Вартість пального",
+    "liters_per_100km": "Літрів на 100 км",
+}
 pdfmetrics.registerFont(
     TTFont(PDF_FONT, Path(__file__).parent / "fonts" / "DejaVuSans.ttf")
 )
@@ -27,7 +38,7 @@ class File:
 
 
 def _period(report):
-    return f"{report.period_from:%d.%m.%Y} - {report.period_to:%d.%m.%Y}"
+    return f"з {report.period_from:%d/%m/%Y} по {report.period_to:%d/%m/%Y}"
 
 
 def _filename(report, extension):
@@ -36,6 +47,18 @@ def _filename(report, extension):
 
 def _columns(report):
     return list(report.rows[0]) if report.rows else []
+
+
+def _label(column):
+    return COLUMN_LABELS.get(column, column)
+
+
+def _pdf_cell(value):
+    if value is None:
+        return "—"
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value)
 
 
 class ExportStrategy(ABC):
@@ -52,9 +75,8 @@ class PdfExport(ExportStrategy):
         story = [Paragraph(report.title, title), Paragraph(_period(report), text)]
         columns = _columns(report)
         if columns:
-            cells = [columns] + [
-                ["" if row[c] is None else str(row[c]) for c in columns]
-                for row in report.rows
+            cells = [[_label(c) for c in columns]] + [
+                [_pdf_cell(row[c]) for c in columns] for row in report.rows
             ]
             table = Table(cells)
             table.setStyle(
@@ -82,7 +104,7 @@ class ExcelExport(ExportStrategy):
         columns = _columns(report)
         if columns:
             sheet.append([])
-            sheet.append(columns)
+            sheet.append([_label(c) for c in columns])
             for row in report.rows:
                 sheet.append([row[c] for c in columns])
         buffer = BytesIO()
@@ -103,5 +125,5 @@ class ReportExporter:
 
     def export(self, report):
         if self._strategy is None:
-            raise BusinessRuleError("The export format is not set")
+            raise BusinessRuleError("Оберіть формат експорту: PDF або Excel.")
         return self._strategy.export(report)

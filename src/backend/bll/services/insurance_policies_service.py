@@ -18,12 +18,15 @@ class InsurancePolicyData(BaseModel):
 
 
 class InsurancePoliciesService(IInsurancePoliciesService, AccountingService):
-    entity_name = "Insurance policy"
+    entity_name = "Страховий поліс"
 
     async def _validate(self, data, id=None):
         await self._ensure_vehicle_exists(data.vehicle_id)
         if data.end_date < data.start_date:
-            raise BusinessRuleError("end_date cannot be before start_date")
+            raise BusinessRuleError(
+                f"Кінець покриття ({data.end_date:%d/%m/%Y}) не може бути "
+                f"раніше за його початок ({data.start_date:%d/%m/%Y})."
+            )
 
     def _create_record(self, data):
         return InsurancePolicies(**self.to_fields(data))

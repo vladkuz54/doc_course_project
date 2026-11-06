@@ -5,6 +5,8 @@ from .base_service import BaseService
 
 class EntityManagement(BaseService, Subject):
     status_field = "status"
+    status_labels = {}
+    status_blocked_message = "Цей статус зараз не можна встановити."
 
     def __init__(self, repository):
         BaseService.__init__(self, repository)
@@ -13,13 +15,12 @@ class EntityManagement(BaseService, Subject):
     async def change_status(self, id, status):
         entity = await self.get_by_id(id)
         if getattr(entity, self.status_field) == status:
+            label = self.status_labels.get(status, status)
             raise BusinessRuleError(
-                f"{self.entity_name} with ID {id} already has status {status}"
+                f"Статус уже «{label}», змінювати нічого не потрібно."
             )
         if not await self._can_change_status(entity, status):
-            raise BusinessRuleError(
-                f"{self.entity_name} with ID {id} cannot change status to {status}"
-            )
+            raise BusinessRuleError(self.status_blocked_message)
         await self._apply_status(entity, status)
         await self._after_status_change(entity)
         return entity
@@ -30,9 +31,7 @@ class EntityManagement(BaseService, Subject):
         if status != getattr(
             entity, self.status_field
         ) and not await self._can_change_status(entity, status):
-            raise BusinessRuleError(
-                f"{self.entity_name} with ID {id} cannot change status to {status}"
-            )
+            raise BusinessRuleError(self.status_blocked_message)
         return await super().update(id, data)
 
     async def _can_change_status(self, entity, status):

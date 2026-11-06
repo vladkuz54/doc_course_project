@@ -8,7 +8,11 @@ from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.route_stops_interfaces import IRouteStopsRepository
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
-from ...dal.route_states import PlannedState, RouteActionNotAllowed
+from ...dal.route_states import (
+    ROUTE_STATUS_LABELS,
+    PlannedState,
+    RouteActionNotAllowed,
+)
 from ..assignment_checks import (
     AssignmentRequest,
     DriverActiveHandler,
@@ -56,12 +60,17 @@ class RouteVehicleData(BaseModel):
     vehicle_id: int
 
 
+class RouteStartData(BaseModel):
+    started_at: NaiveDatetime | None = None
+
+
 class RouteCompleteData(BaseModel):
     returned_at: NaiveDatetime | None = None
 
 
 class RoutesService(IRoutesService, EntityManagement):
-    entity_name = "Route"
+    entity_name = "Маршрут"
+    status_labels = ROUTE_STATUS_LABELS
 
     def __init__(
         self,
@@ -110,15 +119,21 @@ class RoutesService(IRoutesService, EntityManagement):
     async def update(self, id, data):
         route = await self.get_by_id(id)
         if not isinstance(route.state, PlannedState):
-            raise RouteActionNotAllowed(f"Cannot edit a {route.status} route")
+            raise RouteActionNotAllowed(
+                f"Маршрут №{route.id} має статус "
+                f"«{ROUTE_STATUS_LABELS[route.status]}», тому його не можна "
+                "редагувати. Змінювати можна лише заплановані маршрути."
+            )
         await self._validate(data, id)
         if data.driver_id is None and route.driver_id is not None:
             raise BusinessRuleError(
-                "Cannot remove the driver, cancel the route instead"
+                "Не можна прибрати водія із запланованого маршруту. "
+                "Призначте іншого водія або скасуйте маршрут."
             )
         if data.vehicle_id is None and route.vehicle_id is not None:
             raise BusinessRuleError(
-                "Cannot remove the vehicle, cancel the route instead"
+                "Не можна прибрати транспорт із запланованого маршруту. "
+                "Призначте інший транспорт або скасуйте маршрут."
             )
         new_driver = None
         if data.driver_id != route.driver_id:
@@ -149,7 +164,9 @@ class RoutesService(IRoutesService, EntityManagement):
         elif status == "CANCELLED":
             await self.cancel(entity.id)
         else:
-            raise BusinessRuleError(f"Cannot change a route status to {status}")
+            raise BusinessRuleError(
+                "Маршрут не можна повернути до статусу «Заплановано»."
+            )
 
     async def list_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)
@@ -190,10 +207,10 @@ class RoutesService(IRoutesService, EntityManagement):
         await self._check_assignment(route)
         return await self.repository.update(route)
 
-    async def start(self, route_id):
+    async def start(self, route_id, started_at=None):
         route = await self.get_by_id(route_id)
         await self._ensure_nothing_in_progress(route)
-        route.start()
+        route.start(started_at)
         await self._check_assignment(route)
         return await self.repository.update(route)
 
@@ -201,7 +218,10 @@ class RoutesService(IRoutesService, EntityManagement):
         route = await self.get_by_id(route_id)
         stop = await self.route_stops_repository.get_by_id(stop_id)
         if not stop:
-            raise EntityNotFoundError(f"Route stop with ID {stop_id} not found")
+            raise EntityNotFoundError(
+                "Цю зупинку не знайдено. Можливо, маршрут змінили — "
+                "оновіть сторінку."
+            )
         route.arrive_at_stop(stop)
         return await self.repository.update(route)
 
@@ -249,13 +269,17 @@ class RoutesService(IRoutesService, EntityManagement):
     async def _get_driver(self, driver_id):
         driver = await self.drivers_repository.get_by_id(driver_id)
         if not driver:
-            raise EntityNotFoundError(f"Driver with ID {driver_id} not found")
+            raise EntityNotFoundError(
+                "Обраного водія не знайдено. Оновіть сторінку й оберіть іншого."
+            )
         return driver
 
     async def _get_vehicle(self, vehicle_id):
         vehicle = await self.vehicles_repository.get_by_id(vehicle_id)
         if not vehicle:
-            raise EntityNotFoundError(f"Vehicle with ID {vehicle_id} not found")
+            raise EntityNotFoundError(
+                "Обраний транспорт не знайдено. Оновіть сторінку й оберіть інший."
+            )
         return vehicle
 
     async def _ensure_nothing_in_progress(self, route):
@@ -264,10 +288,18 @@ class RoutesService(IRoutesService, EntityManagement):
             others += await self.repository.get_by_driver(route.driver_id)
         if route.vehicle_id is not None:
             others += await self.repository.get_by_vehicle(route.vehicle_id)
-        if any(r.id != route.id and r.status == "IN_PROGRESS" for r in others):
-            raise BusinessRuleError(
-                "The driver or vehicle is already on a route in progress"
-            )
+        for other in others:
+            if other.id != route.id and other.status == "IN_PROGRESS":
+                busy = (
+                    "Водій"
+                    if route.driver_id is not None
+                    and other.driver_id == route.driver_id
+                    else "Транспорт"
+                )
+                raise BusinessRuleError(
+                    f"{busy} ще на маршруті №{other.id}, який не завершено. "
+                    "Спочатку завершіть той маршрут."
+                )
 
     async def _publish_assigned(self, route, driver):
         await self._notify(

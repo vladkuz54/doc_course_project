@@ -24,6 +24,8 @@ class NotificationData(BaseModel):
         "LICENSE_EXPIRING",
         "MEDICAL_CHECK_DUE",
         "ROUTE_ASSIGNED",
+        "REQUEST_APPROVED",
+        "REQUEST_REJECTED",
     ]
     text: str
     related_entity: Literal["drivers", "vehicles", "routes", "driver_requests"]
@@ -37,7 +39,7 @@ class NotificationUpdateData(NotificationData):
 
 
 class NotificationsService(INotificationsService, BaseService, Observer):
-    entity_name = "Notification"
+    entity_name = "Сповіщення"
 
     def __init__(
         self,
@@ -58,8 +60,14 @@ class NotificationsService(INotificationsService, BaseService, Observer):
     async def _validate(self, data, id=None):
         repository = self.related_repositories[data.related_entity]
         if not await repository.get_by_id(data.related_id):
+            label = {
+                "drivers": "водія",
+                "vehicles": "транспорт",
+                "routes": "маршрут",
+                "driver_requests": "запит",
+            }[data.related_entity]
             raise EntityNotFoundError(
-                f"{data.related_entity} record with ID {data.related_id} not found"
+                f"Не вдалося знайти {label}, до якого належить сповіщення."
             )
 
     async def get_by_driver(self, driver_id):
@@ -72,6 +80,20 @@ class NotificationsService(INotificationsService, BaseService, Observer):
         obj = await self.get_by_id(id)
         obj.is_read = True
         return await self.repository.update(obj)
+
+    async def mark_all_as_read(self, driver_id=None):
+        rows = (
+            await self.get_for_admins()
+            if driver_id is None
+            else await self.get_by_driver(driver_id)
+        )
+        unread = [row for row in rows if not row.is_read]
+        for row in unread:
+            row.is_read = True
+        if unread:
+            # They share a session, so one commit saves every row
+            await self.repository.update(unread[0])
+        return rows
 
     async def on_event(self, event):
         for n in await self.repository.get_unread():

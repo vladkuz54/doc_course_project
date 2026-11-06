@@ -1,9 +1,8 @@
 from datetime import date, timedelta
 
+from ...dal.db_models import WARNING_DAYS
 from ..observer import DomainEvent, Subject
 from .repair_records_service import MAINTENANCE_TYPE_LABELS
-
-WARNING_DAYS = 14
 
 
 def _until():

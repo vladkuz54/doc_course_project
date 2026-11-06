@@ -71,6 +71,14 @@ async def create(
     return await service.create(data)
 
 
+@router.patch("/read-all", response_model=list[NotificationResponse])
+async def mark_all_as_read(
+    driver_id: int | None = Depends(get_current_driver_id),
+    service: NotificationsService = Depends(get_notifications_service),
+):
+    return await service.mark_all_as_read(driver_id)
+
+
 @router.patch("/{id}/read", response_model=NotificationResponse)
 async def mark_as_read(
     id: int,

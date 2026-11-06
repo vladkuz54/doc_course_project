@@ -12,7 +12,7 @@ class RouteStopData(BaseModel):
 
 
 class RouteStopsService(IRouteStopsService):
-    entity_name = "Route stop"
+    entity_name = "Зупинку"
 
     def __init__(self, repository: IRouteStopsRepository):
         self.repository = repository
@@ -23,7 +23,10 @@ class RouteStopsService(IRouteStopsService):
     async def get_by_id(self, id):
         obj = await self.repository.get_by_id(id)
         if not obj:
-            raise EntityNotFoundError(f"{self.entity_name} with ID {id} not found")
+            raise EntityNotFoundError(
+                f"{self.entity_name} не знайдено. Можливо, запис уже видалено — "
+                "оновіть сторінку."
+            )
         return obj
 
     async def get_by_driver(self, driver_id):

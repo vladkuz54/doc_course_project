@@ -5,7 +5,11 @@ from pydantic import BaseModel
 
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.users_interfaces import IUsersRepository
-from ..exceptions import BusinessRuleError, EntityAlreadyExistsError
+from ..exceptions import (
+    AccountDisabledError,
+    BusinessRuleError,
+    EntityAlreadyExistsError,
+)
 from ..interfaces.users_interface import IUsersService
 from .base_service import BaseService
 
@@ -17,7 +21,7 @@ class UserData(BaseModel):
 
 
 class UsersService(IUsersService, BaseService):
-    entity_name = "User"
+    entity_name = "Користувача"
 
     def __init__(
         self, repository: IUsersRepository, drivers_repository: IDriversRepository
@@ -31,18 +35,29 @@ class UsersService(IUsersService, BaseService):
             password.encode(), user.password_hash.encode()
         ):
             return None
+        driver = await self.drivers_repository.get_by_user_id(user.id)
+        if driver and driver.employment_status == "DISMISSED":
+            raise AccountDisabledError(
+                "Ваш обліковий запис водія деактивовано. Зверніться до "
+                "адміністратора."
+            )
         return user
 
     async def _validate(self, data, id=None):
         existing = await self.repository.get_by_username(data.username)
         if existing and existing.id != id:
-            raise EntityAlreadyExistsError(f"User {data.username} already exists")
+            raise EntityAlreadyExistsError(
+                f"Ім'я користувача «{data.username}» уже зайняте. Оберіть інше."
+            )
         if (
             id is not None
             and data.role != "DRIVER"
             and await self.drivers_repository.get_by_user_id(id)
         ):
-            raise BusinessRuleError("A user with a driver profile must stay a driver")
+            raise BusinessRuleError(
+                "Цей обліковий запис має профіль водія, тому його роль має "
+                "залишатися «Водій». Щоб змінити роль, спершу видаліть профіль водія."
+            )
 
     def to_fields(self, data):
         fields = data.model_dump(exclude={"password"})

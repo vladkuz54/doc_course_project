@@ -17,7 +17,7 @@ router = APIRouter(prefix="/driver-requests", tags=["driver-requests"])
 
 class DriverRequestResponse(DriverRequestData):
     id: int
-    status: Literal["PENDING", "APPROVED"]
+    status: Literal["PENDING", "APPROVED", "REJECTED"]
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -53,7 +53,7 @@ async def create(
     if driver_id is not None and data.driver_id != driver_id:
         raise HTTPException(
             status_code=403,
-            detail="Drivers can only create requests for themselves",
+            detail="Водій може подавати запити лише від свого імені.",
         )
     return await service.submit_request(data)
 
@@ -80,3 +80,12 @@ async def approve_medical(
     service: DriversService = Depends(get_drivers_service),
 ):
     return await service.approve_medical_check(id, data.valid_until)
+
+
+@router.post(
+    "/{id}/reject",
+    response_model=DriverRequestResponse,
+    dependencies=[Depends(require_admin)],
+)
+async def reject(id: int, service: DriversService = Depends(get_drivers_service)):
+    return await service.reject_request(id)
