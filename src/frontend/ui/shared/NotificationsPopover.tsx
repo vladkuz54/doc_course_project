@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { apiGet, apiPatch } from "../api";
+import { ApiError, apiGet, apiPatch, readEvents } from "../api";
 import { formatDateTime } from "./fleet";
 import { REFRESH_EVENT, useData } from "./useData";
 
@@ -15,7 +15,7 @@ type Notification = {
   is_read: boolean;
 };
 
-const REFRESH_MS = 15000;
+const RECONNECT_MS = 3000;
 
 const loadNotifications = () => apiGet<Notification[]>("/notifications/");
 
@@ -31,24 +31,34 @@ export function NotificationsPopover({
   const { data, error, pending, reload, run } = useData(loadNotifications);
   const panel = useRef<HTMLDivElement>(null);
   const unread = data?.filter((notification) => !notification.is_read) ?? [];
-  const newestId = useRef<number | null>(null);
 
+  // A change means data changed elsewhere too, so every open useData reloads,
+  // this list included. The stream closes on sign out, when this unmounts.
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (!document.hidden) reload();
-    }, REFRESH_MS);
-    return () => clearInterval(timer);
+    const stop = new AbortController();
+    const listen = async () => {
+      while (!stop.signal.aborted) {
+        const ended = await readEvents(
+          "/notifications/stream",
+          {
+            onOpen: reload,
+            onEvent: (name) => {
+              if (name === "changed") {
+                window.dispatchEvent(new Event(REFRESH_EVENT));
+              }
+            },
+          },
+          stop.signal,
+        ).catch((e) => e);
+        const refused =
+          ended instanceof ApiError && [401, 403].includes(ended.status);
+        if (refused) return;
+        await new Promise((wait) => setTimeout(wait, RECONNECT_MS));
+      }
+    };
+    listen();
+    return () => stop.abort();
   }, [reload]);
-
-  // A new notification means data changed elsewhere: reload the open page.
-  useEffect(() => {
-    if (!data) return;
-    const newest = Math.max(0, ...data.map((notification) => notification.id));
-    if (newestId.current !== null && newest > newestId.current) {
-      window.dispatchEvent(new Event(REFRESH_EVENT));
-    }
-    newestId.current = newest;
-  }, [data]);
 
   const open = (notification: Notification) => {
     panel.current?.hidePopover();
