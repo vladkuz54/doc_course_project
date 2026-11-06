@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiDownload, apiGet } from "../api";
 import { DateField, nowForField, toIsoDate } from "../shared/DateField";
 import { formatDate, type Vehicle } from "../shared/fleet";
@@ -58,20 +58,32 @@ export function ReportsPage() {
   const [report, setReport] = useState<Report | null>(null);
   const today = nowForField().slice(0, 10);
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const { submitter } = event.nativeEvent as SubmitEvent;
-    const format = (submitter as HTMLButtonElement | null)?.value;
+  const form = useRef<HTMLFormElement>(null);
+  const latest = useRef(0);
 
-    if (format === "pdf" || format === "xlsx") {
-      run(() =>
-        apiDownload(reportPath(form, format), exportName(form, format)),
-      );
-      return;
-    }
-    setReport(null);
-    run(() => apiGet<Report>(reportPath(form)).then(setReport));
+  const show = useCallback(() => {
+    if (!form.current?.checkValidity()) return;
+    const request = ++latest.current;
+    const path = reportPath(new FormData(form.current));
+    run(() =>
+      apiGet<Report>(path).then((loaded) => {
+        if (request === latest.current) setReport(loaded);
+      }),
+    ).then((shown) => {
+      if (!shown && request === latest.current) setReport(null);
+    });
+  }, [run]);
+
+  useEffect(() => {
+    show();
+  }, [show]);
+
+  const download = (format: "pdf" | "xlsx") => {
+    if (!form.current?.reportValidity()) return;
+    const fields = new FormData(form.current);
+    run(() =>
+      apiDownload(reportPath(fields, format), exportName(fields, format)),
+    );
   };
 
   const cell = (key: string, value: ReportRow[string]) => {
@@ -86,7 +98,15 @@ export function ReportsPage() {
     <>
       <h1>Reports</h1>
       <Messages error={error} onClose={clearMessages} />
-      <form className="panel" onSubmit={submit}>
+      <form
+        ref={form}
+        className="panel"
+        onChange={show}
+        onSubmit={(event) => {
+          event.preventDefault();
+          show();
+        }}
+      >
         <label>
           Report
           <select name="kind">
@@ -121,22 +141,19 @@ export function ReportsPage() {
           </select>
         </label>
         <div className="form-actions">
-          <button type="submit" value="json" disabled={pending}>
-            Show report
-          </button>
           <button
-            type="submit"
-            value="pdf"
+            type="button"
             className="secondary"
             disabled={pending}
+            onClick={() => download("pdf")}
           >
             Export PDF
           </button>
           <button
-            type="submit"
-            value="xlsx"
+            type="button"
             className="secondary"
             disabled={pending}
+            onClick={() => download("xlsx")}
           >
             Export Excel
           </button>

@@ -29,21 +29,25 @@ export function useData<T>(load: () => Promise<T>) {
     setNotice("");
   }, []);
 
-  const run = (action: () => Promise<unknown>, doneNotice = "") => {
-    clearMessages();
-    setPending(true);
-    return action()
-      .then(reload)
-      .then(() => {
-        setNotice(doneNotice);
-        return true;
-      })
-      .catch((e: Error) => {
-        setError(e.message);
-        return false;
-      })
-      .finally(() => setPending(false));
-  };
+  const run = useCallback(
+    (action: () => Promise<unknown>, doneNotice = "") => {
+      clearMessages();
+      setPending(true);
+      return action()
+        .then(load)
+        .then((loaded) => {
+          setData(loaded);
+          setNotice(doneNotice);
+          return true;
+        })
+        .catch((e: Error) => {
+          setError(e.message);
+          return false;
+        })
+        .finally(() => setPending(false));
+    },
+    [load, clearMessages],
+  );
 
   return { data, error, notice, pending, reload, run, clearMessages };
 }
