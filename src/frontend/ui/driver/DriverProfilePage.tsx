@@ -40,12 +40,16 @@ export class DriverProfilePage implements ProfilePage {
     });
   }
 
-  submitLicenseUpdate(driverId: number, category: string, expiryDate: string) {
+  submitLicenseUpdate(
+    driverId: number,
+    category: string,
+    expiryDate?: string | null,
+  ) {
     return apiPost("/driver-requests/", {
       driver_id: driverId,
       type: "LICENSE_UPDATE",
       new_license_category: category,
-      new_license_expiry_date: expiryDate || null,
+      new_license_expiry_date: expiryDate ?? null,
     });
   }
 }
@@ -64,7 +68,7 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
         page.submitLicenseUpdate(
           id,
           String(fields.get("category")),
-          toIsoDate(String(fields.get("expiry"))),
+          toIsoDate(String(fields.get("expiry"))) || null,
         ),
       "License update requested.",
     ).then((saved) => {
