@@ -1,8 +1,11 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import ConfigDict
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...bll.live_notifications import live_notifications
 from ...bll.observer import DomainEvent
 from ...bll.services.deadline_monitor import DeadlineMonitor
 from ...bll.services.notifications_service import (
@@ -10,8 +13,18 @@ from ...bll.services.notifications_service import (
     NotificationsService,
     NotificationUpdateData,
 )
-from ..dependencies import get_deadline_monitor, get_notifications_service
-from .auth import ensure_visible, get_current_driver_id, require_admin
+from ..dependencies import (
+    get_db_session,
+    get_deadline_monitor,
+    get_notifications_service,
+)
+from .auth import (
+    CurrentUser,
+    ensure_visible,
+    get_current_driver_id,
+    get_current_user,
+    require_admin,
+)
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -44,6 +57,21 @@ async def check_deadlines(monitor: DeadlineMonitor = Depends(get_deadline_monito
         *await monitor.check_license_expiring(),
         *await monitor.check_medical_check_due(),
     ]
+
+
+@router.get("/stream")
+async def stream(
+    current_user: CurrentUser = Depends(get_current_user),
+    driver_id: int | None = Depends(get_current_driver_id),
+    session: AsyncSession = Depends(get_db_session),
+):
+    # The stream stays open, so release the database connection the login check used
+    await session.close()
+    return StreamingResponse(
+        live_notifications.stream(current_user.user_id, driver_id is None),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache"},
+    )
 
 
 @router.get("/{id}", response_model=NotificationResponse)
