@@ -2,6 +2,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..bll.exports import ReportExporter
+from ..bll.live_notifications import live_notifications
 from ..bll.reports import ReportService
 from ..bll.services.deadline_monitor import DeadlineMonitor
 from ..bll.services.driver_requests_service import DriverRequestsService
@@ -61,6 +62,7 @@ def get_drivers_service(
         DriverRequestsRepository(session),
     )
     service.attach(notifications)
+    service.attach(live_notifications)
     return service
 
 
@@ -80,6 +82,7 @@ def get_repair_records_service(
         RoutesRepository(session),
     )
     service.attach(notifications)
+    service.attach(live_notifications)
     return service
 
 
@@ -114,6 +117,7 @@ def get_routes_service(
         insurance_policies_service,
     )
     service.attach(notifications)
+    service.attach(live_notifications)
     return service
 
 
@@ -143,6 +147,7 @@ def get_deadline_monitor(
         repair_records_service, insurance_policies_service, drivers_service
     )
     monitor.attach(notifications)
+    monitor.attach(live_notifications)
     return monitor
 
 
