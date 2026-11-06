@@ -9,24 +9,13 @@ from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityNotFoundError
 from ..interfaces.notifications_interface import INotificationsService
-from ..observer import Observer
+from ..observer import NotificationType, Observer
 from .base_service import BaseService
 
 
 class NotificationData(BaseModel):
     recipient_id: int | None = None
-    type: Literal[
-        "LICENSE_UPDATE_REQUEST",
-        "MEDICAL_CHECK_REQUEST",
-        "MAINTENANCE_SCHEDULED",
-        "MAINTENANCE_DUE",
-        "INSURANCE_EXPIRING",
-        "LICENSE_EXPIRING",
-        "MEDICAL_CHECK_DUE",
-        "ROUTE_ASSIGNED",
-        "REQUEST_APPROVED",
-        "REQUEST_REJECTED",
-    ]
+    type: NotificationType
     text: str
     related_entity: Literal["drivers", "vehicles", "routes", "driver_requests"]
     related_id: int
