@@ -1,10 +1,24 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Literal
+
+NotificationType = Literal[
+    "LICENSE_UPDATE_REQUEST",
+    "MEDICAL_CHECK_REQUEST",
+    "MAINTENANCE_SCHEDULED",
+    "MAINTENANCE_DUE",
+    "INSURANCE_EXPIRING",
+    "LICENSE_EXPIRING",
+    "MEDICAL_CHECK_DUE",
+    "ROUTE_ASSIGNED",
+    "REQUEST_APPROVED",
+    "REQUEST_REJECTED",
+]
 
 
 @dataclass(frozen=True)
 class DomainEvent:
-    type: str
+    type: NotificationType
     related_entity: str
     related_id: int
     text: str
