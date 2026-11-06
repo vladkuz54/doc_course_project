@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from ..dal.db_models import Drivers, Routes, Vehicles
+from .services.repair_records_service import MAINTENANCE_TYPE_LABELS
 
 MIN_ROUTE_GAP_MINUTES = 10
 
@@ -47,7 +48,11 @@ class AssignmentHandler(ABC):
 class DriverActiveHandler(AssignmentHandler):
     async def _check(self, request):
         if request.driver and request.driver.employment_status != "ACTIVE":
-            return CheckResult(False, "The driver is not active")
+            return CheckResult(
+                False,
+                f"Водій {request.driver.full_name} звільнений, тому його не можна "
+                "призначити на маршрут. Оберіть іншого водія.",
+            )
         return CheckResult(True)
 
 
@@ -58,9 +63,19 @@ class LicenseCategoryHandler(AssignmentHandler):
             return CheckResult(True)
         category = vehicle.required_license_category
         if category not in driver.license_categories:
-            return CheckResult(False, f"The driver has no license category {category}")
+            return CheckResult(
+                False,
+                f"Для {vehicle.make} потрібна категорія {category}, а у водія "
+                f"{driver.full_name} її немає. Оберіть іншого водія або транспорт.",
+            )
         if driver.license_expiry_date < _departure(request):
-            return CheckResult(False, "The driver's license expires before departure")
+            return CheckResult(
+                False,
+                f"Посвідчення водія {driver.full_name} дійсне до "
+                f"{driver.license_expiry_date:%d/%m/%Y}, а виїзд — "
+                f"{_departure(request):%d/%m/%Y}. Оберіть іншого водія або "
+                "спершу оновіть посвідчення.",
+            )
         return CheckResult(True)
 
 
@@ -70,10 +85,23 @@ class MedicalCheckHandler(AssignmentHandler):
         if not driver:
             return CheckResult(True)
         if driver.medical_check_status != "VALID":
-            return CheckResult(False, "The driver's medical check is not valid")
+            state = (
+                "ще чекає на підтвердження"
+                if driver.medical_check_status == "PENDING"
+                else "прострочений"
+            )
+            return CheckResult(
+                False,
+                f"Медогляд водія {driver.full_name} {state}. Підтвердьте медогляд "
+                "або оберіть іншого водія.",
+            )
         if driver.medical_valid_until < _departure(request):
             return CheckResult(
-                False, "The driver's medical check expires before departure"
+                False,
+                f"Медогляд водія {driver.full_name} дійсний до "
+                f"{driver.medical_valid_until:%d/%m/%Y}, а виїзд — "
+                f"{_departure(request):%d/%m/%Y}. Оберіть іншого водія або "
+                "спершу оновіть медогляд.",
             )
         return CheckResult(True)
 
@@ -81,7 +109,11 @@ class MedicalCheckHandler(AssignmentHandler):
 class VehicleActiveHandler(AssignmentHandler):
     async def _check(self, request):
         if request.vehicle and request.vehicle.status != "ACTIVE":
-            return CheckResult(False, "The vehicle is not active")
+            return CheckResult(
+                False,
+                f"Транспорт {request.vehicle.make} ({request.vehicle.vin}) списаний. "
+                "Оберіть інший транспорт.",
+            )
         return CheckResult(True)
 
 
@@ -103,7 +135,11 @@ class VehicleMaintenanceHandler(AssignmentHandler):
                 and departure <= repair.date <= planned_return
             ):
                 return CheckResult(
-                    False, f"The vehicle has maintenance planned on {repair.date}"
+                    False,
+                    f"На {repair.date:%d/%m/%Y} для {request.vehicle.make} "
+                    f"заплановано {MAINTENANCE_TYPE_LABELS[repair.type]}, а це "
+                    "припадає на час маршруту. Оберіть інший транспорт або "
+                    "перенесіть маршрут чи обслуговування.",
                 )
         return CheckResult(True)
 
@@ -122,7 +158,11 @@ class InsuranceHandler(AssignmentHandler):
         )
         if any(p.start_date <= departure <= p.end_date for p in policies):
             return CheckResult(True)
-        return CheckResult(False, "The vehicle has no insurance on the departure date")
+        return CheckResult(
+            False,
+            f"Транспорт {request.vehicle.make} не має страхового поліса на дату "
+            f"виїзду {departure:%d/%m/%Y}. Додайте поліс або оберіть інший транспорт.",
+        )
 
 
 class ScheduleConflictHandler(AssignmentHandler):
@@ -137,9 +177,18 @@ class ScheduleConflictHandler(AssignmentHandler):
                 route.departure_at - end < gap
                 and other.departure_at - route.planned_return_at < gap
             ):
+                busy = (
+                    "Водій"
+                    if route.driver_id is not None
+                    and other.driver_id == route.driver_id
+                    else "Транспорт"
+                )
                 return CheckResult(
                     False,
-                    f"The route needs at least {MIN_ROUTE_GAP_MINUTES} minutes "
-                    f"between it and route {other.id}",
+                    f"{busy} уже зайнятий на маршруті №{other.id} "
+                    f"({other.departure_at:%d/%m/%Y %H:%M} – "
+                    f"{end:%d/%m/%Y %H:%M}). Маршрути не можуть перетинатися, "
+                    f"і між ними має бути щонайменше {MIN_ROUTE_GAP_MINUTES} "
+                    "хвилин. Оберіть інший час, водія або транспорт.",
                 )
         return CheckResult(True)

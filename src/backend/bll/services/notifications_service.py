@@ -39,7 +39,7 @@ class NotificationUpdateData(NotificationData):
 
 
 class NotificationsService(INotificationsService, BaseService, Observer):
-    entity_name = "Notification"
+    entity_name = "Сповіщення"
 
     def __init__(
         self,
@@ -60,8 +60,14 @@ class NotificationsService(INotificationsService, BaseService, Observer):
     async def _validate(self, data, id=None):
         repository = self.related_repositories[data.related_entity]
         if not await repository.get_by_id(data.related_id):
+            label = {
+                "drivers": "водія",
+                "vehicles": "транспорт",
+                "routes": "маршрут",
+                "driver_requests": "запит",
+            }[data.related_entity]
             raise EntityNotFoundError(
-                f"{data.related_entity} record with ID {data.related_id} not found"
+                f"Не вдалося знайти {label}, до якого належить сповіщення."
             )
 
     async def get_by_driver(self, driver_id):

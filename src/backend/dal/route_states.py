@@ -6,6 +6,14 @@ class RouteActionNotAllowed(Exception):
     pass
 
 
+ROUTE_STATUS_LABELS = {
+    "PLANNED": "Заплановано",
+    "IN_PROGRESS": "У дорозі",
+    "COMPLETED": "Завершено",
+    "CANCELLED": "Скасовано",
+}
+
+
 class RouteState(ABC):
     @staticmethod
     def from_status(status):
@@ -21,39 +29,42 @@ class RouteState(ABC):
         pass
 
     def reassign_driver(self, route, driver):
-        self._reject("reassign the driver of")
+        self._reject("змінити водія")
 
     def reassign_vehicle(self, route, vehicle):
-        self._reject("reassign the vehicle of")
+        self._reject("змінити транспорт")
 
     def reschedule(self, route, departure_at):
-        self._reject("reschedule")
+        self._reject("перенести")
 
     def edit_stops(self, route, stops):
-        self._reject("edit the stops of")
+        self._reject("змінити зупинки")
 
     def start(self, route, started_at):
-        self._reject("start")
+        self._reject("розпочати")
 
     def arrive_at_stop(self, route, stop):
-        self._reject("clock a stop of")
+        self._reject("відмітити прибуття на зупинку")
 
     def complete(self, route, returned_at):
-        self._reject("complete")
+        self._reject("завершити")
 
     def cancel(self, route):
-        self._reject("cancel")
+        self._reject("скасувати")
 
     def delete(self, route):
-        self._reject("delete")
+        self._reject("видалити")
 
     def _reject(self, action):
-        raise RouteActionNotAllowed(f"Cannot {action} a {self.status()} route")
+        raise RouteActionNotAllowed(
+            f"Маршрут має статус «{ROUTE_STATUS_LABELS[self.status()]}», "
+            f"тому його не можна {action}."
+        )
 
 
 def _ensure_not_in_future(moment, name):
     if moment > datetime.now():
-        raise RouteActionNotAllowed(f"{name} time cannot be in the future")
+        raise RouteActionNotAllowed(f"{name} не може бути в майбутньому.")
 
 
 class PlannedState(RouteState):
@@ -71,7 +82,7 @@ class PlannedState(RouteState):
 
     def edit_stops(self, route, stops):
         if not stops:
-            raise RouteActionNotAllowed("A route must have at least one stop")
+            raise RouteActionNotAllowed("Маршрут повинен мати хоча б одну зупинку.")
         # In place, because SQLAlchemy inserts before it deletes, which would break uq_route_stop
         existing_count = len(route.stops)
         for position, stop in enumerate(stops, 1):
@@ -87,19 +98,22 @@ class PlannedState(RouteState):
         if started_at is None:
             started_at = datetime.now()
         else:
-            _ensure_not_in_future(started_at, "Start")
+            _ensure_not_in_future(started_at, "Час початку")
         route.started_at = started_at
         route.set_state(InProgressState())
 
     def complete(self, route, returned_at):
         if returned_at is None:
             raise RouteActionNotAllowed(
-                "A route that was never started needs a return time"
+                "Цей маршрут не було розпочато, тому для завершення вкажіть час повернення."
             )
         self._ensure_assigned(route)
-        _ensure_not_in_future(returned_at, "Return")
+        _ensure_not_in_future(returned_at, "Час повернення")
         if returned_at < route.departure_at:
-            raise RouteActionNotAllowed("Return time cannot be before the departure")
+            raise RouteActionNotAllowed(
+                f"Час повернення ({returned_at:%d/%m/%Y %H:%M}) не може бути "
+                f"раніше за час виїзду ({route.departure_at:%d/%m/%Y %H:%M})."
+            )
         route.completed_at = returned_at
         route.set_state(CompletedState())
 
@@ -111,7 +125,7 @@ class PlannedState(RouteState):
 
     def _ensure_assigned(self, route):
         if route.driver_id is None or route.vehicle_id is None:
-            raise RouteActionNotAllowed("A route needs a driver and a vehicle")
+            raise RouteActionNotAllowed("Спершу призначте маршруту водія і транспорт.")
 
 
 class InProgressState(RouteState):
@@ -120,22 +134,28 @@ class InProgressState(RouteState):
 
     def arrive_at_stop(self, route, stop):
         if stop not in route.stops:
-            raise RouteActionNotAllowed("The stop belongs to another route")
+            raise RouteActionNotAllowed("Ця зупинка належить іншому маршруту.")
         if stop.arrived_at is not None:
-            raise RouteActionNotAllowed("The stop is already clocked")
+            raise RouteActionNotAllowed("Ви вже відмітили прибуття на цю зупинку.")
         if any(
             s.arrived_at is not None and s.order_no > stop.order_no for s in route.stops
         ):
-            raise RouteActionNotAllowed("A later stop is already clocked")
+            raise RouteActionNotAllowed(
+                "Ви вже відмітили прибуття на одну з наступних зупинок. "
+                "Зупинки відмічаються по черзі."
+            )
         stop.arrived_at = datetime.now()
 
     def complete(self, route, returned_at):
         if returned_at is None:
             returned_at = datetime.now()
         else:
-            _ensure_not_in_future(returned_at, "Return")
+            _ensure_not_in_future(returned_at, "Час повернення")
             if returned_at < route.started_at:
-                raise RouteActionNotAllowed("Return time cannot be before the start")
+                raise RouteActionNotAllowed(
+                    f"Час повернення ({returned_at:%d/%m/%Y %H:%M}) не може бути "
+                    f"раніше за час початку ({route.started_at:%d/%m/%Y %H:%M})."
+                )
         route.completed_at = returned_at
         route.set_state(CompletedState())
 

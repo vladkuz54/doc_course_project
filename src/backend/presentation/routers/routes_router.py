@@ -153,7 +153,7 @@ async def start(
     started_at = data.started_at if data else None
     if driver_id is not None and started_at is not None:
         raise HTTPException(
-            status_code=403, detail="Only an admin can set the start time"
+            status_code=403, detail="Вказати час початку може лише адміністратор."
         )
     return await service.start(id, started_at)
 
@@ -169,7 +169,7 @@ async def complete(
     returned_at = data.returned_at if data else None
     if driver_id is not None and returned_at is not None:
         raise HTTPException(
-            status_code=403, detail="Only an admin can set the return time"
+            status_code=403, detail="Вказати час повернення може лише адміністратор."
         )
     return await service.complete(id, returned_at)
 
@@ -183,7 +183,7 @@ async def arrive_at_stop(
 ):
     if driver_id is None:
         raise HTTPException(
-            status_code=403, detail="Only the route's driver can clock a stop"
+            status_code=403, detail="Відмічати прибуття на зупинки може лише водій цього маршруту."
         )
     await _ensure_can_act(id, driver_id, service)
     return await service.arrive_at_stop(id, stop_id)

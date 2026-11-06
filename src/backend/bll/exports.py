@@ -14,6 +14,17 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 from .exceptions import BusinessRuleError
 
 PDF_FONT = "DejaVuSans"
+COLUMN_LABELS = {
+    "vehicle": "Транспорт",
+    "completed_routes": "Завершені маршрути",
+    "total_distance": "Загальна відстань, км",
+    "done_repairs": "Виконане обслуговування",
+    "planned_repairs": "Заплановане обслуговування",
+    "total_cost": "Загальна вартість",
+    "liters": "Літри",
+    "fuel_cost": "Вартість пального",
+    "liters_per_100km": "Літрів на 100 км",
+}
 pdfmetrics.registerFont(
     TTFont(PDF_FONT, Path(__file__).parent / "fonts" / "DejaVuSans.ttf")
 )
@@ -27,7 +38,7 @@ class File:
 
 
 def _period(report):
-    return f"{report.period_from:%d/%m/%Y} to {report.period_to:%d/%m/%Y}"
+    return f"з {report.period_from:%d/%m/%Y} по {report.period_to:%d/%m/%Y}"
 
 
 def _filename(report, extension):
@@ -39,7 +50,7 @@ def _columns(report):
 
 
 def _label(column):
-    return column.replace("_", " ").capitalize()
+    return COLUMN_LABELS.get(column, column)
 
 
 def _pdf_cell(value):
@@ -114,5 +125,5 @@ class ReportExporter:
 
     def export(self, report):
         if self._strategy is None:
-            raise BusinessRuleError("The export format is not set")
+            raise BusinessRuleError("Оберіть формат експорту: PDF або Excel.")
         return self._strategy.export(report)

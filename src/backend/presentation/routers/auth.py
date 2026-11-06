@@ -47,7 +47,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(
+            status_code=401, detail="Сесія завершилася. Увійдіть знову."
+        )
 
     username, user_id, role = (
         payload.get("sub"),
@@ -55,14 +57,16 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         payload.get("role"),
     )
     if not username or not user_id or not role:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(
+            status_code=401, detail="Сесія завершилася. Увійдіть знову."
+        )
     return CurrentUser(user_id=user_id, username=username, role=role)
 
 
 async def require_admin(current_user: CurrentUser = Depends(get_current_user)):
     if current_user.role != "ADMIN":
         raise HTTPException(
-            status_code=403, detail="You are not authorized to perform this action"
+            status_code=403, detail="У вас немає прав на цю дію."
         )
     return current_user
 
@@ -76,14 +80,17 @@ async def get_current_driver_id(
         return None
     driver = await drivers_service.get_by_user_id(current_user.user_id)
     if driver.employment_status == "DISMISSED":
-        raise HTTPException(status_code=403, detail="This driver has been dismissed")
+        raise HTTPException(
+            status_code=403,
+            detail="Ваш обліковий запис водія деактивовано. Зверніться до адміністратора.",
+        )
     return driver.id
 
 
 def ensure_visible(obj, visible):
     if obj.id not in {item.id for item in visible}:
         raise HTTPException(
-            status_code=403, detail="You are not authorized to perform this action"
+            status_code=403, detail="У вас немає прав на цю дію."
         )
 
 
@@ -94,7 +101,9 @@ async def login(
 ):
     user = await service.authenticate(form_data.username, form_data.password)
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=401, detail="Неправильне ім'я користувача або пароль."
+        )
     access_token = create_access_token(user.username, user.id, user.role)
     return {"access_token": access_token, "token_type": "bearer"}
 

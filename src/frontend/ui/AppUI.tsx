@@ -25,7 +25,7 @@ export class AppUI extends Component<object, AppUIState> {
 
   componentDidMount() {
     setUnauthorizedHandler(() =>
-      this.showLogin("Your session has expired. Sign in again."),
+      this.showLogin("Сесія завершилася. Увійдіть знову."),
     );
     if (hasToken()) {
       this.loadUser();

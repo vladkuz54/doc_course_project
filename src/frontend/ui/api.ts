@@ -32,17 +32,9 @@ export function logout() {
   sessionStorage.removeItem(TOKEN_KEY);
 }
 
-type ValidationItem = { loc: (string | number)[]; msg: string };
-
-function validationText({ loc, msg }: ValidationItem) {
-  const field = String(loc[loc.length - 1]).replaceAll("_", " ");
-  return `${field}: ${msg}`;
-}
-
-function detailText(detail: unknown, fallback: string): string {
+function detailText(detail: unknown, status: number): string {
   if (typeof detail === "string") return detail;
-  if (Array.isArray(detail)) return detail.map(validationText).join("; ");
-  return fallback;
+  return `Сервер повернув помилку (${status}). Спробуйте ще раз.`;
 }
 
 async function fetchOk(path: string, init: RequestInit = {}) {
@@ -52,7 +44,7 @@ async function fetchOk(path: string, init: RequestInit = {}) {
 
   const response = await fetch(`${API_URL}${path}`, { ...init, headers }).catch(
     () => {
-      throw new ApiError(0, "Can't reach the server. Try again in a moment.");
+      throw new ApiError(0, "Не вдається зв'язатися із сервером. Спробуйте ще раз за мить.");
     },
   );
   if (!response.ok) {
@@ -63,7 +55,7 @@ async function fetchOk(path: string, init: RequestInit = {}) {
     const body = await response.json().catch(() => null);
     throw new ApiError(
       response.status,
-      detailText(body?.detail, response.statusText),
+      detailText(body?.detail, response.status),
     );
   }
   return response;

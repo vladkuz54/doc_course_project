@@ -264,7 +264,9 @@ class Routes(Base):
                 minutes=MINUTES_PER_STOP * len(self.stops),
             )
         except OverflowError:
-            raise RouteActionNotAllowed("The departure time is too far in the future")
+            raise RouteActionNotAllowed(
+                "Час виїзду надто далеко в майбутньому. Перевірте дату."
+            )
 
 
 class RouteStops(Base):

@@ -26,7 +26,7 @@ class VehicleData(BaseModel):
     @classmethod
     def year_not_in_future(cls, value):
         if value > Date.today().year + 1:
-            raise ValueError(f"year must be at most {Date.today().year + 1}")
+            raise ValueError(f"не може бути пізніше {Date.today().year + 1}")
         return value
 
 
@@ -39,7 +39,13 @@ class VehicleStatusData(BaseModel):
 
 
 class VehiclesService(IVehiclesService, EntityManagement):
-    entity_name = "Vehicle"
+    entity_name = "Транспорт"
+    status_labels = {"ACTIVE": "Активний", "DECOMMISSIONED": "Списаний"}
+    status_blocked_message = (
+        "Транспорт не можна списати, поки на нього є заплановані маршрути "
+        "або маршрути в дорозі. Спочатку завершіть, скасуйте або передайте "
+        "ці маршрути іншому транспорту."
+    )
 
     def __init__(
         self, repository: IVehiclesRepository, routes_repository: IRoutesRepository
@@ -51,7 +57,8 @@ class VehiclesService(IVehiclesService, EntityManagement):
         existing = await self.repository.get_by_vin(data.vin)
         if existing and existing.id != id:
             raise EntityAlreadyExistsError(
-                f"Vehicle with VIN {data.vin} already exists"
+                f"Транспорт із VIN {data.vin} уже є ({existing.make}). "
+                "Перевірте VIN."
             )
 
     async def _can_change_status(self, entity, status):

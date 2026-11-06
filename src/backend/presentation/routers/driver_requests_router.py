@@ -53,7 +53,7 @@ async def create(
     if driver_id is not None and data.driver_id != driver_id:
         raise HTTPException(
             status_code=403,
-            detail="Drivers can only create requests for themselves",
+            detail="Водій може подавати запити лише від свого імені.",
         )
     return await service.submit_request(data)
 

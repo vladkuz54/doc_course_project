@@ -44,9 +44,22 @@ class MedicalApprovalData(BaseModel):
     valid_until: date
 
 
+REQUEST_TYPE_LABELS = {
+    "LICENSE_UPDATE": "оновлення посвідчення",
+    "MEDICAL_CHECK": "підтвердження медогляду",
+}
+REQUEST_STATUS_LABELS = {"APPROVED": "схвалено", "REJECTED": "відхилено"}
+
+
 class DriversService(IDriversService, EntityManagement):
-    entity_name = "Driver"
+    entity_name = "Водія"
     status_field = "employment_status"
+    status_labels = {"ACTIVE": "Працює", "DISMISSED": "Звільнений"}
+    status_blocked_message = (
+        "Водія не можна звільнити, поки на нього є заплановані маршрути "
+        "або маршрути в дорозі. Спочатку завершіть, скасуйте або передайте "
+        "ці маршрути іншому водієві."
+    )
 
     def __init__(
         self,
@@ -63,13 +76,19 @@ class DriversService(IDriversService, EntityManagement):
     async def _validate(self, data, id=None):
         user = await self.users_repository.get_by_id(data.user_id)
         if not user:
-            raise EntityNotFoundError(f"User with ID {data.user_id} not found")
+            raise EntityNotFoundError(
+                "Обліковий запис для цього водія не знайдено. Оновіть сторінку."
+            )
         if user.role != "DRIVER":
-            raise BusinessRuleError(f"User with ID {data.user_id} is not a driver")
+            raise BusinessRuleError(
+                f"«{user.username}» — обліковий запис адміністратора. Профіль "
+                "водія можна створити лише для облікового запису водія."
+            )
         existing = await self.repository.get_by_user_id(data.user_id)
         if existing and existing.id != id:
             raise EntityAlreadyExistsError(
-                f"User with ID {data.user_id} already has a driver profile"
+                f"Користувач «{user.username}» уже має профіль водія. "
+                "Відредагуйте наявний профіль."
             )
 
     async def _can_change_status(self, entity, status):
@@ -81,7 +100,10 @@ class DriversService(IDriversService, EntityManagement):
     async def get_by_user_id(self, user_id):
         driver = await self.repository.get_by_user_id(user_id)
         if not driver:
-            raise EntityNotFoundError(f"User with ID {user_id} has no driver profile")
+            raise EntityNotFoundError(
+                "Ваш обліковий запис ще не пов'язаний із профілем водія. "
+                "Зверніться до адміністратора."
+            )
         return driver
 
     async def get_by_driver(self, driver_id):
@@ -117,7 +139,10 @@ class DriversService(IDriversService, EntityManagement):
     async def approve_medical_check(self, request_id, valid_until):
         request = await self._get_pending_request(request_id, "MEDICAL_CHECK")
         if valid_until <= date.today():
-            raise BusinessRuleError("valid_until must be after today")
+            raise BusinessRuleError(
+                f"Дата «Дійсний до» ({valid_until:%d/%m/%Y}) має бути пізнішою "
+                "за сьогоднішню."
+            )
         driver = await self.get_by_id(request.driver_id)
         driver.medical_valid_until = valid_until
         driver.medical_check_date = date.today()
@@ -146,22 +171,27 @@ class DriversService(IDriversService, EntityManagement):
         if data.type == "MEDICAL_CHECK":
             if data.new_license_category or data.new_license_expiry_date:
                 raise BusinessRuleError(
-                    "Medical check request cannot contain license fields"
+                    "Запит на медогляд не може містити категорію чи термін "
+                    "дії посвідчення."
                 )
             if pending:
                 raise BusinessRuleError(
-                    "Driver already has a pending medical check request"
+                    "Ви вже подали запит на підтвердження медогляду. Зачекайте, "
+                    "доки адміністратор його розгляне."
                 )
             return
         if data.new_license_category is None:
-            raise BusinessRuleError("License update request needs new_license_category")
+            raise BusinessRuleError(
+                "Оберіть категорію, яку хочете додати до посвідчення."
+            )
         if data.new_license_category in driver.license_categories:
             raise BusinessRuleError(
-                f"Driver already has license category {data.new_license_category}"
+                f"У вас уже є категорія {data.new_license_category}."
             )
         if any(r.new_license_category == data.new_license_category for r in pending):
             raise BusinessRuleError(
-                f"Driver already has a pending request for category {data.new_license_category}"
+                f"Ви вже подали запит на категорію {data.new_license_category}. "
+                "Зачекайте, доки адміністратор його розгляне."
             )
 
     async def _save_decision(self, request, type, verb):
@@ -187,13 +217,17 @@ class DriversService(IDriversService, EntityManagement):
     async def _get_pending_request(self, request_id, type=None):
         request = await self.driver_requests_repository.get_by_id(request_id)
         if not request:
-            raise EntityNotFoundError(f"Driver request with ID {request_id} not found")
+            raise EntityNotFoundError(
+                "Запит не знайдено. Можливо, запис уже видалено — оновіть сторінку."
+            )
         if type is not None and request.type != type:
             raise BusinessRuleError(
-                f"Driver request with ID {request_id} is not a {type} request"
+                f"Це запит на {REQUEST_TYPE_LABELS[request.type]}, "
+                f"а не на {REQUEST_TYPE_LABELS[type]}."
             )
         if request.status != "PENDING":
             raise BusinessRuleError(
-                f"Driver request with ID {request_id} is not pending"
+                f"Цей запит уже {REQUEST_STATUS_LABELS[request.status]}. "
+                "Оновіть сторінку, щоб побачити його стан."
             )
         return request

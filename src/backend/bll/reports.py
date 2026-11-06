@@ -147,7 +147,10 @@ class ReportService:
 
     async def build(self, period_from, period_to, vehicle=None):
         if self._strategy is None:
-            raise BusinessRuleError("The report type is not set")
+            raise BusinessRuleError("Оберіть тип звіту.")
         if period_from > period_to:
-            raise BusinessRuleError("period_from cannot be after period_to")
+            raise BusinessRuleError(
+                f"Початкова дата ({period_from:%d/%m/%Y}) пізніша за кінцеву "
+                f"({period_to:%d/%m/%Y}). Виправте період звіту."
+            )
         return await self._strategy.generate(period_from, period_to, vehicle)

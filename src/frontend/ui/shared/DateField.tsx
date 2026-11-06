@@ -62,7 +62,7 @@ export function DateField({
       input.value = withSeparators(input.value, withTime);
     }
     input.setCustomValidity(
-      input.value && !toIso(input.value) ? `Enter a real date as ${format}` : "",
+      input.value && !toIso(input.value) ? `Введіть справжню дату у форматі ${format}` : "",
     );
   };
 
