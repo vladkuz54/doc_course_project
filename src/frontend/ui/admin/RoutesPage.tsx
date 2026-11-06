@@ -140,7 +140,10 @@ export function RoutesPage() {
         vehicles={vehicles ?? []}
         pending={pending}
         onSubmit={(form, edited) =>
-          save(() => updateRoute(editing.route, form, edited), "Маршрут збережено.")
+          save(
+            () => updateRoute(editing.route, form, edited),
+            "Маршрут збережено.",
+          )
         }
         onCancel={() => openForm(null)}
       />
@@ -194,7 +197,7 @@ export function RoutesPage() {
         sections={ROUTE_SECTIONS}
       >
         {(rows) => (
-          <table>
+          <table className="compact">
             <thead>
               <tr>
                 <th>Маршрут</th>
@@ -212,7 +215,7 @@ export function RoutesPage() {
                     <td>{route.id}</td>
                     <td>{formatDateTime(route.departure_at)}</td>
                     <td>{route.distance} км</td>
-                    <td>
+                    <td className="name">
                       {drivers?.find((d) => d.id === route.driver_id)
                         ?.full_name ?? "Не призначено"}
                     </td>

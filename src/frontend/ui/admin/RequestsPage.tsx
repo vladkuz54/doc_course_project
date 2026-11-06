@@ -70,7 +70,7 @@ export function RequestsPage() {
               <tbody>
                 {rows.map((request) => (
                   <tr key={request.id}>
-                    <td>
+                    <td className="name">
                       {
                         drivers?.find((d) => d.id === request.driver_id)
                           ?.full_name
@@ -81,7 +81,7 @@ export function RequestsPage() {
                     {request.status === "PENDING" && (
                       <td className="actions">
                         {request.status === "PENDING" && (
-                          <>
+                          <div className="request-actions">
                             {request.type === "MEDICAL_CHECK" ? (
                               <form
                                 className="approve-medical"
@@ -130,7 +130,7 @@ export function RequestsPage() {
                             >
                               Відхилити
                             </button>
-                          </>
+                          </div>
                         )}
                       </td>
                     )}
