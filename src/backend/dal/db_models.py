@@ -239,6 +239,9 @@ class Routes(Base):
     def reschedule(self, departure_at):
         self.state.reschedule(self, departure_at)
 
+    def change_distance(self, distance):
+        self.state.change_distance(self, distance)
+
     def edit_stops(self, stops):
         self.state.edit_stops(self, stops)
 

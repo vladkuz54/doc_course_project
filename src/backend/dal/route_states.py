@@ -37,6 +37,9 @@ class RouteState(ABC):
     def reschedule(self, route, departure_at):
         self._reject("перенести")
 
+    def change_distance(self, route, distance):
+        self._reject("редагувати")
+
     def edit_stops(self, route, stops):
         self._reject("змінити зупинки")
 
@@ -79,6 +82,9 @@ class PlannedState(RouteState):
 
     def reschedule(self, route, departure_at):
         route.departure_at = departure_at
+
+    def change_distance(self, route, distance):
+        route.distance = distance
 
     def edit_stops(self, route, stops):
         if not stops:
