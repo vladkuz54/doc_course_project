@@ -7,7 +7,7 @@ from .base_interfaces import IBaseRepository
 class INotificationsRepository(IBaseRepository[Notifications]):
 
     @abstractmethod
-    async def get_unread(self):
+    async def get_unread_or_read_since(self, since):
         pass
 
     @abstractmethod

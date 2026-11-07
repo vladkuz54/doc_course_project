@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from ..db_models import Drivers, Notifications
 from ..interfaces.notifications_interfaces import INotificationsRepository
@@ -9,8 +9,10 @@ class NotificationsRepository(INotificationsRepository, BaseRepository):
     def __init__(self, session):
         super().__init__(session, Notifications)
 
-    async def get_unread(self):
-        return await self._where(self.model.is_read.is_(False))
+    async def get_unread_or_read_since(self, since):
+        return await self._where(
+            or_(self.model.is_read.is_(False), self.model.read_at >= since)
+        )
 
     async def get_by_driver(self, driver_id):
         result = await self.session.execute(
