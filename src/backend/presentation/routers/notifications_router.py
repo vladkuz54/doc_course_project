@@ -11,7 +11,6 @@ from ...bll.services.deadline_monitor import DeadlineMonitor
 from ...bll.services.notifications_service import (
     NotificationData,
     NotificationsService,
-    NotificationUpdateData,
 )
 from ..dependencies import (
     get_db_session,
@@ -86,19 +85,6 @@ async def get_by_id(
     return obj
 
 
-@router.post(
-    "/",
-    response_model=NotificationResponse,
-    status_code=201,
-    dependencies=[Depends(require_admin)],
-)
-async def create(
-    data: NotificationData,
-    service: NotificationsService = Depends(get_notifications_service),
-):
-    return await service.create(data)
-
-
 @router.patch("/read-all", response_model=list[NotificationResponse])
 async def mark_all_as_read(
     driver_id: int | None = Depends(get_current_driver_id),
@@ -117,17 +103,6 @@ async def mark_as_read(
     if driver_id is not None:
         ensure_visible(obj, await service.get_by_driver(driver_id))
     return await service.mark_as_read(id)
-
-
-@router.put(
-    "/{id}", response_model=NotificationResponse, dependencies=[Depends(require_admin)]
-)
-async def update(
-    id: int,
-    data: NotificationUpdateData,
-    service: NotificationsService = Depends(get_notifications_service),
-):
-    return await service.update(id, data)
 
 
 @router.delete(

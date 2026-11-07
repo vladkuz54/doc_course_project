@@ -22,11 +22,6 @@ class NotificationData(BaseModel):
     is_read: bool = False
 
 
-class NotificationUpdateData(NotificationData):
-    recipient_id: int | None
-    is_read: bool
-
-
 class NotificationsService(INotificationsService, BaseService, Observer):
     entity_name = "Сповіщення"
 
