@@ -3,7 +3,11 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from ...dal.db_models import ACTIVE_ROUTE_STATUSES, LICENSE_CATEGORIES
+from ...dal.db_models import (
+    ACTIVE_ROUTE_STATUSES,
+    LICENSE_CATEGORIES,
+    medical_valid_until,
+)
 from ...dal.interfaces.driver_requests_interfaces import IDriverRequestsRepository
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
@@ -25,23 +29,16 @@ class DriverData(BaseModel):
     experience_years: int = Field(0, ge=0, le=60)
     license_expiry_date: date
     medical_check_date: date
-    medical_valid_until: date
-    medical_check_status: Literal["VALID", "EXPIRED", "PENDING"] = "VALID"
     employment_status: Literal["ACTIVE", "DISMISSED"] = "ACTIVE"
 
 
 class DriverUpdateData(DriverData):
     experience_years: int = Field(ge=0, le=60)
-    medical_check_status: Literal["VALID", "EXPIRED", "PENDING"]
     employment_status: Literal["ACTIVE", "DISMISSED"]
 
 
 class DriverStatusData(BaseModel):
     employment_status: Literal["ACTIVE", "DISMISSED"]
-
-
-class MedicalApprovalData(BaseModel):
-    valid_until: date
 
 
 REQUEST_TYPE_LABELS = {
@@ -97,6 +94,11 @@ class DriversService(IDriversService, EntityManagement):
         routes = await self.routes_repository.get_by_driver(entity.id)
         return not any(r.status in ACTIVE_ROUTE_STATUSES for r in routes)
 
+    def to_fields(self, data):
+        fields = data.model_dump()
+        fields["medical_valid_until"] = medical_valid_until(data.medical_check_date)
+        return fields
+
     async def get_by_user_id(self, user_id):
         driver = await self.repository.get_by_user_id(user_id)
         if not driver:
@@ -120,7 +122,7 @@ class DriversService(IDriversService, EntityManagement):
             text = f"{driver.full_name} просить оновити посвідчення до категорії {request.new_license_category}"
         else:
             type = "MEDICAL_CHECK_REQUEST"
-            text = f"{driver.full_name} подав запит на підтвердження медогляду"
+            text = f"{driver.full_name} повідомляє про медогляд {request.medical_check_date:%d.%m.%Y}"
         await self._notify(DomainEvent(type, "driver_requests", request.id, text))
         return request
 
@@ -136,17 +138,11 @@ class DriversService(IDriversService, EntityManagement):
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
 
-    async def approve_medical_check(self, request_id, valid_until):
+    async def approve_medical_check(self, request_id):
         request = await self._get_pending_request(request_id, "MEDICAL_CHECK")
-        if valid_until <= date.today():
-            raise BusinessRuleError(
-                f"Дата «Дійсний до» ({valid_until:%d/%m/%Y}) має бути пізнішою "
-                "за сьогоднішню."
-            )
         driver = await self.get_by_id(request.driver_id)
-        driver.medical_valid_until = valid_until
-        driver.medical_check_date = date.today()
-        driver.medical_check_status = "VALID"
+        driver.medical_check_date = request.medical_check_date
+        driver.medical_valid_until = medical_valid_until(request.medical_check_date)
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
 
@@ -174,12 +170,20 @@ class DriversService(IDriversService, EntityManagement):
                     "Запит на медогляд не може містити категорію чи термін "
                     "дії посвідчення."
                 )
+            if data.medical_check_date is None:
+                raise BusinessRuleError("Вкажіть дату, коли ви пройшли медогляд.")
+            if data.medical_check_date > date.today():
+                raise BusinessRuleError("Дата медогляду не може бути в майбутньому.")
             if pending:
                 raise BusinessRuleError(
                     "Ви вже подали запит на підтвердження медогляду. Зачекайте, "
                     "доки адміністратор його розгляне."
                 )
             return
+        if data.medical_check_date is not None:
+            raise BusinessRuleError(
+                "Запит на оновлення посвідчення не може містити дату медогляду."
+            )
         if data.new_license_category is None:
             raise BusinessRuleError(
                 "Оберіть категорію, яку хочете додати до посвідчення."

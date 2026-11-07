@@ -8,7 +8,7 @@ from ...bll.services.driver_requests_service import (
     DriverRequestData,
     DriverRequestsService,
 )
-from ...bll.services.drivers_service import DriversService, MedicalApprovalData
+from ...bll.services.drivers_service import DriversService
 from ..dependencies import get_driver_requests_service, get_drivers_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
@@ -75,11 +75,9 @@ async def approve_license(
     dependencies=[Depends(require_admin)],
 )
 async def approve_medical(
-    id: int,
-    data: MedicalApprovalData,
-    service: DriversService = Depends(get_drivers_service),
+    id: int, service: DriversService = Depends(get_drivers_service)
 ):
-    return await service.approve_medical_check(id, data.valid_until)
+    return await service.approve_medical_check(id)
 
 
 @router.post(

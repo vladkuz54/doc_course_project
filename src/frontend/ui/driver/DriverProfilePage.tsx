@@ -13,7 +13,7 @@ import {
   type Driver,
   type DriverRequest,
 } from "../shared/fleet";
-import { DateField, toIsoDate } from "../shared/DateField";
+import { DateField, nowForField, toIsoDate } from "../shared/DateField";
 import { Messages } from "../shared/Messages";
 import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
@@ -33,10 +33,11 @@ export class DriverProfilePage implements ProfilePage {
     return <DriverProfile page={this} />;
   }
 
-  requestMedicalCheck(driverId: number) {
+  requestMedicalCheck(driverId: number, checkDate: string) {
     return apiPost("/driver-requests/", {
       driver_id: driverId,
       type: "MEDICAL_CHECK",
+      medical_check_date: checkDate,
     });
   }
 
@@ -58,6 +59,18 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
   const { data, error, notice, pending, run, clearMessages } =
     useData(loadProfile);
   const [driver, requests] = data ?? [];
+
+  const submitMedical = (event: FormEvent<HTMLFormElement>, id: number) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const checkDate = toIsoDate(String(new FormData(form).get("check_date")));
+    run(
+      () => page.requestMedicalCheck(id, checkDate),
+      "Повідомлення про медогляд надіслано.",
+    ).then((saved) => {
+      if (saved) form.reset();
+    });
+  };
 
   const submitLicense = (event: FormEvent<HTMLFormElement>, id: number) => {
     event.preventDefault();
@@ -98,18 +111,24 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
             </dd>
           </dl>
 
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() =>
-              run(
-                () => page.requestMedicalCheck(driver.id),
-                "Запит на підтвердження медогляду надіслано.",
-              )
-            }
+          <form
+            className="panel"
+            onSubmit={(event) => submitMedical(event, driver.id)}
           >
-            Подати запит на медогляд
-          </button>
+            <label>
+              Дата, коли ви пройшли медогляд
+              <DateField
+                name="check_date"
+                max={nowForField().slice(0, 10)}
+                required
+              />
+            </label>
+            <div className="form-actions">
+              <button type="submit" disabled={pending}>
+                Повідомити про медогляд
+              </button>
+            </div>
+          </form>
 
           <form
             className="panel"

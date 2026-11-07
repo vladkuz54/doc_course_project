@@ -1,6 +1,5 @@
 "use client";
 
-import type { FormEvent } from "react";
 import { apiGet, apiPost } from "../api";
 import {
   describeRequest,
@@ -9,7 +8,6 @@ import {
   type Driver,
   type DriverRequest,
 } from "../shared/fleet";
-import { DateField, toIsoDate } from "../shared/DateField";
 import { Messages } from "../shared/Messages";
 import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
@@ -28,23 +26,6 @@ export function RequestsPage() {
   const { data, error, notice, pending, run, clearMessages } =
     useData(loadRequests);
   const [requests, drivers] = data ?? [];
-
-  const approveMedical = (
-    event: FormEvent<HTMLFormElement>,
-    request: DriverRequest,
-  ) => {
-    event.preventDefault();
-    const validUntil = toIsoDate(
-      String(new FormData(event.currentTarget).get("valid_until")),
-    );
-    run(
-      () =>
-        apiPost(`/driver-requests/${request.id}/approve-medical`, {
-          valid_until: validUntil,
-        }),
-      "Запит схвалено.",
-    );
-  };
 
   return (
     <>
@@ -82,38 +63,25 @@ export function RequestsPage() {
                       <td className="actions">
                         {request.status === "PENDING" && (
                           <div className="request-actions">
-                            {request.type === "MEDICAL_CHECK" ? (
-                              <form
-                                className="approve-medical"
-                                onSubmit={(event) =>
-                                  approveMedical(event, request)
-                                }
-                              >
-                                <label>
-                                  Дійсний до
-                                  <DateField name="valid_until" required />
-                                </label>
-                                <button type="submit" disabled={pending}>
-                                  Схвалити
-                                </button>
-                              </form>
-                            ) : (
-                              <button
-                                type="button"
-                                disabled={pending}
-                                onClick={() =>
-                                  run(
-                                    () =>
-                                      apiPost(
-                                        `/driver-requests/${request.id}/approve-license`,
-                                      ),
-                                    "Запит схвалено.",
-                                  )
-                                }
-                              >
-                                Схвалити
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              disabled={pending}
+                              onClick={() =>
+                                run(
+                                  () =>
+                                    apiPost(
+                                      `/driver-requests/${request.id}/${
+                                        request.type === "MEDICAL_CHECK"
+                                          ? "approve-medical"
+                                          : "approve-license"
+                                      }`,
+                                    ),
+                                  "Запит схвалено.",
+                                )
+                              }
+                            >
+                              Схвалити
+                            </button>
                             <button
                               type="button"
                               className="secondary danger"

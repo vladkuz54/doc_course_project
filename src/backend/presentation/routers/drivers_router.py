@@ -1,3 +1,6 @@
+from datetime import date
+from typing import Literal
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict
 
@@ -15,6 +18,8 @@ router = APIRouter(prefix="/drivers", tags=["drivers"])
 
 class DriverResponse(DriverData):
     id: int
+    medical_valid_until: date
+    medical_check_status: Literal["VALID", "EXPIRED", "PENDING"]
     model_config = ConfigDict(from_attributes=True)
 
 

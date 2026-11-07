@@ -45,11 +45,13 @@ export function DateField({
   required,
   defaultValue,
   withTime = false,
+  max,
 }: {
   name: string;
   required?: boolean;
   defaultValue?: string;
   withTime?: boolean;
+  max?: string;
 }) {
   const text = useRef<HTMLInputElement>(null);
   const picker = useRef<HTMLInputElement>(null);
@@ -61,8 +63,13 @@ export function DateField({
     if (input.selectionStart === input.value.length) {
       input.value = withSeparators(input.value, withTime);
     }
+    const iso = toIso(input.value);
     input.setCustomValidity(
-      input.value && !toIso(input.value) ? `Введіть справжню дату у форматі ${format}` : "",
+      input.value && !iso
+        ? `Введіть справжню дату у форматі ${format}`
+        : max && iso > max
+          ? `Дата не може бути пізніше ${formatForField(max, withTime)}`
+          : "",
     );
   };
 
@@ -96,6 +103,7 @@ export function DateField({
         className="date-picker"
         tabIndex={-1}
         aria-hidden="true"
+        max={max}
         onChange={picked}
       />
       <button

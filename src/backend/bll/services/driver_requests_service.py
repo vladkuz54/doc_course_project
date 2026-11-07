@@ -14,6 +14,7 @@ class DriverRequestData(BaseModel):
     type: Literal["LICENSE_UPDATE", "MEDICAL_CHECK"]
     new_license_category: Literal[LICENSE_CATEGORIES] | None = None
     new_license_expiry_date: date | None = None
+    medical_check_date: date | None = None
 
 
 class DriverRequestsService(IDriverRequestsService):

@@ -22,7 +22,7 @@ class IDriversService(IBaseService):
         pass
 
     @abstractmethod
-    async def approve_medical_check(self, request_id, valid_until):
+    async def approve_medical_check(self, request_id):
         pass
 
     @abstractmethod

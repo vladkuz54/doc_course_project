@@ -524,26 +524,6 @@ td.name {
   gap: 6px;
 }
 
-.approve-medical {
-  display: contents;
-}
-
-.approve-medical label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.approve-medical .date-field {
-  width: 9rem;
-}
-
-.approve-medical input:not(.date-picker) {
-  min-height: 0;
-  height: 31px;
-  padding-right: 32px;
-}
-
 .date-field {
   position: relative;
   display: block;
