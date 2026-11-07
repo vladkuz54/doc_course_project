@@ -366,6 +366,7 @@ def build():
                 created_at=NOW - timedelta(days=5),
                 text=f"Медогляд спливає: {shevchenko.full_name}, {shevchenko.medical_valid_until:%d.%m.%Y}",
                 is_read=True,
+                read_at=NOW - timedelta(days=5),
             ),
             Notifications(
                 recipient_id=shevchenko.user_id,

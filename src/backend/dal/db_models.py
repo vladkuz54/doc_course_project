@@ -383,6 +383,7 @@ class Notifications(Base):
     related_entity = Column(String, nullable=False)
     related_id = Column(Integer, nullable=False)
     is_read = Column(Boolean, nullable=False, default=False)
+    read_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
 
 
