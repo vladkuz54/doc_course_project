@@ -3,16 +3,10 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from ...dal.interfaces.driver_requests_interfaces import IDriverRequestsRepository
-from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.notifications_interfaces import INotificationsRepository
-from ...dal.interfaces.routes_interfaces import IRoutesRepository
-from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
-from ..exceptions import EntityNotFoundError
 from ..interfaces.notifications_interface import INotificationsService
 from ..observer import NotificationType, Observer, Subject
 from .base_service import BaseService
-
 
 READ_WARNING_QUIET_PERIOD = timedelta(hours=12)
 
@@ -32,33 +26,13 @@ class NotificationsService(INotificationsService, BaseService, Observer, Subject
     def __init__(
         self,
         repository: INotificationsRepository,
-        drivers_repository: IDriversRepository,
-        vehicles_repository: IVehiclesRepository,
-        routes_repository: IRoutesRepository,
-        driver_requests_repository: IDriverRequestsRepository,
     ):
         BaseService.__init__(self, repository)
         Subject.__init__(self)
         self.quiet_period = READ_WARNING_QUIET_PERIOD
-        self.related_repositories = {
-            "drivers": drivers_repository,
-            "vehicles": vehicles_repository,
-            "routes": routes_repository,
-            "driver_requests": driver_requests_repository,
-        }
 
     async def _validate(self, data, id=None):
-        repository = self.related_repositories[data.related_entity]
-        if not await repository.get_by_id(data.related_id):
-            label = {
-                "drivers": "водія",
-                "vehicles": "транспорт",
-                "routes": "маршрут",
-                "driver_requests": "запит",
-            }[data.related_entity]
-            raise EntityNotFoundError(
-                f"Не вдалося знайти {label}, до якого належить сповіщення."
-            )
+        pass
 
     async def get_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)
