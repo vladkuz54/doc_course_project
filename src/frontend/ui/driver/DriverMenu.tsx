@@ -9,12 +9,13 @@ import {
 
 const LINKS: MenuLink[] = [
   { page: "routes", label: "Маршрути" },
+  { page: "requests", label: "Запити" },
   { page: "profile", label: "Профіль" },
 ];
 
 const OPEN_PAGES: Record<RelatedEntity, string | null> = {
   drivers: "profile",
-  driver_requests: "profile",
+  driver_requests: "requests",
   routes: "routes",
   vehicles: null,
 };

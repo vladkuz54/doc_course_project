@@ -13,11 +13,40 @@ import { Messages } from "../shared/Messages";
 import { StopLine } from "../shared/StopLine";
 import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
+import { useHash } from "../shared/useHash";
+import { DriverRequestsPage } from "./DriverRequestsPage";
 
 export class DriverWorkspace implements Workspace {
   render() {
-    return <DriverRoutes />;
+    return <DriverScreens workspace={this} />;
   }
+
+  requestMedicalCheck(driverId: number, checkDate: string) {
+    return apiPost("/driver-requests/", {
+      driver_id: driverId,
+      type: "MEDICAL_CHECK",
+      medical_check_date: checkDate,
+    });
+  }
+
+  submitLicenseUpdate(
+    driverId: number,
+    category: string | null,
+    expiryDate: string,
+  ) {
+    return apiPost("/driver-requests/", {
+      driver_id: driverId,
+      type: "LICENSE_UPDATE",
+      new_license_category: category,
+      new_license_expiry_date: expiryDate,
+    });
+  }
+}
+
+function DriverScreens({ workspace }: { workspace: DriverWorkspace }) {
+  const hash = useHash();
+  if (hash === "requests") return <DriverRequestsPage workspace={workspace} />;
+  return <DriverRoutes />;
 }
 
 function DriverRoutes() {
@@ -34,7 +63,9 @@ function DriverRoutes() {
     <>
       <h1>Маршрути</h1>
       <Messages error={error} onClose={clearMessages} />
-      {routes?.length === 0 && <p className="muted">Маршрутів не призначено.</p>}
+      {routes?.length === 0 && (
+        <p className="muted">Маршрутів не призначено.</p>
+      )}
       <StatusSections
         items={sorted}
         statusOf={(route) => route.status}
