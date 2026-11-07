@@ -17,9 +17,9 @@ type Report = {
 };
 
 const REPORT_KINDS = {
-  utilization: "Використання транспорту",
-  maintenance: "Витрати на обслуговування",
-  usage: "Аналітика використання",
+  utilization: "Завантаженість автомобілів",
+  maintenance: "Витрати на утримання автопарку",
+  usage: "Аналітика використання транспорту за період",
 };
 
 const loadVehicles = () => apiGet<Vehicle[]>("/vehicles/");
