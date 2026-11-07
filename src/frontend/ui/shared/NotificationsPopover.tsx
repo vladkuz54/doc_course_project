@@ -7,8 +7,9 @@ import { REFRESH_EVENT, useData } from "./useData";
 
 export type RelatedEntity = "drivers" | "vehicles" | "routes" | "driver_requests";
 
-type Notification = {
+export type Notification = {
   id: number;
+  type: string;
   text: string;
   related_entity: RelatedEntity;
   created_at: string;
@@ -25,7 +26,7 @@ export function NotificationsPopover({
   openPage,
   canCheckDeadlines = false,
 }: {
-  openPage: (entity: RelatedEntity) => string | null;
+  openPage: (notification: Notification) => string | null;
   canCheckDeadlines?: boolean;
 }) {
   const { data, error, pending, reload, run } = useData(loadNotifications);
@@ -135,7 +136,7 @@ export function NotificationsPopover({
         {data?.length === 0 && <p className="muted">Сповіщень немає.</p>}
         <ul>
           {data?.map((notification) => {
-            const page = openPage(notification.related_entity);
+            const page = openPage(notification);
             return (
               <li
                 key={notification.id}

@@ -4,6 +4,7 @@ import type { NavigationMenu } from "../products";
 import { MenuLinks, type MenuLink } from "../shared/MenuLinks";
 import {
   NotificationsPopover,
+  type Notification,
   type RelatedEntity,
 } from "../shared/NotificationsPopover";
 
@@ -24,8 +25,17 @@ const OPEN_PAGES: Record<RelatedEntity, string> = {
   vehicles: "vehicles",
 };
 
-function openPage(entity: RelatedEntity) {
-  return OPEN_PAGES[entity];
+// These point at a vehicle, but what they are about lives on Облік
+const OPEN_BY_TYPE: Record<string, string> = {
+  INSURANCE_EXPIRING: "accounting/insurance",
+  MAINTENANCE_SCHEDULED: "accounting/repairs",
+  MAINTENANCE_DUE: "accounting/repairs",
+};
+
+function openPage(notification: Notification) {
+  return (
+    OPEN_BY_TYPE[notification.type] ?? OPEN_PAGES[notification.related_entity]
+  );
 }
 
 export class AdminMenu implements NavigationMenu {

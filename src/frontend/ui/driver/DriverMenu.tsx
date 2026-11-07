@@ -4,6 +4,7 @@ import type { NavigationMenu } from "../products";
 import { MenuLinks, type MenuLink } from "../shared/MenuLinks";
 import {
   NotificationsPopover,
+  type Notification,
   type RelatedEntity,
 } from "../shared/NotificationsPopover";
 
@@ -20,8 +21,8 @@ const OPEN_PAGES: Record<RelatedEntity, string | null> = {
   vehicles: null,
 };
 
-function openPage(entity: RelatedEntity) {
-  return OPEN_PAGES[entity];
+function openPage(notification: Notification) {
+  return OPEN_PAGES[notification.related_entity];
 }
 
 export class DriverMenu implements NavigationMenu {

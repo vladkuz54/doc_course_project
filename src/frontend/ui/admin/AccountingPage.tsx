@@ -14,6 +14,7 @@ import { FormRow } from "../shared/FormRow";
 import { Messages } from "../shared/Messages";
 import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
+import { useHashTab } from "../shared/useHash";
 
 type FuelRecord = {
   id: number;
@@ -77,7 +78,8 @@ function newestFirst(a: { date: string }, b: { date: string }) {
 }
 
 export function AccountingPage() {
-  const [tab, setTab] = useState<TabName>("fuel");
+  const hashTab = useHashTab();
+  const tab: TabName = hashTab in TABS ? (hashTab as TabName) : "fuel";
   const { Tab } = TABS[tab];
 
   return (
@@ -91,7 +93,7 @@ export function AccountingPage() {
             role="tab"
             aria-selected={name === tab}
             className={name === tab ? undefined : "secondary"}
-            onClick={() => setTab(name)}
+            onClick={() => (window.location.hash = `accounting/${name}`)}
           >
             {TABS[name].label}
           </button>
