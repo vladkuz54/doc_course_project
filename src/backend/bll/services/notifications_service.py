@@ -9,7 +9,7 @@ from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityNotFoundError
 from ..interfaces.notifications_interface import INotificationsService
-from ..observer import NotificationType, Observer
+from ..observer import NotificationType, Observer, Subject
 from .base_service import BaseService
 
 
@@ -22,7 +22,7 @@ class NotificationData(BaseModel):
     is_read: bool = False
 
 
-class NotificationsService(INotificationsService, BaseService, Observer):
+class NotificationsService(INotificationsService, BaseService, Observer, Subject):
     entity_name = "Сповіщення"
 
     def __init__(
@@ -33,7 +33,8 @@ class NotificationsService(INotificationsService, BaseService, Observer):
         routes_repository: IRoutesRepository,
         driver_requests_repository: IDriverRequestsRepository,
     ):
-        super().__init__(repository)
+        BaseService.__init__(self, repository)
+        Subject.__init__(self)
         self.related_repositories = {
             "drivers": drivers_repository,
             "vehicles": vehicles_repository,
@@ -97,3 +98,5 @@ class NotificationsService(INotificationsService, BaseService, Observer):
                 text=event.text,
             )
         )
+        # Pass it on only now that a row was saved, so duplicates stay silent
+        await self._notify(event)
