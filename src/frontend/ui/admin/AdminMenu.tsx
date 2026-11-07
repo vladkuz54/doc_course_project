@@ -1,22 +1,13 @@
 "use client";
 
 import type { NavigationMenu } from "../products";
-import { MenuLinks, type MenuLink } from "../shared/MenuLinks";
+import { MenuLinks } from "../shared/MenuLinks";
 import {
   NotificationsPopover,
   type Notification,
   type RelatedEntity,
 } from "../shared/NotificationsPopover";
-
-export const ADMIN_LINKS: MenuLink[] = [
-  { page: "drivers", label: "Водії" },
-  { page: "requests", label: "Запити" },
-  { page: "routes", label: "Маршрути" },
-  { page: "vehicles", label: "Транспорт" },
-  { page: "accounting", label: "Облік" },
-  { page: "reports", label: "Звіти" },
-  { page: "profile", label: "Профіль" },
-];
+import { ADMIN_LINKS } from "./adminLinks";
 
 const OPEN_PAGES: Record<RelatedEntity, string> = {
   drivers: "drivers",
@@ -25,7 +16,6 @@ const OPEN_PAGES: Record<RelatedEntity, string> = {
   vehicles: "vehicles",
 };
 
-// These point at a vehicle, but what they are about lives on Облік
 const OPEN_BY_TYPE: Record<string, string> = {
   INSURANCE_EXPIRING: "accounting/insurance",
   MAINTENANCE_SCHEDULED: "accounting/repairs",
