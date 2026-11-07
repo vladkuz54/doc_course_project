@@ -75,7 +75,6 @@ class NotificationsService(INotificationsService, BaseService, Observer):
         for row in unread:
             row.is_read = True
         if unread:
-            # They share a session, so one commit saves every row
             await self.repository.update(unread[0])
         return rows
 

@@ -1,7 +1,7 @@
 from datetime import date
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
 from ...dal.db_models import (
     ACTIVE_ROUTE_STATUSES,
@@ -24,7 +24,7 @@ from .entity_management import EntityManagement
 
 class DriverData(BaseModel):
     user_id: int
-    full_name: str
+    full_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
     license_categories: list[Literal[LICENSE_CATEGORIES]] = Field(min_length=1)
     experience_years: int = Field(0, ge=0, le=60)
     license_expiry_date: date
@@ -181,6 +181,11 @@ class DriversService(IDriversService, EntityManagement):
                 raise BusinessRuleError("Вкажіть дату, коли ви пройшли медогляд.")
             if data.medical_check_date > date.today():
                 raise BusinessRuleError("Дата медогляду не може бути в майбутньому.")
+            if data.medical_check_date <= driver.medical_check_date:
+                raise BusinessRuleError(
+                    f"Медогляд від {driver.medical_check_date:%d/%m/%Y} уже "
+                    "враховано. Вкажіть дату нового медогляду."
+                )
             if pending:
                 raise BusinessRuleError(
                     "Ви вже подали запит на підтвердження медогляду. Зачекайте, "

@@ -64,7 +64,6 @@ async def stream(
     driver_id: int | None = Depends(get_current_driver_id),
     session: AsyncSession = Depends(get_db_session),
 ):
-    # The stream stays open, so release the database connection the login check used
     await session.close()
     return StreamingResponse(
         live_notifications.stream(current_user.user_id, driver_id is None),

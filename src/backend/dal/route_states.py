@@ -89,7 +89,6 @@ class PlannedState(RouteState):
     def edit_stops(self, route, stops):
         if not stops:
             raise RouteActionNotAllowed("Маршрут повинен мати хоча б одну зупинку.")
-        # In place, because SQLAlchemy inserts before it deletes, which would break uq_route_stop
         existing_count = len(route.stops)
         for position, stop in enumerate(stops, 1):
             if position <= existing_count:

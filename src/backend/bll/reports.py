@@ -55,7 +55,7 @@ class VehicleUtilizationReport(ReportStrategy):
             row["completed_routes"] += 1
             row["total_distance"] += route.distance
         return ReportData(
-            title="Використання транспорту",
+            title="Завантаженість автомобілів",
             period_from=period_from,
             period_to=period_to,
             rows=await _named_rows(rows, self.vehicles_service),
@@ -87,7 +87,7 @@ class MaintenanceCostReport(ReportStrategy):
             else:
                 row["planned_repairs"] += 1
         return ReportData(
-            title="Витрати на обслуговування",
+            title="Витрати на утримання автопарку",
             period_from=period_from,
             period_to=period_to,
             rows=await _named_rows(rows, self.vehicles_service),
@@ -131,7 +131,7 @@ class UsageAnalyticsReport(ReportStrategy):
                     row["liters"] / row["total_distance"] * 100, 2
                 )
         return ReportData(
-            title="Аналітика використання",
+            title="Аналітика використання транспорту за період",
             period_from=period_from,
             period_to=period_to,
             rows=await _named_rows(rows, self.vehicles_service),

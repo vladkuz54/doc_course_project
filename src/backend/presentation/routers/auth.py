@@ -14,7 +14,6 @@ from ..dependencies import get_drivers_service, get_users_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# shortcut: without JWT_SECRET_KEY a random key is used, so tokens die on every restart; set the env var for real use
 SECRET_KEY = os.getenv("JWT_SECRET_KEY") or secrets.token_urlsafe(32)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)

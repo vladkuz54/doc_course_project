@@ -217,7 +217,6 @@ class RoutesService(IRoutesService, EntityManagement):
         route.edit_stops(stops)
         route.update_planned_return()
         await self._check_assignment(route)
-        # Read the addresses now: after the commit, stops would need another query
         addresses = " → ".join(stop.address for stop in route.stops)
         route = await self.repository.update(route)
         await self._publish_updated(route, [f"зупинки {addresses}"])
