@@ -29,8 +29,10 @@ const COLUMN_LABELS: Record<string, string> = {
   vehicle: "Транспорт",
   completed_routes: "Завершені маршрути",
   total_distance: "Загальна відстань, км",
-  done_repairs: "Виконане обслуговування",
-  planned_repairs: "Заплановане обслуговування",
+  hours_on_route: "Годин у рейсі",
+  utilization_percent: "Завантаженість, %",
+  repair_cost: "Вартість обслуговування",
+  insurance_cost: "Вартість страхування",
   total_cost: "Загальна вартість",
   liters: "Літри",
   fuel_cost: "Вартість пального",
@@ -118,7 +120,7 @@ export function ReportsPage() {
           show();
         }}
       >
-        <label>
+        <label className="span-2">
           Звіт
           <select name="kind">
             {Object.entries(REPORT_KINDS).map(([value, label]) => (
