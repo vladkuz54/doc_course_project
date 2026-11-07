@@ -260,6 +260,13 @@ def build():
             status="PLANNED",
             description="Щорічний техогляд",
         ),
+        RepairRecords(
+            vehicle=volvo,
+            date=date(2026, 11, 1),
+            type="REPAIR",
+            status="PLANNED",
+            description="Заміна зчеплення",
+        ),
     ]
 
     insurance = [

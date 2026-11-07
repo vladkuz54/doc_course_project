@@ -373,6 +373,7 @@ class Notifications(Base):
             "ROUTE_UPDATED",
             "ROUTE_UNASSIGNED",
             "ROUTE_CANCELLED",
+            "REPAIR_COST_MISSING",
             "REQUEST_APPROVED",
             "REQUEST_REJECTED",
             name="notification_type",
