@@ -8,10 +8,7 @@ from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.route_stops_interfaces import IRouteStopsRepository
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
-from ...dal.route_states import (
-    ROUTE_STATUS_LABELS,
-    RouteActionNotAllowed,
-)
+from ...dal.route_states import ROUTE_STATUS_LABELS, RouteActionNotAllowed
 from ..assignment_checks import (
     AssignmentRequest,
     DriverActiveHandler,

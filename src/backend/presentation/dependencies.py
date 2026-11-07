@@ -152,7 +152,6 @@ def get_report_exporter() -> ReportExporter:
 
 
 async def run_deadline_checks():
-    """Runs the five deadline checks outside a request, for the hourly schedule."""
     async with Session() as session:
         notifications = get_notifications_service(session)
         monitor = get_deadline_monitor(

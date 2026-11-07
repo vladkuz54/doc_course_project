@@ -183,7 +183,8 @@ async def arrive_at_stop(
 ):
     if driver_id is None:
         raise HTTPException(
-            status_code=403, detail="Відмічати прибуття на зупинки може лише водій цього маршруту."
+            status_code=403,
+            detail="Відмічати прибуття на зупинки може лише водій цього маршруту.",
         )
     await _ensure_can_act(id, driver_id, service)
     return await service.arrive_at_stop(id, stop_id)

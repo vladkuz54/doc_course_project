@@ -6,11 +6,6 @@ HEARTBEAT_SECONDS = 15
 
 
 class LiveNotifications(Observer):
-    """Tells open browser streams that their notification list changed.
-
-    It keeps subscribers in memory, so it works with one server process.
-    """
-
     def __init__(self):
         self._subscribers = {}
 

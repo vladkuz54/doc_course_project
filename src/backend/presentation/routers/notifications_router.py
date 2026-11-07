@@ -8,10 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...bll.live_notifications import live_notifications
 from ...bll.observer import DomainEvent
 from ...bll.services.deadline_monitor import DeadlineMonitor
-from ...bll.services.notifications_service import (
-    NotificationData,
-    NotificationsService,
-)
+from ...bll.services.notifications_service import NotificationData, NotificationsService
 from ..dependencies import (
     get_db_session,
     get_deadline_monitor,

@@ -7,7 +7,6 @@ function subscribe(onChange: () => void) {
   return () => window.removeEventListener("hashchange", onChange);
 }
 
-// The hash is "screen" or "screen/tab", such as #accounting/insurance
 const part = (index: number) => () =>
   window.location.hash.slice(1).split("/")[index] ?? "";
 

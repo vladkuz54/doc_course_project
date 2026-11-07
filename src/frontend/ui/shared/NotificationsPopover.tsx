@@ -33,8 +33,6 @@ export function NotificationsPopover({
   const panel = useRef<HTMLDivElement>(null);
   const unread = data?.filter((notification) => !notification.is_read) ?? [];
 
-  // A change means data changed elsewhere too, so every open useData reloads,
-  // this list included. The stream closes on sign out, when this unmounts.
   useEffect(() => {
     const stop = new AbortController();
     const listen = async () => {

@@ -64,9 +64,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 async def require_admin(current_user: CurrentUser = Depends(get_current_user)):
     if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=403, detail="У вас немає прав на цю дію."
-        )
+        raise HTTPException(status_code=403, detail="У вас немає прав на цю дію.")
     return current_user
 
 
@@ -74,7 +72,6 @@ async def get_current_driver_id(
     current_user: CurrentUser = Depends(get_current_user),
     drivers_service: DriversService = Depends(get_drivers_service),
 ):
-    """None for an admin (sees everything), the driver's id for a driver."""
     if current_user.role == "ADMIN":
         return None
     driver = await drivers_service.get_by_user_id(current_user.user_id)
@@ -88,9 +85,7 @@ async def get_current_driver_id(
 
 def ensure_visible(obj, visible):
     if obj.id not in {item.id for item in visible}:
-        raise HTTPException(
-            status_code=403, detail="У вас немає прав на цю дію."
-        )
+        raise HTTPException(status_code=403, detail="У вас немає прав на цю дію.")
 
 
 @router.post("/token", response_model=TokenResponse)

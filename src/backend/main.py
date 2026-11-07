@@ -48,12 +48,6 @@ async def check_deadlines_every_hour():
 
 
 class RunDeadlineChecksAfterChanges:
-    """After a successful change through the API, checks deadlines at once.
-
-    Notification and login routes are skipped, so marking warnings as read
-    isn't undone straight away.
-    """
-
     skipped_paths = ("/notifications", "/auth")
 
     def __init__(self, app):

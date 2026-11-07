@@ -10,7 +10,6 @@ def _until():
 
 
 def _cover_end(policies):
-    """Last day of unbroken cover from today. A gap that is already over doesn't count."""
     policies = sorted(policies, key=lambda p: p.start_date)
     cover_end = policies[0].end_date
     for policy in policies[1:]:

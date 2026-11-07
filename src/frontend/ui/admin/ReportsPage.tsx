@@ -24,7 +24,6 @@ const REPORT_KINDS = {
 
 const loadVehicles = () => apiGet<Vehicle[]>("/vehicles/");
 
-// Same labels as the PDF and Excel exports (backend bll/exports.py)
 const COLUMN_LABELS: Record<string, string> = {
   vehicle: "Транспорт",
   completed_routes: "Завершені маршрути",
