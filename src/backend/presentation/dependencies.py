@@ -42,13 +42,15 @@ def get_users_service(
 def get_notifications_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> NotificationsService:
-    return NotificationsService(
+    service = NotificationsService(
         NotificationsRepository(session),
         DriversRepository(session),
         VehiclesRepository(session),
         RoutesRepository(session),
         DriverRequestsRepository(session),
     )
+    service.attach(live_notifications)
+    return service
 
 
 def get_drivers_service(
@@ -62,7 +64,6 @@ def get_drivers_service(
         DriverRequestsRepository(session),
     )
     service.attach(notifications)
-    service.attach(live_notifications)
     return service
 
 
@@ -82,7 +83,6 @@ def get_repair_records_service(
         RoutesRepository(session),
     )
     service.attach(notifications)
-    service.attach(live_notifications)
     return service
 
 
@@ -117,7 +117,6 @@ def get_routes_service(
         insurance_policies_service,
     )
     service.attach(notifications)
-    service.attach(live_notifications)
     return service
 
 
@@ -147,7 +146,6 @@ def get_deadline_monitor(
         repair_records_service, insurance_policies_service, drivers_service
     )
     monitor.attach(notifications)
-    monitor.attach(live_notifications)
     return monitor
 
 
@@ -157,3 +155,19 @@ def get_report_service() -> ReportService:
 
 def get_report_exporter() -> ReportExporter:
     return ReportExporter()
+
+
+async def run_deadline_checks():
+    """Runs the four deadline checks outside a request, for the hourly schedule."""
+    async with Session() as session:
+        notifications = get_notifications_service(session)
+        monitor = get_deadline_monitor(
+            get_repair_records_service(session, notifications),
+            get_insurance_policies_service(session),
+            get_drivers_service(session, notifications),
+            notifications,
+        )
+        await monitor.check_maintenance_due()
+        await monitor.check_insurance_expiring()
+        await monitor.check_license_expiring()
+        await monitor.check_medical_check_due()
