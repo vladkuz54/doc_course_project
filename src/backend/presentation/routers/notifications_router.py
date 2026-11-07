@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -49,7 +49,11 @@ async def get_all(
     response_model=list[DomainEvent],
     dependencies=[Depends(require_admin)],
 )
-async def check_deadlines(monitor: DeadlineMonitor = Depends(get_deadline_monitor)):
+async def check_deadlines(
+    monitor: DeadlineMonitor = Depends(get_deadline_monitor),
+    notifications: NotificationsService = Depends(get_notifications_service),
+):
+    notifications.quiet_period = timedelta(0)
     return [
         *await monitor.check_maintenance_due(),
         *await monitor.check_insurance_expiring(),

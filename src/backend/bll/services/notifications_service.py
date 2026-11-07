@@ -87,7 +87,6 @@ class NotificationsService(INotificationsService, BaseService, Observer, Subject
         return rows
 
     async def on_event(self, event):
-        # A read warning stays quiet for a while after it was read, then may come back
         since = datetime.now() - self.quiet_period
         for n in await self.repository.get_unread_or_read_since(since):
             if (
@@ -107,5 +106,4 @@ class NotificationsService(INotificationsService, BaseService, Observer, Subject
                 text=event.text,
             )
         )
-        # Pass it on only now that a row was saved, so duplicates stay silent
         await self._notify(event)
