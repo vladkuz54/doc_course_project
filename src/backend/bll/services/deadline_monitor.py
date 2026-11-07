@@ -33,7 +33,7 @@ class DeadlineMonitor(Subject):
         until = _until()
         events = []
         for repair in await self.repair_records_service.get_planned():
-            if repair.date <= until:
+            if date.today() <= repair.date <= until:
                 label = MAINTENANCE_TYPE_LABELS[repair.type]
                 events.append(
                     DomainEvent(
@@ -41,6 +41,22 @@ class DeadlineMonitor(Subject):
                         "vehicles",
                         repair.vehicle_id,
                         f"Планове обслуговування ({label}) для {repair.vehicle.make}: {repair.date:%d.%m.%Y}",
+                    )
+                )
+        return await self._publish(events)
+
+    async def check_repair_cost_missing(self):
+        events = []
+        for repair in await self.repair_records_service.get_planned():
+            if repair.date < date.today():
+                label = MAINTENANCE_TYPE_LABELS[repair.type]
+                events.append(
+                    DomainEvent(
+                        "REPAIR_COST_MISSING",
+                        "vehicles",
+                        repair.vehicle_id,
+                        f"Не внесено вартість: {label} для {repair.vehicle.make} "
+                        f"від {repair.date:%d.%m.%Y}",
                     )
                 )
         return await self._publish(events)

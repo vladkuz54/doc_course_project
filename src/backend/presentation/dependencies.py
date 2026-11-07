@@ -168,6 +168,7 @@ async def run_deadline_checks():
             notifications,
         )
         await monitor.check_maintenance_due()
+        await monitor.check_repair_cost_missing()
         await monitor.check_insurance_expiring()
         await monitor.check_license_expiring()
         await monitor.check_medical_check_due()
