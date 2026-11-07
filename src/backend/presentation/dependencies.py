@@ -42,13 +42,7 @@ def get_users_service(
 def get_notifications_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> NotificationsService:
-    service = NotificationsService(
-        NotificationsRepository(session),
-        DriversRepository(session),
-        VehiclesRepository(session),
-        RoutesRepository(session),
-        DriverRequestsRepository(session),
-    )
+    service = NotificationsService(NotificationsRepository(session))
     service.attach(live_notifications)
     return service
 
@@ -158,7 +152,7 @@ def get_report_exporter() -> ReportExporter:
 
 
 async def run_deadline_checks():
-    """Runs the four deadline checks outside a request, for the hourly schedule."""
+    """Runs the five deadline checks outside a request, for the hourly schedule."""
     async with Session() as session:
         notifications = get_notifications_service(session)
         monitor = get_deadline_monitor(
