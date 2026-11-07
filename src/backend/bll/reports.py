@@ -23,6 +23,13 @@ async def _named_rows(rows_by_vehicle, vehicles_service):
     return rows
 
 
+async def _vehicle_ids(vehicles_service, vehicle):
+    if vehicle:
+        return [vehicle.id]
+    vehicles = await vehicles_service.get_all()
+    return [v.id for v in vehicles if v.status == "ACTIVE"]
+
+
 async def _completed_routes(routes_service, period_from, period_to, vehicle):
     routes = await routes_service.list(period_from, period_to, vehicle)
     return [r for r in routes if r.status == "COMPLETED" and r.vehicle_id is not None]
@@ -40,20 +47,34 @@ class VehicleUtilizationReport(ReportStrategy):
         self.vehicles_service = vehicles_service
 
     async def generate(self, period_from, period_to, vehicle=None):
-        rows = {}
+        def new_row(vehicle_id):
+            return {
+                "vehicle_id": vehicle_id,
+                "completed_routes": 0,
+                "total_distance": 0.0,
+                "hours_on_route": 0.0,
+                "utilization_percent": 0.0,
+            }
+
+        rows = {
+            id: new_row(id) for id in await _vehicle_ids(self.vehicles_service, vehicle)
+        }
         for route in await _completed_routes(
             self.routes_service, period_from, period_to, vehicle
         ):
-            row = rows.setdefault(
-                route.vehicle_id,
-                {
-                    "vehicle_id": route.vehicle_id,
-                    "completed_routes": 0,
-                    "total_distance": 0.0,
-                },
-            )
+            row = rows.setdefault(route.vehicle_id, new_row(route.vehicle_id))
             row["completed_routes"] += 1
             row["total_distance"] += route.distance
+            started = route.started_at or route.departure_at
+            row["hours_on_route"] += (
+                route.completed_at - started
+            ).total_seconds() / 3600
+        period_hours = ((period_to - period_from).days + 1) * 24
+        for row in rows.values():
+            row["utilization_percent"] = round(
+                row["hours_on_route"] / period_hours * 100, 1
+            )
+            row["hours_on_route"] = round(row["hours_on_route"], 1)
         return ReportData(
             title="Завантаженість автомобілів",
             period_from=period_from,
@@ -63,29 +84,50 @@ class VehicleUtilizationReport(ReportStrategy):
 
 
 class MaintenanceCostReport(ReportStrategy):
-    def __init__(self, repair_records_service, vehicles_service):
+    def __init__(
+        self,
+        repair_records_service,
+        fuel_records_service,
+        insurance_policies_service,
+        vehicles_service,
+    ):
         self.repair_records_service = repair_records_service
+        self.fuel_records_service = fuel_records_service
+        self.insurance_policies_service = insurance_policies_service
         self.vehicles_service = vehicles_service
 
     async def generate(self, period_from, period_to, vehicle=None):
-        rows = {}
+        def new_row(vehicle_id):
+            return {
+                "vehicle_id": vehicle_id,
+                "fuel_cost": Decimal("0.00"),
+                "repair_cost": Decimal("0.00"),
+                "insurance_cost": Decimal("0.00"),
+                "total_cost": Decimal("0.00"),
+            }
+
+        rows = {
+            id: new_row(id) for id in await _vehicle_ids(self.vehicles_service, vehicle)
+        }
+
+        def add(record, column):
+            row = rows.setdefault(record.vehicle_id, new_row(record.vehicle_id))
+            row[column] += record.amount
+            row["total_cost"] += record.amount
+
+        for fuel in await self.fuel_records_service.list(
+            period_from, period_to, vehicle
+        ):
+            add(fuel, "fuel_cost")
         for repair in await self.repair_records_service.list(
             period_from, period_to, vehicle
         ):
-            row = rows.setdefault(
-                repair.vehicle_id,
-                {
-                    "vehicle_id": repair.vehicle_id,
-                    "done_repairs": 0,
-                    "planned_repairs": 0,
-                    "total_cost": Decimal("0"),
-                },
-            )
             if repair.status == "DONE":
-                row["done_repairs"] += 1
-                row["total_cost"] += repair.amount
-            else:
-                row["planned_repairs"] += 1
+                add(repair, "repair_cost")
+        for policy in await self.insurance_policies_service.list(
+            period_from, period_to, vehicle
+        ):
+            add(policy, "insurance_cost")
         return ReportData(
             title="Витрати на утримання автопарку",
             period_from=period_from,
