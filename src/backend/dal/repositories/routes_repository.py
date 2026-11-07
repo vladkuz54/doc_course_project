@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from ..db_models import Routes
@@ -25,10 +25,11 @@ class RoutesRepository(IRoutesRepository, BaseRepository):
         return await self._where(self.model.vehicle_id == vehicle_id)
 
     async def get_between_dates(self, start, end, vehicle_id=None):
-        conditions = [self.model.departure_at.between(start, end)]
+        driven_at = func.coalesce(self.model.started_at, self.model.departure_at)
+        conditions = [driven_at.between(start, end)]
         if vehicle_id is not None:
             conditions.append(self.model.vehicle_id == vehicle_id)
         result = await self.session.execute(
-            select(self.model).where(*conditions).order_by(self.model.departure_at)
+            select(self.model).where(*conditions).order_by(driven_at)
         )
         return result.scalars().all()
