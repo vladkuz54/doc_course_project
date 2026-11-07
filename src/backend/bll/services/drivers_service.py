@@ -48,6 +48,13 @@ REQUEST_TYPE_LABELS = {
 REQUEST_STATUS_LABELS = {"APPROVED": "схвалено", "REJECTED": "відхилено"}
 
 
+def _license_details(request):
+    details = f"дійсне до {request.new_license_expiry_date:%d.%m.%Y}"
+    if request.new_license_category:
+        details += f", категорія {request.new_license_category}"
+    return details
+
+
 class DriversService(IDriversService, EntityManagement):
     entity_name = "Водія"
     status_field = "employment_status"
@@ -119,7 +126,7 @@ class DriversService(IDriversService, EntityManagement):
         driver = await self.get_by_id(request.driver_id)
         if request.type == "LICENSE_UPDATE":
             type = "LICENSE_UPDATE_REQUEST"
-            text = f"{driver.full_name} просить оновити посвідчення до категорії {request.new_license_category}"
+            text = f"{driver.full_name} повідомляє про нове посвідчення, {_license_details(request)}"
         else:
             type = "MEDICAL_CHECK_REQUEST"
             text = f"{driver.full_name} повідомляє про медогляд {request.medical_check_date:%d.%m.%Y}"
@@ -129,12 +136,12 @@ class DriversService(IDriversService, EntityManagement):
     async def approve_license_update(self, request_id):
         request = await self._get_pending_request(request_id, "LICENSE_UPDATE")
         driver = await self.get_by_id(request.driver_id)
-        driver.license_categories = [
-            *driver.license_categories,
-            request.new_license_category,
-        ]
-        if request.new_license_expiry_date:
-            driver.license_expiry_date = request.new_license_expiry_date
+        if request.new_license_category:
+            driver.license_categories = [
+                *driver.license_categories,
+                request.new_license_category,
+            ]
+        driver.license_expiry_date = request.new_license_expiry_date
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
 
@@ -184,27 +191,30 @@ class DriversService(IDriversService, EntityManagement):
             raise BusinessRuleError(
                 "Запит на оновлення посвідчення не може містити дату медогляду."
             )
-        if data.new_license_category is None:
+        if data.new_license_expiry_date is None:
+            raise BusinessRuleError("Вкажіть, до якої дати дійсне нове посвідчення.")
+        if data.new_license_expiry_date <= max(
+            date.today(), driver.license_expiry_date
+        ):
             raise BusinessRuleError(
-                "Оберіть категорію, яку хочете додати до посвідчення."
+                "Нове посвідчення має бути дійсним довше, ніж поточне "
+                f"(до {driver.license_expiry_date:%d/%m/%Y})."
             )
         if data.new_license_category in driver.license_categories:
             raise BusinessRuleError(
                 f"У вас уже є категорія {data.new_license_category}."
             )
-        if any(r.new_license_category == data.new_license_category for r in pending):
+        if pending:
             raise BusinessRuleError(
-                f"Ви вже подали запит на категорію {data.new_license_category}. "
-                "Зачекайте, доки адміністратор його розгляне."
+                "Ви вже подали запит на оновлення посвідчення. Зачекайте, "
+                "доки адміністратор його розгляне."
             )
 
     async def _save_decision(self, request, type, verb):
         request = await self.driver_requests_repository.update(request)
         driver = await self.get_by_id(request.driver_id)
         if request.type == "LICENSE_UPDATE":
-            subject = (
-                f"оновлення посвідчення (категорія {request.new_license_category})"
-            )
+            subject = f"оновлення посвідчення ({_license_details(request)})"
         else:
             subject = "підтвердження медогляду"
         await self._notify(

@@ -109,10 +109,10 @@ export function describeRequest(request: DriverRequest) {
   if (request.type === "MEDICAL_CHECK") {
     return `Медогляд пройдено ${formatDate(request.medical_check_date ?? "")}`;
   }
-  const expiry = request.new_license_expiry_date
-    ? `, дійсне до ${formatDate(request.new_license_expiry_date)}`
+  const category = request.new_license_category
+    ? `, категорія ${request.new_license_category}`
     : "";
-  return `Категорія посвідчення ${request.new_license_category}${expiry}`;
+  return `Посвідчення до ${formatDate(request.new_license_expiry_date ?? "")}${category}`;
 }
 
 const STATUS_ORDER: RouteStatus[] = [

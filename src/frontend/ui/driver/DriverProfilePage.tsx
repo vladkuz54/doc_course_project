@@ -24,6 +24,14 @@ const loadProfile = () =>
     apiGet<DriverRequest[]>("/driver-requests/"),
   ]);
 
+const today = () => nowForField().slice(0, 10);
+
+function dayAfter(isoDate: string) {
+  const next = new Date(`${isoDate}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  return next.toISOString().slice(0, 10);
+}
+
 function newestFirst(a: DriverRequest, b: DriverRequest) {
   return b.created_at.localeCompare(a.created_at);
 }
@@ -43,14 +51,14 @@ export class DriverProfilePage implements ProfilePage {
 
   submitLicenseUpdate(
     driverId: number,
-    category: string,
-    expiryDate?: string | null,
+    category: string | null,
+    expiryDate: string,
   ) {
     return apiPost("/driver-requests/", {
       driver_id: driverId,
       type: "LICENSE_UPDATE",
       new_license_category: category,
-      new_license_expiry_date: expiryDate ?? null,
+      new_license_expiry_date: expiryDate,
     });
   }
 }
@@ -80,8 +88,8 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
       () =>
         page.submitLicenseUpdate(
           id,
-          String(fields.get("category")),
-          toIsoDate(String(fields.get("expiry"))) || null,
+          String(fields.get("category")) || null,
+          toIsoDate(String(fields.get("expiry"))),
         ),
       "Запит на оновлення посвідчення надіслано.",
     ).then((saved) => {
@@ -119,7 +127,7 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
               Дата, коли ви пройшли медогляд
               <DateField
                 name="check_date"
-                max={nowForField().slice(0, 10)}
+                max={today()}
                 required
               />
             </label>
@@ -135,18 +143,25 @@ function DriverProfile({ page }: { page: DriverProfilePage }) {
             onSubmit={(event) => submitLicense(event, driver.id)}
           >
             <label>
-              Нова категорія посвідчення
-              <select name="category" required>
+              Нове посвідчення дійсне до
+              <DateField
+                name="expiry"
+                min={dayAfter(
+                  [today(), driver.license_expiry_date].toSorted().at(-1)!,
+                )}
+                required
+              />
+            </label>
+            <label>
+              Нова категорія (необов’язково)
+              <select name="category">
+                <option value="">Без нової категорії</option>
                 {LICENSE_CATEGORIES.filter(
                   (category) => !driver.license_categories.includes(category),
                 ).map((category) => (
                   <option key={category}>{category}</option>
                 ))}
               </select>
-            </label>
-            <label>
-              Новий термін дії (необов’язково)
-              <DateField name="expiry" />
             </label>
             <div className="form-actions">
               <button type="submit" disabled={pending}>

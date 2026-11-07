@@ -321,7 +321,7 @@ def build():
                 related_entity="driver_requests",
                 related_id=license_request.id,
                 created_at=license_request.created_at,
-                text="Коваленко О. П. просить оновити посвідчення до категорії C",
+                text=f"{kovalenko.full_name} повідомляє про нове посвідчення, дійсне до {days(3650):%d.%m.%Y}, категорія C",
             ),
             Notifications(
                 type="MEDICAL_CHECK_REQUEST",
