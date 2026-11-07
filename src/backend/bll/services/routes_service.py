@@ -10,7 +10,6 @@ from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ...dal.route_states import (
     ROUTE_STATUS_LABELS,
-    PlannedState,
     RouteActionNotAllowed,
 )
 from ..assignment_checks import (
@@ -118,12 +117,7 @@ class RoutesService(IRoutesService, EntityManagement):
 
     async def update(self, id, data):
         route = await self.get_by_id(id)
-        if not isinstance(route.state, PlannedState):
-            raise RouteActionNotAllowed(
-                f"Маршрут №{route.id} має статус "
-                f"«{ROUTE_STATUS_LABELS[route.status]}», тому його не можна "
-                "редагувати. Змінювати можна лише заплановані маршрути."
-            )
+        route.change_distance(data.distance)
         await self._validate(data, id)
         if data.driver_id is None and route.driver_id is not None:
             raise BusinessRuleError(
@@ -143,7 +137,6 @@ class RoutesService(IRoutesService, EntityManagement):
             route.reassign_vehicle(await self._get_vehicle(data.vehicle_id))
         if data.departure_at != route.departure_at:
             route.reschedule(data.departure_at)
-        route.distance = data.distance
         route.update_planned_return()
         await self._check_assignment(route)
         route = await self.repository.update(route)
