@@ -3,7 +3,7 @@
 import type { Workspace } from "../products";
 import { useHash } from "../shared/useHash";
 import { AccountingPage } from "./AccountingPage";
-import { ADMIN_LINKS } from "./AdminMenu";
+import { ADMIN_LINKS } from "./adminLinks";
 import { DriversPage } from "./DriversPage";
 import { ReportsPage } from "./ReportsPage";
 import { RequestsPage } from "./RequestsPage";
