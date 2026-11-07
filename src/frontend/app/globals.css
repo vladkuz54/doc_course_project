@@ -442,6 +442,10 @@ main.login {
   grid-column: 1 / -1;
 }
 
+.panel .span-2 {
+  grid-column: span 2;
+}
+
 .form-actions {
   display: flex;
   gap: 8px;
