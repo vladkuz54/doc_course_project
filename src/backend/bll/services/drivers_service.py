@@ -1,9 +1,13 @@
 from datetime import date
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
-from ...dal.db_models import ACTIVE_ROUTE_STATUSES, LICENSE_CATEGORIES
+from ...dal.db_models import (
+    ACTIVE_ROUTE_STATUSES,
+    LICENSE_CATEGORIES,
+    medical_valid_until,
+)
 from ...dal.interfaces.driver_requests_interfaces import IDriverRequestsRepository
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
@@ -20,19 +24,16 @@ from .entity_management import EntityManagement
 
 class DriverData(BaseModel):
     user_id: int
-    full_name: str
+    full_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
     license_categories: list[Literal[LICENSE_CATEGORIES]] = Field(min_length=1)
     experience_years: int = Field(0, ge=0, le=60)
     license_expiry_date: date
     medical_check_date: date
-    medical_valid_until: date
-    medical_check_status: Literal["VALID", "EXPIRED", "PENDING"] = "VALID"
     employment_status: Literal["ACTIVE", "DISMISSED"] = "ACTIVE"
 
 
 class DriverUpdateData(DriverData):
     experience_years: int = Field(ge=0, le=60)
-    medical_check_status: Literal["VALID", "EXPIRED", "PENDING"]
     employment_status: Literal["ACTIVE", "DISMISSED"]
 
 
@@ -40,15 +41,18 @@ class DriverStatusData(BaseModel):
     employment_status: Literal["ACTIVE", "DISMISSED"]
 
 
-class MedicalApprovalData(BaseModel):
-    valid_until: date
-
-
 REQUEST_TYPE_LABELS = {
     "LICENSE_UPDATE": "оновлення посвідчення",
     "MEDICAL_CHECK": "підтвердження медогляду",
 }
 REQUEST_STATUS_LABELS = {"APPROVED": "схвалено", "REJECTED": "відхилено"}
+
+
+def _license_details(request):
+    details = f"дійсне до {request.new_license_expiry_date:%d.%m.%Y}"
+    if request.new_license_category:
+        details += f", категорія {request.new_license_category}"
+    return details
 
 
 class DriversService(IDriversService, EntityManagement):
@@ -97,6 +101,11 @@ class DriversService(IDriversService, EntityManagement):
         routes = await self.routes_repository.get_by_driver(entity.id)
         return not any(r.status in ACTIVE_ROUTE_STATUSES for r in routes)
 
+    def to_fields(self, data):
+        fields = data.model_dump()
+        fields["medical_valid_until"] = medical_valid_until(data.medical_check_date)
+        return fields
+
     async def get_by_user_id(self, user_id):
         driver = await self.repository.get_by_user_id(user_id)
         if not driver:
@@ -117,36 +126,30 @@ class DriversService(IDriversService, EntityManagement):
         driver = await self.get_by_id(request.driver_id)
         if request.type == "LICENSE_UPDATE":
             type = "LICENSE_UPDATE_REQUEST"
-            text = f"{driver.full_name} просить оновити посвідчення до категорії {request.new_license_category}"
+            text = f"{driver.full_name} повідомляє про нове посвідчення, {_license_details(request)}"
         else:
             type = "MEDICAL_CHECK_REQUEST"
-            text = f"{driver.full_name} подав запит на підтвердження медогляду"
+            text = f"{driver.full_name} повідомляє про медогляд {request.medical_check_date:%d.%m.%Y}"
         await self._notify(DomainEvent(type, "driver_requests", request.id, text))
         return request
 
     async def approve_license_update(self, request_id):
         request = await self._get_pending_request(request_id, "LICENSE_UPDATE")
         driver = await self.get_by_id(request.driver_id)
-        driver.license_categories = [
-            *driver.license_categories,
-            request.new_license_category,
-        ]
-        if request.new_license_expiry_date:
-            driver.license_expiry_date = request.new_license_expiry_date
+        if request.new_license_category:
+            driver.license_categories = [
+                *driver.license_categories,
+                request.new_license_category,
+            ]
+        driver.license_expiry_date = request.new_license_expiry_date
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
 
-    async def approve_medical_check(self, request_id, valid_until):
+    async def approve_medical_check(self, request_id):
         request = await self._get_pending_request(request_id, "MEDICAL_CHECK")
-        if valid_until <= date.today():
-            raise BusinessRuleError(
-                f"Дата «Дійсний до» ({valid_until:%d/%m/%Y}) має бути пізнішою "
-                "за сьогоднішню."
-            )
         driver = await self.get_by_id(request.driver_id)
-        driver.medical_valid_until = valid_until
-        driver.medical_check_date = date.today()
-        driver.medical_check_status = "VALID"
+        driver.medical_check_date = request.medical_check_date
+        driver.medical_valid_until = medical_valid_until(request.medical_check_date)
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
 
@@ -174,33 +177,49 @@ class DriversService(IDriversService, EntityManagement):
                     "Запит на медогляд не може містити категорію чи термін "
                     "дії посвідчення."
                 )
+            if data.medical_check_date is None:
+                raise BusinessRuleError("Вкажіть дату, коли ви пройшли медогляд.")
+            if data.medical_check_date > date.today():
+                raise BusinessRuleError("Дата медогляду не може бути в майбутньому.")
+            if data.medical_check_date <= driver.medical_check_date:
+                raise BusinessRuleError(
+                    f"Медогляд від {driver.medical_check_date:%d/%m/%Y} уже "
+                    "враховано. Вкажіть дату нового медогляду."
+                )
             if pending:
                 raise BusinessRuleError(
                     "Ви вже подали запит на підтвердження медогляду. Зачекайте, "
                     "доки адміністратор його розгляне."
                 )
             return
-        if data.new_license_category is None:
+        if data.medical_check_date is not None:
             raise BusinessRuleError(
-                "Оберіть категорію, яку хочете додати до посвідчення."
+                "Запит на оновлення посвідчення не може містити дату медогляду."
+            )
+        if data.new_license_expiry_date is None:
+            raise BusinessRuleError("Вкажіть, до якої дати дійсне нове посвідчення.")
+        if data.new_license_expiry_date <= max(
+            date.today(), driver.license_expiry_date
+        ):
+            raise BusinessRuleError(
+                "Нове посвідчення має бути дійсним довше, ніж поточне "
+                f"(до {driver.license_expiry_date:%d/%m/%Y})."
             )
         if data.new_license_category in driver.license_categories:
             raise BusinessRuleError(
                 f"У вас уже є категорія {data.new_license_category}."
             )
-        if any(r.new_license_category == data.new_license_category for r in pending):
+        if pending:
             raise BusinessRuleError(
-                f"Ви вже подали запит на категорію {data.new_license_category}. "
-                "Зачекайте, доки адміністратор його розгляне."
+                "Ви вже подали запит на оновлення посвідчення. Зачекайте, "
+                "доки адміністратор його розгляне."
             )
 
     async def _save_decision(self, request, type, verb):
         request = await self.driver_requests_repository.update(request)
         driver = await self.get_by_id(request.driver_id)
         if request.type == "LICENSE_UPDATE":
-            subject = (
-                f"оновлення посвідчення (категорія {request.new_license_category})"
-            )
+            subject = f"оновлення посвідчення ({_license_details(request)})"
         else:
             subject = "підтвердження медогляду"
         await self._notify(

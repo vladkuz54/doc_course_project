@@ -54,6 +54,7 @@ export type DriverRequest = {
   status: "PENDING" | "APPROVED" | "REJECTED";
   new_license_category: string | null;
   new_license_expiry_date: string | null;
+  medical_check_date: string | null;
   created_at: string;
 };
 
@@ -105,11 +106,13 @@ export const REQUEST_SECTIONS = (
 ).map((status) => ({ status, label: REQUEST_STATUS_LABELS[status] }));
 
 export function describeRequest(request: DriverRequest) {
-  if (request.type === "MEDICAL_CHECK") return "Підтвердження медогляду";
-  const expiry = request.new_license_expiry_date
-    ? `, дійсне до ${formatDate(request.new_license_expiry_date)}`
+  if (request.type === "MEDICAL_CHECK") {
+    return `Медогляд пройдено ${formatDate(request.medical_check_date ?? "")}`;
+  }
+  const category = request.new_license_category
+    ? `, категорія ${request.new_license_category}`
     : "";
-  return `Категорія посвідчення ${request.new_license_category}${expiry}`;
+  return `Посвідчення до ${formatDate(request.new_license_expiry_date ?? "")}${category}`;
 }
 
 const STATUS_ORDER: RouteStatus[] = [

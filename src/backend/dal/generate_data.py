@@ -17,6 +17,7 @@ from backend.dal.db_models import (
     RouteStops,
     Users,
     Vehicles,
+    medical_valid_until,
 )
 
 TODAY = date.today()
@@ -46,7 +47,7 @@ def build():
         experience_years=12,
         license_expiry_date=days(900),
         medical_check_date=days(-100),
-        medical_valid_until=days(265),
+        medical_valid_until=medical_valid_until(days(-100)),
     )
     kovalenko = Drivers(
         user=user("kovalenko", "DRIVER"),
@@ -54,8 +55,8 @@ def build():
         license_categories=["B"],
         experience_years=4,
         license_expiry_date=days(20),
-        medical_check_date=days(-200),
-        medical_valid_until=days(165),
+        medical_check_date=days(-60),
+        medical_valid_until=medical_valid_until(days(-60)),
     )
     shevchenko = Drivers(
         user=user("shevchenko", "DRIVER"),
@@ -63,9 +64,8 @@ def build():
         license_categories=["B", "C", "CE"],
         experience_years=20,
         license_expiry_date=days(1500),
-        medical_check_date=days(-370),
-        medical_valid_until=days(-5),
-        medical_check_status="EXPIRED",
+        medical_check_date=days(-190),
+        medical_valid_until=medical_valid_until(days(-190)),
     )
     bondar = Drivers(
         user=user("bondar", "DRIVER"),
@@ -74,7 +74,7 @@ def build():
         experience_years=8,
         license_expiry_date=days(400),
         medical_check_date=days(-30),
-        medical_valid_until=days(335),
+        medical_valid_until=medical_valid_until(days(-30)),
     )
     melnyk = Drivers(
         user=user("melnyk", "DRIVER"),
@@ -82,8 +82,8 @@ def build():
         license_categories=["B"],
         experience_years=15,
         license_expiry_date=days(600),
-        medical_check_date=days(-300),
-        medical_valid_until=days(65),
+        medical_check_date=days(-120),
+        medical_valid_until=medical_valid_until(days(-120)),
         employment_status="DISMISSED",
     )
 
@@ -260,6 +260,13 @@ def build():
             status="PLANNED",
             description="Щорічний техогляд",
         ),
+        RepairRecords(
+            vehicle=volvo,
+            date=date(2026, 11, 1),
+            type="REPAIR",
+            status="PLANNED",
+            description="Заміна зчеплення",
+        ),
     ]
 
     insurance = [
@@ -303,11 +310,13 @@ def build():
     medical_request = DriverRequests(
         driver=shevchenko,
         type="MEDICAL_CHECK",
+        medical_check_date=days(-1),
         created_at=NOW - timedelta(hours=5),
     )
     approved_request = DriverRequests(
         driver=bondar,
         type="MEDICAL_CHECK",
+        medical_check_date=days(-30),
         status="APPROVED",
         created_at=NOW - timedelta(days=30),
     )
@@ -319,14 +328,14 @@ def build():
                 related_entity="driver_requests",
                 related_id=license_request.id,
                 created_at=license_request.created_at,
-                text="Коваленко О. П. просить оновити посвідчення до категорії C",
+                text=f"{kovalenko.full_name} повідомляє про нове посвідчення, дійсне до {days(3650):%d.%m.%Y}, категорія C",
             ),
             Notifications(
                 type="MEDICAL_CHECK_REQUEST",
                 related_entity="driver_requests",
                 related_id=medical_request.id,
                 created_at=medical_request.created_at,
-                text="Шевченко А. М. подав запит на підтвердження медогляду",
+                text=f"{shevchenko.full_name} повідомляє про медогляд {days(-1):%d.%m.%Y}",
             ),
             Notifications(
                 type="MAINTENANCE_SCHEDULED",
@@ -362,8 +371,9 @@ def build():
                 related_entity="drivers",
                 related_id=shevchenko.id,
                 created_at=NOW - timedelta(days=5),
-                text=f"Медогляд спливає: {shevchenko.full_name}, {days(-5):%d.%m.%Y}",
+                text=f"Медогляд спливає: {shevchenko.full_name}, {shevchenko.medical_valid_until:%d.%m.%Y}",
                 is_read=True,
+                read_at=NOW - timedelta(days=5),
             ),
             Notifications(
                 recipient_id=shevchenko.user_id,
@@ -371,7 +381,7 @@ def build():
                 related_entity="drivers",
                 related_id=shevchenko.id,
                 created_at=NOW - timedelta(days=5),
-                text=f"Медогляд спливає: {shevchenko.full_name}, {days(-5):%d.%m.%Y}",
+                text=f"Медогляд спливає: {shevchenko.full_name}, {shevchenko.medical_valid_until:%d.%m.%Y}",
             ),
         ]
 

@@ -12,11 +12,13 @@ from ...bll.reports import (
     VehicleUtilizationReport,
 )
 from ...bll.services.fuel_records_service import FuelRecordsService
+from ...bll.services.insurance_policies_service import InsurancePoliciesService
 from ...bll.services.repair_records_service import RepairRecordsService
 from ...bll.services.routes_service import RoutesService
 from ...bll.services.vehicles_service import VehiclesService
 from ..dependencies import (
     get_fuel_records_service,
+    get_insurance_policies_service,
     get_repair_records_service,
     get_report_exporter,
     get_report_service,
@@ -42,13 +44,19 @@ async def get_report(
     routes_service: RoutesService = Depends(get_routes_service),
     repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
     fuel_records_service: FuelRecordsService = Depends(get_fuel_records_service),
+    insurance_policies_service: InsurancePoliciesService = Depends(
+        get_insurance_policies_service
+    ),
     vehicles_service: VehiclesService = Depends(get_vehicles_service),
 ):
     report_service.set_strategy(
         {
             "utilization": VehicleUtilizationReport(routes_service, vehicles_service),
             "maintenance": MaintenanceCostReport(
-                repair_records_service, vehicles_service
+                repair_records_service,
+                fuel_records_service,
+                insurance_policies_service,
+                vehicles_service,
             ),
             "usage": UsageAnalyticsReport(
                 routes_service, fuel_records_service, vehicles_service

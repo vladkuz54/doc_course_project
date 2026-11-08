@@ -117,3 +117,29 @@ export async function apiDownload(path: string, filename: string) {
   link.click();
   URL.revokeObjectURL(url);
 }
+
+export async function readEvents(
+  path: string,
+  handlers: { onOpen: () => void; onEvent: (name: string) => void },
+  signal: AbortSignal,
+): Promise<void> {
+  const response = await fetchOk(path, { signal });
+  handlers.onOpen();
+  const reader = response.body!.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) return;
+    buffer += value;
+    const blocks = buffer.split("\n\n");
+    buffer = blocks.pop() ?? "";
+    for (const block of blocks) {
+      const name = block
+        .split("\n")
+        .find((line) => line.startsWith("event:"))
+        ?.slice("event:".length)
+        .trim();
+      if (name) handlers.onEvent(name);
+    }
+  }
+}

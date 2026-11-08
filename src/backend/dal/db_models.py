@@ -1,3 +1,4 @@
+import calendar
 from datetime import date, datetime, timedelta
 
 from sqlalchemy import (
@@ -42,6 +43,17 @@ LICENSE_CATEGORIES = (
 )
 TECHNICAL_STATES = ("GOOD", "NEEDS_SERVICE", "IN_REPAIR", "FAULTY")
 WARNING_DAYS = 14
+MEDICAL_VALID_MONTHS = 6
+
+
+def medical_valid_until(check_date):
+    month = check_date.month - 1 + MEDICAL_VALID_MONTHS
+    year = check_date.year + month // 12
+    month = month % 12 + 1
+    last_day = calendar.monthrange(year, month)[1]
+    return check_date.replace(year=year, month=month, day=min(check_date.day, last_day))
+
+
 MIN_VEHICLE_YEAR = 1980
 ACTIVE_ROUTE_STATUSES = ("PLANNED", "IN_PROGRESS")
 AVERAGE_SPEED_KMH = 60
@@ -74,11 +86,6 @@ class Drivers(Base):
     license_expiry_date = Column(Date, nullable=False)
     medical_check_date = Column(Date, nullable=False)
     medical_valid_until = Column(Date, nullable=False)
-    medical_check_status = Column(
-        StrEnum("VALID", "EXPIRED", "PENDING", name="medical_check_status"),
-        nullable=False,
-        default="VALID",
-    )
     employment_status = Column(
         StrEnum("ACTIVE", "DISMISSED", name="employment_status"),
         nullable=False,
@@ -87,7 +94,10 @@ class Drivers(Base):
 
     user = relationship("Users", back_populates="driver")
     requests = relationship(
-        "DriverRequests", back_populates="driver", passive_deletes="all"
+        "DriverRequests",
+        back_populates="driver",
+        passive_deletes="all",
+        lazy="selectin",
     )
     routes = relationship("Routes", back_populates="driver", passive_deletes="all")
     categories = relationship(
@@ -102,6 +112,16 @@ class Drivers(Base):
         return sorted(
             (c.category for c in self.categories), key=LICENSE_CATEGORIES.index
         )
+
+    @property
+    def medical_check_status(self):
+        if self.medical_valid_until >= date.today():
+            return "VALID"
+        if any(
+            r.type == "MEDICAL_CHECK" and r.status == "PENDING" for r in self.requests
+        ):
+            return "PENDING"
+        return "EXPIRED"
 
     @license_categories.setter
     def license_categories(self, values):
@@ -142,6 +162,7 @@ class DriverRequests(Base):
         StrEnum(*LICENSE_CATEGORIES, name="new_license_category"), nullable=True
     )
     new_license_expiry_date = Column(Date, nullable=True)
+    medical_check_date = Column(Date, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
 
     driver = relationship("Drivers", back_populates="requests")
@@ -239,6 +260,9 @@ class Routes(Base):
     def reschedule(self, departure_at):
         self.state.reschedule(self, departure_at)
 
+    def change_distance(self, distance):
+        self.state.change_distance(self, distance)
+
     def edit_stops(self, stops):
         self.state.edit_stops(self, stops)
 
@@ -254,8 +278,17 @@ class Routes(Base):
     def cancel(self):
         self.state.cancel(self)
 
-    def delete(self):
-        self.state.delete(self)
+    def restore(self):
+        self.state.restore(self)
+
+    def repeat(self):
+        self.state.repeat(self)
+
+    def unassign_driver(self):
+        self.state.unassign_driver(self)
+
+    def unassign_vehicle(self):
+        self.state.unassign_vehicle(self)
 
     def update_planned_return(self):
         try:
@@ -346,6 +379,10 @@ class Notifications(Base):
             "LICENSE_EXPIRING",
             "MEDICAL_CHECK_DUE",
             "ROUTE_ASSIGNED",
+            "ROUTE_UPDATED",
+            "ROUTE_UNASSIGNED",
+            "ROUTE_CANCELLED",
+            "REPAIR_COST_MISSING",
             "REQUEST_APPROVED",
             "REQUEST_REJECTED",
             name="notification_type",
@@ -356,6 +393,7 @@ class Notifications(Base):
     related_entity = Column(String, nullable=False)
     related_id = Column(Integer, nullable=False)
     is_read = Column(Boolean, nullable=False, default=False)
+    read_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
 
 

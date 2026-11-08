@@ -14,6 +14,7 @@ import { FormRow } from "../shared/FormRow";
 import { Messages } from "../shared/Messages";
 import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
+import { useHashTab } from "../shared/useHash";
 
 type FuelRecord = {
   id: number;
@@ -77,7 +78,8 @@ function newestFirst(a: { date: string }, b: { date: string }) {
 }
 
 export function AccountingPage() {
-  const [tab, setTab] = useState<TabName>("fuel");
+  const hashTab = useHashTab();
+  const tab: TabName = hashTab in TABS ? (hashTab as TabName) : "fuel";
   const { Tab } = TABS[tab];
 
   return (
@@ -91,7 +93,7 @@ export function AccountingPage() {
             role="tab"
             aria-selected={name === tab}
             className={name === tab ? undefined : "secondary"}
-            onClick={() => setTab(name)}
+            onClick={() => (window.location.hash = `accounting/${name}`)}
           >
             {TABS[name].label}
           </button>
@@ -288,7 +290,9 @@ function FuelTab() {
   const form = editing && (
     <RecordForm
       key={record?.id ?? "new"}
-      title={record ? "Редагування запису про пальне" : "Новий запис про пальне"}
+      title={
+        record ? "Редагування запису про пальне" : "Новий запис про пальне"
+      }
       saveLabel="Зберегти запис"
       pending={pending}
       onSubmit={submit}
@@ -300,7 +304,7 @@ function FuelTab() {
         <DateField name="date" defaultValue={record?.date} required />
       </label>
       <NumberField
-        label="Сума"
+        label="Вартість пального"
         name="amount"
         min="0"
         defaultValue={record?.amount}
@@ -337,7 +341,7 @@ function FuelTab() {
               <tr>
                 <th>Транспорт</th>
                 <th>Дата</th>
-                <th>Сума</th>
+                <th>Вартість пального</th>
                 <th>Літри</th>
                 <th>Дії</th>
               </tr>
@@ -412,7 +416,7 @@ function InsuranceTab() {
         <DateField name="date" defaultValue={record?.date} required />
       </label>
       <NumberField
-        label="Сума"
+        label="Вартість поліса"
         name="amount"
         min="0"
         defaultValue={record?.amount}
@@ -455,7 +459,7 @@ function InsuranceTab() {
               <tr>
                 <th>Транспорт</th>
                 <th>Дата оплати</th>
-                <th>Сума</th>
+                <th>Вартість поліса</th>
                 <th>Початок покриття</th>
                 <th>Кінець покриття</th>
                 <th>Дії</th>
@@ -564,7 +568,7 @@ function RepairsTab() {
       onSubmit={(form) => recordCost(costing, form)}
       onCancel={() => open(null)}
     >
-      <NumberField label="Вартість" name="cost" min="0" />
+      <NumberField label="Вартість обслуговування" name="cost" min="0" />
     </RecordForm>
   );
 
@@ -618,7 +622,9 @@ function RepairsTab() {
                   <th>Дата</th>
                   <th>Тип</th>
                   <th>Опис</th>
-                  {rows[0].status === "DONE" && <th>Вартість</th>}
+                  {rows[0].status === "DONE" && (
+                    <th>Вартість обслуговування</th>
+                  )}
                   <th>Дії</th>
                 </tr>
               </thead>
@@ -635,7 +641,10 @@ function RepairsTab() {
                         pending={pending}
                         onEdit={() => open(row)}
                         onDelete={() =>
-                          remove(`/repair-records/${row.id}`, "Обслуговування видалено.")
+                          remove(
+                            `/repair-records/${row.id}`,
+                            "Обслуговування видалено.",
+                          )
                         }
                       >
                         {row.status === "PLANNED" && (
@@ -737,7 +746,9 @@ function NewRepairForm({
         }
       />
       <RepairFields />
-      {status === "DONE" && <NumberField label="Вартість" name="amount" min="0" />}
+      {status === "DONE" && (
+        <NumberField label="Вартість обслуговування" name="amount" min="0" />
+      )}
     </RecordForm>
   );
 }

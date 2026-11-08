@@ -6,6 +6,7 @@
   --road: #0b5cad;
   --alert: #b3261e;
   --success: #1b7a3d;
+  --warning: #8a5a00;
 }
 
 *,
@@ -133,6 +134,11 @@ label {
 
 .toast.notice {
   background: var(--success);
+}
+
+.toast.warning {
+  background: var(--warning);
+  white-space: pre-line;
 }
 
 .toast button {
@@ -442,6 +448,10 @@ main.login {
   grid-column: 1 / -1;
 }
 
+.panel .span-2 {
+  grid-column: span 2;
+}
+
 .form-actions {
   display: flex;
   gap: 8px;
@@ -494,7 +504,7 @@ td.name {
   white-space: nowrap;
 }
 
-.compact td:not(.actions) {
+.compact tr:not(.form-row) > td:not(.actions) {
   white-space: nowrap;
 }
 
@@ -522,26 +532,6 @@ td.name {
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-}
-
-.approve-medical {
-  display: contents;
-}
-
-.approve-medical label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.approve-medical .date-field {
-  width: 9rem;
-}
-
-.approve-medical input:not(.date-picker) {
-  min-height: 0;
-  height: 31px;
-  padding-right: 32px;
 }
 
 .date-field {

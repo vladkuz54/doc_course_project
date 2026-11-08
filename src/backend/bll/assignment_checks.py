@@ -165,17 +165,21 @@ class InsuranceHandler(AssignmentHandler):
         )
 
 
+def _end_of(route):
+    if route.status == "IN_PROGRESS":
+        return max(route.planned_return_at, datetime.now())
+    return route.planned_return_at
+
+
 class ScheduleConflictHandler(AssignmentHandler):
     async def _check(self, request):
         route = request.route
         gap = timedelta(minutes=MIN_ROUTE_GAP_MINUTES)
         for other in request.other_routes:
-            end = other.planned_return_at
-            if other.status == "IN_PROGRESS":
-                end = max(end, datetime.now())
+            end = _end_of(other)
             if (
                 route.departure_at - end < gap
-                and other.departure_at - route.planned_return_at < gap
+                and other.departure_at - _end_of(route) < gap
             ):
                 busy = (
                     "Водій"

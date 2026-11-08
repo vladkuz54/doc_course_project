@@ -43,8 +43,8 @@ class RepairRecordsService(IRepairRecordsService, AccountingService, Subject):
 
     async def _validate(self, data, id=None):
         await self._ensure_vehicle_exists(data.vehicle_id)
-        if id is not None:
-            existing = await self.get_by_id(id)
+        existing = await self.get_by_id(id) if id is not None else None
+        if existing is not None:
             if existing.status == "DONE" and (
                 data.status != existing.status or data.amount != existing.amount
             ):
@@ -63,16 +63,22 @@ class RepairRecordsService(IRepairRecordsService, AccountingService, Subject):
             )
         if data.status == "DONE" and data.amount is None:
             raise BusinessRuleError("Вкажіть вартість виконаного обслуговування.")
+        if data.status == "DONE" and data.date > date.today():
+            raise BusinessRuleError(
+                f"Дата виконаного обслуговування ({data.date:%d/%m/%Y}) ще не "
+                "настала. Вкажіть фактичну дату виконання."
+            )
         if data.amount is not None and data.amount < 0:
             raise BusinessRuleError("Вартість обслуговування не може бути від'ємною.")
         if data.status == "PLANNED":
-            if id is None:
+            if existing is None or data.vehicle_id != existing.vehicle_id:
                 vehicle = await self.vehicles_repository.get_by_id(data.vehicle_id)
                 if vehicle.status != "ACTIVE":
                     raise BusinessRuleError(
                         f"Транспорт {vehicle.make} ({vehicle.vin}) списаний, тому "
                         "для нього не можна запланувати обслуговування."
                     )
+            if existing is None or data.date != existing.date:
                 if data.date < date.today():
                     raise BusinessRuleError(
                         f"Дата обслуговування ({data.date:%d/%m/%Y}) уже минула. "

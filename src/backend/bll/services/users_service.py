@@ -1,7 +1,7 @@
 from typing import Literal
 
 import bcrypt
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.users_interfaces import IUsersRepository
@@ -16,7 +16,7 @@ from .base_service import BaseService
 
 class UserData(BaseModel):
     username: str
-    password: str
+    password: str = Field(min_length=1)
     role: Literal["DRIVER", "ADMIN"]
 
 

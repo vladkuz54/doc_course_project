@@ -31,7 +31,6 @@ function driverFields(form: FormData) {
     experience_years: Number(form.get("experience_years")),
     license_expiry_date: toIsoDate(String(form.get("license_expiry_date"))),
     medical_check_date: toIsoDate(String(form.get("medical_check_date"))),
-    medical_valid_until: toIsoDate(String(form.get("medical_valid_until"))),
   };
 }
 
@@ -54,7 +53,6 @@ function updateDriver(driver: Driver, form: FormData) {
     ...driverFields(form),
     user_id: driver.user_id,
     employment_status: driver.employment_status,
-    medical_check_status: form.get("medical_check_status"),
   });
 }
 
@@ -267,29 +265,6 @@ function DriverForm({
           required
         />
       </label>
-      <label>
-        Медогляд дійсний до
-        <DateField
-          name="medical_valid_until"
-          defaultValue={driver?.medical_valid_until}
-          required
-        />
-      </label>
-      {driver && (
-        <label>
-          Стан медогляду
-          <select
-            name="medical_check_status"
-            defaultValue={driver.medical_check_status}
-          >
-            {Object.entries(MEDICAL_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
       <fieldset className="categories">
         <legend>Категорії посвідчення</legend>
         {LICENSE_CATEGORIES.map((category) => (

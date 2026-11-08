@@ -9,6 +9,7 @@ from ...bll.services.routes_service import (
     RouteCreateData,
     RouteData,
     RouteDriverData,
+    RouteRepeatData,
     RoutesService,
     RouteStartData,
     RouteStatusData,
@@ -87,13 +88,6 @@ async def change_status(
     return await service.change_status(id, data.status)
 
 
-@router.delete(
-    "/{id}", response_model=RouteResponse, dependencies=[Depends(require_admin)]
-)
-async def delete(id: int, service: RoutesService = Depends(get_routes_service)):
-    return await service.delete(id)
-
-
 async def _ensure_can_act(id, driver_id, service):
     route = await service.get_by_id(id)
     if driver_id is not None:
@@ -142,6 +136,38 @@ async def cancel(id: int, service: RoutesService = Depends(get_routes_service)):
     return await service.cancel(id)
 
 
+class RouteWithWarningsResponse(RouteResponse):
+    warnings: list[str]
+
+
+def _with_warnings(result):
+    route = RouteResponse.model_validate(result.route)
+    return RouteWithWarningsResponse(**route.model_dump(), warnings=result.warnings)
+
+
+@router.post(
+    "/{id}/restore",
+    response_model=RouteWithWarningsResponse,
+    dependencies=[Depends(require_admin)],
+)
+async def restore(id: int, service: RoutesService = Depends(get_routes_service)):
+    return _with_warnings(await service.restore(id))
+
+
+@router.post(
+    "/{id}/repeat",
+    response_model=RouteWithWarningsResponse,
+    status_code=201,
+    dependencies=[Depends(require_admin)],
+)
+async def repeat(
+    id: int,
+    data: RouteRepeatData,
+    service: RoutesService = Depends(get_routes_service),
+):
+    return _with_warnings(await service.repeat(id, data.departure_at))
+
+
 @router.post("/{id}/start", response_model=RouteResponse)
 async def start(
     id: int,
@@ -183,7 +209,8 @@ async def arrive_at_stop(
 ):
     if driver_id is None:
         raise HTTPException(
-            status_code=403, detail="Відмічати прибуття на зупинки може лише водій цього маршруту."
+            status_code=403,
+            detail="Відмічати прибуття на зупинки може лише водій цього маршруту.",
         )
     await _ensure_can_act(id, driver_id, service)
     return await service.arrive_at_stop(id, stop_id)

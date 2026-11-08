@@ -44,3 +44,11 @@ class IRoutesService(IBaseService):
     @abstractmethod
     async def cancel(self, route_id):
         pass
+
+    @abstractmethod
+    async def restore(self, route_id):
+        pass
+
+    @abstractmethod
+    async def repeat(self, route_id, departure_at):
+        pass

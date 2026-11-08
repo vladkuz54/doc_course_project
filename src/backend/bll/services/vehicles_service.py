@@ -1,13 +1,9 @@
 from datetime import date as Date
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, StringConstraints, field_validator
 
-from ...dal.db_models import (
-    ACTIVE_ROUTE_STATUSES,
-    LICENSE_CATEGORIES,
-    MIN_VEHICLE_YEAR,
-)
+from ...dal.db_models import ACTIVE_ROUTE_STATUSES, LICENSE_CATEGORIES, MIN_VEHICLE_YEAR
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityAlreadyExistsError
@@ -16,7 +12,7 @@ from .entity_management import EntityManagement
 
 
 class VehicleData(BaseModel):
-    make: str
+    make: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
     year: int = Field(ge=MIN_VEHICLE_YEAR)
     vin: str = Field(pattern=r"^[A-HJ-NPR-Z0-9]{17}$")
     required_license_category: Literal[LICENSE_CATEGORIES]

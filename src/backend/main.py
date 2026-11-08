@@ -1,4 +1,7 @@
+import asyncio
+import logging
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -12,7 +15,9 @@ from .bll.exceptions import (
     EntityAlreadyExistsError,
     EntityNotFoundError,
 )
+from .bll.live_notifications import live_notifications
 from .dal.route_states import RouteActionNotAllowed
+from .presentation.dependencies import run_deadline_checks
 from .presentation.routers.auth import router as auth_router
 from .presentation.routers.driver_requests_router import (
     router as driver_requests_router,
@@ -30,8 +35,59 @@ from .presentation.routers.routes_router import router as routes_router
 from .presentation.routers.users_router import router as users_router
 from .presentation.routers.vehicles_router import router as vehicles_router
 
-app = FastAPI(title="Fleet Management API")
+DEADLINE_CHECK_INTERVAL_SECONDS = 3600
+logger = logging.getLogger(__name__)
 
+
+async def check_deadlines_every_hour():
+    while True:
+        try:
+            await run_deadline_checks()
+        except Exception:
+            logger.exception("Scheduled deadline check failed")
+        await asyncio.sleep(DEADLINE_CHECK_INTERVAL_SECONDS)
+
+
+class AfterSuccessfulChange:
+    skipped_paths = ("/notifications", "/auth")
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if (
+            scope["type"] != "http"
+            or scope["method"] in ("GET", "HEAD", "OPTIONS")
+            or scope["path"].startswith(self.skipped_paths)
+        ):
+            await self.app(scope, receive, send)
+            return
+        status = {}
+
+        async def remember_status(message):
+            if message["type"] == "http.response.start":
+                status["code"] = message["status"]
+            await send(message)
+
+        await self.app(scope, receive, remember_status)
+        if status.get("code", 500) < 400:
+            try:
+                await run_deadline_checks()
+            except Exception:
+                logger.exception("Deadline check after a change failed")
+            live_notifications.signal_admins()
+
+
+@asynccontextmanager
+async def lifespan(app):
+    task = asyncio.create_task(check_deadlines_every_hour())
+    yield
+    task.cancel()
+
+
+app = FastAPI(title="Fleet Management API", lifespan=lifespan)
+
+app.add_middleware(AfterSuccessfulChange)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),

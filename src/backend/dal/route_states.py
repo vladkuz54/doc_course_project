@@ -37,6 +37,9 @@ class RouteState(ABC):
     def reschedule(self, route, departure_at):
         self._reject("перенести")
 
+    def change_distance(self, route, distance):
+        self._reject("редагувати")
+
     def edit_stops(self, route, stops):
         self._reject("змінити зупинки")
 
@@ -52,8 +55,17 @@ class RouteState(ABC):
     def cancel(self, route):
         self._reject("скасувати")
 
-    def delete(self, route):
-        self._reject("видалити")
+    def restore(self, route):
+        self._reject("відновити")
+
+    def repeat(self, route):
+        self._reject("повторити")
+
+    def unassign_driver(self, route):
+        self._reject("прибрати водія")
+
+    def unassign_vehicle(self, route):
+        self._reject("прибрати транспорт")
 
     def _reject(self, action):
         raise RouteActionNotAllowed(
@@ -77,13 +89,21 @@ class PlannedState(RouteState):
     def reassign_vehicle(self, route, vehicle):
         route.vehicle_id = vehicle.id
 
+    def unassign_driver(self, route):
+        route.driver_id = None
+
+    def unassign_vehicle(self, route):
+        route.vehicle_id = None
+
     def reschedule(self, route, departure_at):
         route.departure_at = departure_at
+
+    def change_distance(self, route, distance):
+        route.distance = distance
 
     def edit_stops(self, route, stops):
         if not stops:
             raise RouteActionNotAllowed("Маршрут повинен мати хоча б одну зупинку.")
-        # In place, because SQLAlchemy inserts before it deletes, which would break uq_route_stop
         existing_count = len(route.stops)
         for position, stop in enumerate(stops, 1):
             if position <= existing_count:
@@ -119,9 +139,6 @@ class PlannedState(RouteState):
 
     def cancel(self, route):
         route.set_state(CancelledState())
-
-    def delete(self, route):
-        pass
 
     def _ensure_assigned(self, route):
         if route.driver_id is None or route.vehicle_id is None:
@@ -167,7 +184,16 @@ class CompletedState(RouteState):
     def status(self):
         return "COMPLETED"
 
+    def repeat(self, route):
+        pass
+
 
 class CancelledState(RouteState):
     def status(self):
         return "CANCELLED"
+
+    def restore(self, route):
+        route.started_at = None
+        for stop in route.stops:
+            stop.arrived_at = None
+        route.set_state(PlannedState())

@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState, type FormEvent } from "react";
-import { apiDelete, apiGet, apiPost, apiPut } from "../api";
+import { apiGet, apiPost, apiPut } from "../api";
 import { DateField, nowForField, toIsoDateTime } from "../shared/DateField";
 import {
   compareRoutes,
@@ -26,7 +26,7 @@ import {
   type StopAddress,
 } from "./StopFields";
 
-type TimeAction = "start" | "close" | "complete";
+type TimeAction = "start" | "close" | "complete" | "repeat";
 
 type Editing =
   | { form: "new" }
@@ -58,6 +58,13 @@ const TIME_ACTIONS: Record<
     field: "returned_at",
     notice: "Маршрут завершено.",
   },
+  repeat: {
+    title: "Повторити маршрут",
+    label: "Виїзд",
+    path: "repeat",
+    field: "departure_at",
+    notice: "Маршрут створено.",
+  },
 };
 
 const loadRoutesPage = () =>
@@ -85,8 +92,17 @@ function createRoute(form: FormData, stops: StopAddress[]) {
 }
 
 export function RoutesPage() {
-  const { data, error, notice, pending, reload, run, clearMessages } =
-    useData(loadRoutesPage);
+  const {
+    data,
+    error,
+    notice,
+    warning,
+    pending,
+    reload,
+    run,
+    setWarning,
+    clearMessages,
+  } = useData(loadRoutesPage);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [stopsOpen, setStopsOpen] = useState<number | null>(null);
 
@@ -128,6 +144,11 @@ export function RoutesPage() {
     if (window.confirm(message)) run(action, doneNotice);
   };
 
+  const postWithWarnings = async (path: string, body?: unknown) => {
+    const { warnings } = await apiPost<{ warnings?: string[] }>(path, body);
+    setWarning(warnings?.join("\n") ?? "");
+  };
+
   const rowForm =
     editing?.form === "edit" ? (
       <RouteForm
@@ -157,7 +178,7 @@ export function RoutesPage() {
           const { path, field, notice: done } = TIME_ACTIONS[editing.form];
           save(
             () =>
-              apiPost(`/routes/${editing.route.id}/${path}`, {
+              postWithWarnings(`/routes/${editing.route.id}/${path}`, {
                 [field]: time,
               }),
             done,
@@ -175,7 +196,12 @@ export function RoutesPage() {
           Додати маршрут
         </button>
       </div>
-      <Messages error={error} notice={notice} onClose={clearMessages} />
+      <Messages
+        error={error}
+        notice={notice}
+        warning={warning}
+        onClose={clearMessages}
+      />
 
       {editing?.form === "new" && (
         <RouteForm
@@ -213,7 +239,19 @@ export function RoutesPage() {
                 <Fragment key={route.id}>
                   <tr>
                     <td>{route.id}</td>
-                    <td>{formatDateTime(route.departure_at)}</td>
+                    <td>
+                      {formatDateTime(route.departure_at)}
+                      {route.started_at && (
+                        <div className="muted">
+                          Початок: {formatDateTime(route.started_at)}
+                        </div>
+                      )}
+                      {route.completed_at && (
+                        <div className="muted">
+                          Завершено: {formatDateTime(route.completed_at)}
+                        </div>
+                      )}
+                    </td>
                     <td>{route.distance} км</td>
                     <td className="name">
                       {drivers?.find((d) => d.id === route.driver_id)
@@ -290,20 +328,29 @@ export function RoutesPage() {
                           Скасувати
                         </button>
                       )}
-                      {route.status === "PLANNED" && (
+                      {route.status === "COMPLETED" && (
                         <button
                           type="button"
-                          className="secondary danger"
+                          className="secondary"
+                          onClick={() => openForm({ form: "repeat", route })}
+                        >
+                          Повторити
+                        </button>
+                      )}
+                      {route.status === "CANCELLED" && (
+                        <button
+                          type="button"
+                          className="secondary"
                           disabled={pending}
                           onClick={() =>
-                            confirmed(
-                              `Видалити маршрут №${route.id}?`,
-                              () => apiDelete(`/routes/${route.id}`),
-                              "Маршрут видалено.",
+                            run(
+                              () =>
+                                postWithWarnings(`/routes/${route.id}/restore`),
+                              "Маршрут відновлено.",
                             )
                           }
                         >
-                          Видалити
+                          Відновити
                         </button>
                       )}
                     </td>
@@ -457,7 +504,11 @@ function RouteTimeForm({
           name="time"
           withTime
           required
-          defaultValue={action === "close" ? undefined : nowForField()}
+          defaultValue={
+            action === "start" || action === "complete"
+              ? nowForField()
+              : undefined
+          }
         />
       </label>
       <div className="form-actions">
