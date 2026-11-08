@@ -246,6 +246,11 @@ export function RoutesPage() {
                           Початок: {formatDateTime(route.started_at)}
                         </div>
                       )}
+                      {route.completed_at && (
+                        <div className="muted">
+                          Завершено: {formatDateTime(route.completed_at)}
+                        </div>
+                      )}
                     </td>
                     <td>{route.distance} км</td>
                     <td className="name">

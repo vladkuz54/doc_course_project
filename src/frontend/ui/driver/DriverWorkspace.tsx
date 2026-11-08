@@ -91,6 +91,11 @@ function DriverRoutes() {
                         Початок: {formatDateTime(route.started_at)}
                       </p>
                     )}
+                    {route.completed_at && (
+                      <p className="muted">
+                        Завершено: {formatDateTime(route.completed_at)}
+                      </p>
+                    )}
                   </div>
                   {route.status === "PLANNED" && route.vehicle_id !== null && (
                     <button
