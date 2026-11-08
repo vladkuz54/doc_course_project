@@ -239,7 +239,14 @@ export function RoutesPage() {
                 <Fragment key={route.id}>
                   <tr>
                     <td>{route.id}</td>
-                    <td>{formatDateTime(route.departure_at)}</td>
+                    <td>
+                      {formatDateTime(route.departure_at)}
+                      {route.started_at && (
+                        <div className="muted">
+                          Початок: {formatDateTime(route.started_at)}
+                        </div>
+                      )}
+                    </td>
                     <td>{route.distance} км</td>
                     <td className="name">
                       {drivers?.find((d) => d.id === route.driver_id)

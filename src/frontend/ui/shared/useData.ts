@@ -8,7 +8,6 @@ export function useData<T>(load: () => Promise<T>) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  // Kept apart from error, because a reload clears error and a warning must stay
   const [warning, setWarning] = useState("");
   const [pending, setPending] = useState(false);
 

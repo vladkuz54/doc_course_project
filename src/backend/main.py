@@ -15,6 +15,7 @@ from .bll.exceptions import (
     EntityAlreadyExistsError,
     EntityNotFoundError,
 )
+from .bll.live_notifications import live_notifications
 from .dal.route_states import RouteActionNotAllowed
 from .presentation.dependencies import run_deadline_checks
 from .presentation.routers.auth import router as auth_router
@@ -47,7 +48,7 @@ async def check_deadlines_every_hour():
         await asyncio.sleep(DEADLINE_CHECK_INTERVAL_SECONDS)
 
 
-class RunDeadlineChecksAfterChanges:
+class AfterSuccessfulChange:
     skipped_paths = ("/notifications", "/auth")
 
     def __init__(self, app):
@@ -74,6 +75,7 @@ class RunDeadlineChecksAfterChanges:
                 await run_deadline_checks()
             except Exception:
                 logger.exception("Deadline check after a change failed")
+            live_notifications.signal_admins()
 
 
 @asynccontextmanager
@@ -85,7 +87,7 @@ async def lifespan(app):
 
 app = FastAPI(title="Fleet Management API", lifespan=lifespan)
 
-app.add_middleware(RunDeadlineChecksAfterChanges)
+app.add_middleware(AfterSuccessfulChange)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),

@@ -86,6 +86,11 @@ function DriverRoutes() {
                     <p className="muted">
                       {formatDateTime(route.departure_at)}, {route.distance} км
                     </p>
+                    {route.started_at && (
+                      <p className="muted">
+                        Початок: {formatDateTime(route.started_at)}
+                      </p>
+                    )}
                   </div>
                   {route.status === "PLANNED" && route.vehicle_id !== null && (
                     <button

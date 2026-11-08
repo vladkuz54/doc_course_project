@@ -27,6 +27,11 @@ class LiveNotifications(Observer):
             ):
                 queue.put_nowait(event.type)
 
+    def signal_admins(self):
+        for queue, (_, is_admin) in self._subscribers.items():
+            if is_admin:
+                queue.put_nowait("changed")
+
     async def stream(self, user_id, is_admin):
         queue = self.subscribe(user_id, is_admin)
         try:

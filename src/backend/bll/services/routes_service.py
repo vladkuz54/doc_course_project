@@ -312,7 +312,6 @@ class RoutesService(IRoutesService, EntityManagement):
                     ("транспорту", result.reason, "Призначте транспорт пізніше.")
                 )
                 route.unassign_vehicle()
-        # What's left can still fail together: the license check needs both
         result = await self._run_chain(route, route.driver_id, route.vehicle_id)
         if not result.passed:
             removed.append(("водія", result.reason, "Призначте водія пізніше."))
