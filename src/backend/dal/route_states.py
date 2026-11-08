@@ -55,6 +55,15 @@ class RouteState(ABC):
     def cancel(self, route):
         self._reject("скасувати")
 
+    def restore(self, route):
+        self._reject("відновити")
+
+    def unassign_driver(self, route):
+        self._reject("прибрати водія")
+
+    def unassign_vehicle(self, route):
+        self._reject("прибрати транспорт")
+
     def _reject(self, action):
         raise RouteActionNotAllowed(
             f"Маршрут має статус «{ROUTE_STATUS_LABELS[self.status()]}», "
@@ -76,6 +85,12 @@ class PlannedState(RouteState):
 
     def reassign_vehicle(self, route, vehicle):
         route.vehicle_id = vehicle.id
+
+    def unassign_driver(self, route):
+        route.driver_id = None
+
+    def unassign_vehicle(self, route):
+        route.vehicle_id = None
 
     def reschedule(self, route, departure_at):
         route.departure_at = departure_at
@@ -170,3 +185,9 @@ class CompletedState(RouteState):
 class CancelledState(RouteState):
     def status(self):
         return "CANCELLED"
+
+    def restore(self, route):
+        route.started_at = None
+        for stop in route.stops:
+            stop.arrived_at = None
+        route.set_state(PlannedState())

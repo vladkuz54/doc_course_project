@@ -135,6 +135,21 @@ async def cancel(id: int, service: RoutesService = Depends(get_routes_service)):
     return await service.cancel(id)
 
 
+class RouteRestoreResponse(RouteResponse):
+    warnings: list[str]
+
+
+@router.post(
+    "/{id}/restore",
+    response_model=RouteRestoreResponse,
+    dependencies=[Depends(require_admin)],
+)
+async def restore(id: int, service: RoutesService = Depends(get_routes_service)):
+    result = await service.restore(id)
+    route = RouteResponse.model_validate(result.route)
+    return RouteRestoreResponse(**route.model_dump(), warnings=result.warnings)
+
+
 @router.post("/{id}/start", response_model=RouteResponse)
 async def start(
     id: int,

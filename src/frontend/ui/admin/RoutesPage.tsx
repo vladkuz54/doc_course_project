@@ -85,8 +85,17 @@ function createRoute(form: FormData, stops: StopAddress[]) {
 }
 
 export function RoutesPage() {
-  const { data, error, notice, pending, reload, run, clearMessages } =
-    useData(loadRoutesPage);
+  const {
+    data,
+    error,
+    notice,
+    warning,
+    pending,
+    reload,
+    run,
+    setWarning,
+    clearMessages,
+  } = useData(loadRoutesPage);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [stopsOpen, setStopsOpen] = useState<number | null>(null);
 
@@ -175,7 +184,12 @@ export function RoutesPage() {
           Додати маршрут
         </button>
       </div>
-      <Messages error={error} notice={notice} onClose={clearMessages} />
+      <Messages
+        error={error}
+        notice={notice}
+        warning={warning}
+        onClose={clearMessages}
+      />
 
       {editing?.form === "new" && (
         <RouteForm
@@ -288,6 +302,23 @@ export function RoutesPage() {
                           }
                         >
                           Скасувати
+                        </button>
+                      )}
+                      {route.status === "CANCELLED" && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          disabled={pending}
+                          onClick={() =>
+                            run(async () => {
+                              const { warnings } = await apiPost<{
+                                warnings: string[];
+                              }>(`/routes/${route.id}/restore`);
+                              setWarning(warnings.join("\n"));
+                            }, "Маршрут відновлено.")
+                          }
+                        >
+                          Відновити
                         </button>
                       )}
                     </td>

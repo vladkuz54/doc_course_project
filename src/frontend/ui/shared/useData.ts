@@ -8,6 +8,8 @@ export function useData<T>(load: () => Promise<T>) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  // Kept apart from error, because a reload clears error and a warning must stay
+  const [warning, setWarning] = useState("");
   const [pending, setPending] = useState(false);
 
   const reload = useCallback(
@@ -31,6 +33,7 @@ export function useData<T>(load: () => Promise<T>) {
   const clearMessages = useCallback(() => {
     setError("");
     setNotice("");
+    setWarning("");
   }, []);
 
   const run = useCallback(
@@ -53,5 +56,15 @@ export function useData<T>(load: () => Promise<T>) {
     [load, clearMessages],
   );
 
-  return { data, error, notice, pending, reload, run, clearMessages };
+  return {
+    data,
+    error,
+    notice,
+    warning,
+    pending,
+    reload,
+    run,
+    setWarning,
+    clearMessages,
+  };
 }

@@ -278,6 +278,15 @@ class Routes(Base):
     def cancel(self):
         self.state.cancel(self)
 
+    def restore(self):
+        self.state.restore(self)
+
+    def unassign_driver(self):
+        self.state.unassign_driver(self)
+
+    def unassign_vehicle(self):
+        self.state.unassign_vehicle(self)
+
     def update_planned_return(self):
         try:
             self.planned_return_at = self.departure_at + timedelta(

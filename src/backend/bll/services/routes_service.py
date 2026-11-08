@@ -1,9 +1,10 @@
+from dataclasses import dataclass
 from datetime import datetime, time
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, NaiveDatetime, StringConstraints
 
-from ...dal.db_models import ACTIVE_ROUTE_STATUSES, RouteStops
+from ...dal.db_models import ACTIVE_ROUTE_STATUSES, Routes, RouteStops
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.route_stops_interfaces import IRouteStopsRepository
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
@@ -27,6 +28,12 @@ from ..observer import DomainEvent
 from .entity_management import EntityManagement
 
 StopAddress = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+
+
+@dataclass
+class RouteRestoreResult:
+    route: Routes
+    warnings: list[str]
 
 
 class RouteData(BaseModel):
@@ -250,6 +257,48 @@ class RoutesService(IRoutesService, EntityManagement):
             )
         return route
 
+    async def restore(self, route_id):
+        route = await self.get_by_id(route_id)
+        route.restore()
+        warnings = []
+
+        def warn(missing, result, advice):
+            warnings.append(
+                f"Маршрут №{route.id} відновлено без {missing}. "
+                f"{result.reason} {advice}"
+            )
+
+        driver_advice = "Призначте водія пізніше."
+        vehicle_advice = "Призначте транспорт пізніше."
+        if route.driver_id is not None:
+            result = await self._run_chain(route, route.driver_id, None)
+            if not result.passed:
+                warn("водія", result, driver_advice)
+                route.unassign_driver()
+        if route.vehicle_id is not None:
+            result = await self._run_chain(route, None, route.vehicle_id)
+            if not result.passed:
+                warn("транспорту", result, vehicle_advice)
+                route.unassign_vehicle()
+        # What's left can still fail together: the license check needs both
+        result = await self._run_chain(route, route.driver_id, route.vehicle_id)
+        if not result.passed:
+            warn("водія", result, driver_advice)
+            route.unassign_driver()
+        route = await self.repository.update(route)
+        for warning in warnings:
+            await self._notify(
+                DomainEvent("ROUTE_UPDATED", "routes", route.id, warning)
+            )
+        if route.driver_id is not None:
+            await self._publish_to_driver(
+                route.driver_id,
+                "ROUTE_ASSIGNED",
+                route,
+                f"Маршрут №{route.id} на {route.departure_at:%d.%m.%Y %H:%M} відновлено",
+            )
+        return RouteRestoreResult(route, warnings)
+
     def _build_route(self, data):
         route = self.repository.model(
             **self.to_fields(data),
@@ -262,24 +311,27 @@ class RoutesService(IRoutesService, EntityManagement):
         return route
 
     async def _check_assignment(self, route):
+        result = await self._run_chain(route, route.driver_id, route.vehicle_id)
+        if not result.passed:
+            raise BusinessRuleError(result.reason)
+
+    async def _run_chain(self, route, driver_id, vehicle_id):
         driver = vehicle = None
         others = []
-        if route.driver_id is not None:
-            driver = await self.drivers_repository.get_by_id(route.driver_id)
-            others += await self.repository.get_by_driver(route.driver_id)
-        if route.vehicle_id is not None:
-            vehicle = await self.vehicles_repository.get_by_id(route.vehicle_id)
-            others += await self.repository.get_by_vehicle(route.vehicle_id)
+        if driver_id is not None:
+            driver = await self.drivers_repository.get_by_id(driver_id)
+            others += await self.repository.get_by_driver(driver_id)
+        if vehicle_id is not None:
+            vehicle = await self.vehicles_repository.get_by_id(vehicle_id)
+            others += await self.repository.get_by_vehicle(vehicle_id)
         other_routes = {
             r.id: r
             for r in others
             if r.status in ACTIVE_ROUTE_STATUSES and r.id != route.id
         }
-        result = await self._assignment_chain.handle(
+        return await self._assignment_chain.handle(
             AssignmentRequest(route, driver, vehicle, [*other_routes.values()])
         )
-        if not result.passed:
-            raise BusinessRuleError(result.reason)
 
     async def _get_driver(self, driver_id):
         driver = await self.drivers_repository.get_by_id(driver_id)

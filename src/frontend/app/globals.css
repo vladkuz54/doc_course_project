@@ -6,6 +6,7 @@
   --road: #0b5cad;
   --alert: #b3261e;
   --success: #1b7a3d;
+  --warning: #8a5a00;
 }
 
 *,
@@ -133,6 +134,11 @@ label {
 
 .toast.notice {
   background: var(--success);
+}
+
+.toast.warning {
+  background: var(--warning);
+  white-space: pre-line;
 }
 
 .toast button {
