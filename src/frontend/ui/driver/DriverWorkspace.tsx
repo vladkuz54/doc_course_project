@@ -1,6 +1,6 @@
 "use client";
 
-import { apiPost } from "../api";
+import { apiGet, apiPost } from "../api";
 import type { Workspace } from "../products";
 import {
   compareRoutes,
@@ -8,6 +8,8 @@ import {
   loadRoutesAndStops,
   ROUTE_SECTIONS,
   stopsOf,
+  TECHNICAL_STATE_LABELS,
+  type Vehicle,
 } from "../shared/fleet";
 import { Messages } from "../shared/Messages";
 import { StopLine } from "../shared/StopLine";
@@ -15,6 +17,9 @@ import { StatusSections } from "../shared/StatusSections";
 import { useData } from "../shared/useData";
 import { useHash } from "../shared/useHash";
 import { DriverRequestsPage } from "./DriverRequestsPage";
+
+const loadDriverRoutes = () =>
+  Promise.all([loadRoutesAndStops(), apiGet<Vehicle[]>("/vehicles/")]);
 
 export class DriverWorkspace implements Workspace {
   render() {
@@ -51,8 +56,8 @@ function DriverScreens({ workspace }: { workspace: DriverWorkspace }) {
 
 function DriverRoutes() {
   const { data, error, pending, run, clearMessages } =
-    useData(loadRoutesAndStops);
-  const [routes, stops] = data ?? [];
+    useData(loadDriverRoutes);
+  const [[routes, stops] = [], vehicles] = data ?? [];
   const sorted = routes?.toSorted(compareRoutes);
 
   const act = (routeId: number, path: string) => {
@@ -101,6 +106,9 @@ function DriverRoutes() {
                     </button>
                   )}
                 </div>
+                <RouteVehicle
+                  vehicle={vehicles?.find((v) => v.id === route.vehicle_id)}
+                />
                 <StopLine
                   status={route.status}
                   stops={stopsOf(stops, route.id)}
@@ -113,5 +121,23 @@ function DriverRoutes() {
         )}
       </StatusSections>
     </>
+  );
+}
+
+function RouteVehicle({ vehicle }: { vehicle?: Vehicle }) {
+  if (!vehicle) return <p className="muted">Транспорт не призначено.</p>;
+  return (
+    <dl className="details">
+      <dt>Транспорт</dt>
+      <dd>{vehicle.make}</dd>
+      <dt>Рік</dt>
+      <dd>{vehicle.year}</dd>
+      <dt>VIN</dt>
+      <dd>{vehicle.vin}</dd>
+      <dt>Категорія</dt>
+      <dd>{vehicle.required_license_category}</dd>
+      <dt>Технічний стан</dt>
+      <dd>{TECHNICAL_STATE_LABELS[vehicle.technical_state]}</dd>
+    </dl>
   );
 }
