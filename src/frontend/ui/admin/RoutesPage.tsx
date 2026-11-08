@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState, type FormEvent } from "react";
-import { apiDelete, apiGet, apiPost, apiPut } from "../api";
+import { apiGet, apiPost, apiPut } from "../api";
 import { DateField, nowForField, toIsoDateTime } from "../shared/DateField";
 import {
   compareRoutes,
@@ -288,22 +288,6 @@ export function RoutesPage() {
                           }
                         >
                           Скасувати
-                        </button>
-                      )}
-                      {route.status === "PLANNED" && (
-                        <button
-                          type="button"
-                          className="secondary danger"
-                          disabled={pending}
-                          onClick={() =>
-                            confirmed(
-                              `Видалити маршрут №${route.id}?`,
-                              () => apiDelete(`/routes/${route.id}`),
-                              "Маршрут видалено.",
-                            )
-                          }
-                        >
-                          Видалити
                         </button>
                       )}
                     </td>

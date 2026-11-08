@@ -150,11 +150,6 @@ class RoutesService(IRoutesService, EntityManagement):
             await self._publish_updated(route, changes)
         return route
 
-    async def delete(self, id):
-        route = await self.get_by_id(id)
-        route.delete()
-        return await self.repository.delete(id)
-
     async def _apply_status(self, entity, status):
         if status == "IN_PROGRESS":
             await self.start(entity.id)

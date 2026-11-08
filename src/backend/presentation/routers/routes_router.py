@@ -87,13 +87,6 @@ async def change_status(
     return await service.change_status(id, data.status)
 
 
-@router.delete(
-    "/{id}", response_model=RouteResponse, dependencies=[Depends(require_admin)]
-)
-async def delete(id: int, service: RoutesService = Depends(get_routes_service)):
-    return await service.delete(id)
-
-
 async def _ensure_can_act(id, driver_id, service):
     route = await service.get_by_id(id)
     if driver_id is not None:

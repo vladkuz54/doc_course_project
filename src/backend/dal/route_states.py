@@ -55,9 +55,6 @@ class RouteState(ABC):
     def cancel(self, route):
         self._reject("скасувати")
 
-    def delete(self, route):
-        self._reject("видалити")
-
     def _reject(self, action):
         raise RouteActionNotAllowed(
             f"Маршрут має статус «{ROUTE_STATUS_LABELS[self.status()]}», "
@@ -124,9 +121,6 @@ class PlannedState(RouteState):
 
     def cancel(self, route):
         route.set_state(CancelledState())
-
-    def delete(self, route):
-        pass
 
     def _ensure_assigned(self, route):
         if route.driver_id is None or route.vehicle_id is None:

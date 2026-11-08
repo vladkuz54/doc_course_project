@@ -278,9 +278,6 @@ class Routes(Base):
     def cancel(self):
         self.state.cancel(self)
 
-    def delete(self):
-        self.state.delete(self)
-
     def update_planned_return(self):
         try:
             self.planned_return_at = self.departure_at + timedelta(
