@@ -26,7 +26,7 @@ import {
   type StopAddress,
 } from "./StopFields";
 
-type TimeAction = "start" | "close" | "complete";
+type TimeAction = "start" | "close" | "complete" | "repeat";
 
 type Editing =
   | { form: "new" }
@@ -57,6 +57,13 @@ const TIME_ACTIONS: Record<
     path: "complete",
     field: "returned_at",
     notice: "Маршрут завершено.",
+  },
+  repeat: {
+    title: "Повторити маршрут",
+    label: "Виїзд",
+    path: "repeat",
+    field: "departure_at",
+    notice: "Маршрут створено.",
   },
 };
 
@@ -137,6 +144,11 @@ export function RoutesPage() {
     if (window.confirm(message)) run(action, doneNotice);
   };
 
+  const postWithWarnings = async (path: string, body?: unknown) => {
+    const { warnings } = await apiPost<{ warnings?: string[] }>(path, body);
+    setWarning(warnings?.join("\n") ?? "");
+  };
+
   const rowForm =
     editing?.form === "edit" ? (
       <RouteForm
@@ -166,7 +178,7 @@ export function RoutesPage() {
           const { path, field, notice: done } = TIME_ACTIONS[editing.form];
           save(
             () =>
-              apiPost(`/routes/${editing.route.id}/${path}`, {
+              postWithWarnings(`/routes/${editing.route.id}/${path}`, {
                 [field]: time,
               }),
             done,
@@ -304,18 +316,26 @@ export function RoutesPage() {
                           Скасувати
                         </button>
                       )}
+                      {route.status === "COMPLETED" && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => openForm({ form: "repeat", route })}
+                        >
+                          Повторити
+                        </button>
+                      )}
                       {route.status === "CANCELLED" && (
                         <button
                           type="button"
                           className="secondary"
                           disabled={pending}
                           onClick={() =>
-                            run(async () => {
-                              const { warnings } = await apiPost<{
-                                warnings: string[];
-                              }>(`/routes/${route.id}/restore`);
-                              setWarning(warnings.join("\n"));
-                            }, "Маршрут відновлено.")
+                            run(
+                              () =>
+                                postWithWarnings(`/routes/${route.id}/restore`),
+                              "Маршрут відновлено.",
+                            )
                           }
                         >
                           Відновити
@@ -472,7 +492,11 @@ function RouteTimeForm({
           name="time"
           withTime
           required
-          defaultValue={action === "close" ? undefined : nowForField()}
+          defaultValue={
+            action === "start" || action === "complete"
+              ? nowForField()
+              : undefined
+          }
         />
       </label>
       <div className="form-actions">

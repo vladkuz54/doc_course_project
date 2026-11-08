@@ -31,7 +31,7 @@ StopAddress = Annotated[str, StringConstraints(strip_whitespace=True, min_length
 
 
 @dataclass
-class RouteRestoreResult:
+class RouteWithWarnings:
     route: Routes
     warnings: list[str]
 
@@ -65,6 +65,10 @@ class RouteVehicleData(BaseModel):
 
 class RouteStartData(BaseModel):
     started_at: NaiveDatetime | None = None
+
+
+class RouteRepeatData(BaseModel):
+    departure_at: NaiveDatetime
 
 
 class RouteCompleteData(BaseModel):
@@ -260,36 +264,9 @@ class RoutesService(IRoutesService, EntityManagement):
     async def restore(self, route_id):
         route = await self.get_by_id(route_id)
         route.restore()
-        warnings = []
-
-        def warn(missing, result, advice):
-            warnings.append(
-                f"Маршрут №{route.id} відновлено без {missing}. "
-                f"{result.reason} {advice}"
-            )
-
-        driver_advice = "Призначте водія пізніше."
-        vehicle_advice = "Призначте транспорт пізніше."
-        if route.driver_id is not None:
-            result = await self._run_chain(route, route.driver_id, None)
-            if not result.passed:
-                warn("водія", result, driver_advice)
-                route.unassign_driver()
-        if route.vehicle_id is not None:
-            result = await self._run_chain(route, None, route.vehicle_id)
-            if not result.passed:
-                warn("транспорту", result, vehicle_advice)
-                route.unassign_vehicle()
-        # What's left can still fail together: the license check needs both
-        result = await self._run_chain(route, route.driver_id, route.vehicle_id)
-        if not result.passed:
-            warn("водія", result, driver_advice)
-            route.unassign_driver()
+        removed = await self._remove_what_fails(route)
         route = await self.repository.update(route)
-        for warning in warnings:
-            await self._notify(
-                DomainEvent("ROUTE_UPDATED", "routes", route.id, warning)
-            )
+        warnings = await self._publish_warnings(route, "відновлено", removed)
         if route.driver_id is not None:
             await self._publish_to_driver(
                 route.driver_id,
@@ -297,7 +274,61 @@ class RoutesService(IRoutesService, EntityManagement):
                 route,
                 f"Маршрут №{route.id} на {route.departure_at:%d.%m.%Y %H:%M} відновлено",
             )
-        return RouteRestoreResult(route, warnings)
+        return RouteWithWarnings(route, warnings)
+
+    async def repeat(self, route_id, departure_at):
+        original = await self.get_by_id(route_id)
+        original.repeat()
+        route = self.repository.model(
+            driver_id=original.driver_id,
+            vehicle_id=original.vehicle_id,
+            distance=original.distance,
+            departure_at=departure_at,
+            status="PLANNED",
+            stops=[
+                RouteStops(order_no=stop.order_no, address=stop.address)
+                for stop in original.stops
+            ],
+        )
+        route.update_planned_return()
+        removed = await self._remove_what_fails(route)
+        route = await self.repository.create(route)
+        warnings = await self._publish_warnings(route, "створено", removed)
+        if route.driver_id is not None:
+            await self._publish_assigned(route, await self._get_driver(route.driver_id))
+        return RouteWithWarnings(route, warnings)
+
+    async def _remove_what_fails(self, route):
+        removed = []
+        if route.driver_id is not None:
+            result = await self._run_chain(route, route.driver_id, None)
+            if not result.passed:
+                removed.append(("водія", result.reason, "Призначте водія пізніше."))
+                route.unassign_driver()
+        if route.vehicle_id is not None:
+            result = await self._run_chain(route, None, route.vehicle_id)
+            if not result.passed:
+                removed.append(
+                    ("транспорту", result.reason, "Призначте транспорт пізніше.")
+                )
+                route.unassign_vehicle()
+        # What's left can still fail together: the license check needs both
+        result = await self._run_chain(route, route.driver_id, route.vehicle_id)
+        if not result.passed:
+            removed.append(("водія", result.reason, "Призначте водія пізніше."))
+            route.unassign_driver()
+        return removed
+
+    async def _publish_warnings(self, route, verb, removed):
+        warnings = [
+            f"Маршрут №{route.id} {verb} без {missing}. {reason} {advice}"
+            for missing, reason, advice in removed
+        ]
+        for warning in warnings:
+            await self._notify(
+                DomainEvent("ROUTE_UPDATED", "routes", route.id, warning)
+            )
+        return warnings
 
     def _build_route(self, data):
         route = self.repository.model(

@@ -281,6 +281,9 @@ class Routes(Base):
     def restore(self):
         self.state.restore(self)
 
+    def repeat(self):
+        self.state.repeat(self)
+
     def unassign_driver(self):
         self.state.unassign_driver(self)
 

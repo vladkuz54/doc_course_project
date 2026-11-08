@@ -9,6 +9,7 @@ from ...bll.services.routes_service import (
     RouteCreateData,
     RouteData,
     RouteDriverData,
+    RouteRepeatData,
     RoutesService,
     RouteStartData,
     RouteStatusData,
@@ -135,19 +136,36 @@ async def cancel(id: int, service: RoutesService = Depends(get_routes_service)):
     return await service.cancel(id)
 
 
-class RouteRestoreResponse(RouteResponse):
+class RouteWithWarningsResponse(RouteResponse):
     warnings: list[str]
+
+
+def _with_warnings(result):
+    route = RouteResponse.model_validate(result.route)
+    return RouteWithWarningsResponse(**route.model_dump(), warnings=result.warnings)
 
 
 @router.post(
     "/{id}/restore",
-    response_model=RouteRestoreResponse,
+    response_model=RouteWithWarningsResponse,
     dependencies=[Depends(require_admin)],
 )
 async def restore(id: int, service: RoutesService = Depends(get_routes_service)):
-    result = await service.restore(id)
-    route = RouteResponse.model_validate(result.route)
-    return RouteRestoreResponse(**route.model_dump(), warnings=result.warnings)
+    return _with_warnings(await service.restore(id))
+
+
+@router.post(
+    "/{id}/repeat",
+    response_model=RouteWithWarningsResponse,
+    status_code=201,
+    dependencies=[Depends(require_admin)],
+)
+async def repeat(
+    id: int,
+    data: RouteRepeatData,
+    service: RoutesService = Depends(get_routes_service),
+):
+    return _with_warnings(await service.repeat(id, data.departure_at))
 
 
 @router.post("/{id}/start", response_model=RouteResponse)

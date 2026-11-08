@@ -58,6 +58,9 @@ class RouteState(ABC):
     def restore(self, route):
         self._reject("відновити")
 
+    def repeat(self, route):
+        self._reject("повторити")
+
     def unassign_driver(self, route):
         self._reject("прибрати водія")
 
@@ -180,6 +183,9 @@ class InProgressState(RouteState):
 class CompletedState(RouteState):
     def status(self):
         return "COMPLETED"
+
+    def repeat(self, route):
+        pass
 
 
 class CancelledState(RouteState):
