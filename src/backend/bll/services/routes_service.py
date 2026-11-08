@@ -399,7 +399,9 @@ class RoutesService(IRoutesService, EntityManagement):
                 )
 
     async def _publish_moved(self, route, old_driver_id, new_driver):
-        if old_driver_id is not None and old_driver_id != new_driver.id:
+        if old_driver_id == new_driver.id:
+            return
+        if old_driver_id is not None:
             await self._publish_to_driver(
                 old_driver_id,
                 "ROUTE_UNASSIGNED",
