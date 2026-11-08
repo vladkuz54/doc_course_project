@@ -504,7 +504,7 @@ td.name {
   white-space: nowrap;
 }
 
-.compact td:not(.actions) {
+.compact tr:not(.form-row) > td:not(.actions) {
   white-space: nowrap;
 }
 
