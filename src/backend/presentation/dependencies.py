@@ -1,6 +1,15 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..bll.assignment_checks import (
+    DriverActiveHandler,
+    InsuranceHandler,
+    LicenseCategoryHandler,
+    MedicalCheckHandler,
+    ScheduleConflictHandler,
+    VehicleActiveHandler,
+    VehicleMaintenanceHandler,
+)
 from ..bll.exports import ReportExporter
 from ..bll.live_notifications import live_notifications
 from ..bll.reports import ReportService
@@ -98,6 +107,18 @@ def get_insurance_policies_service(
     )
 
 
+def build_assignment_chain(repair_records_service, insurance_policies_service):
+    chain = DriverActiveHandler()
+    chain.set_next(LicenseCategoryHandler()).set_next(MedicalCheckHandler()).set_next(
+        VehicleActiveHandler()
+    ).set_next(VehicleMaintenanceHandler(repair_records_service)).set_next(
+        InsuranceHandler(insurance_policies_service)
+    ).set_next(
+        ScheduleConflictHandler()
+    )
+    return chain
+
+
 def get_routes_service(
     session: AsyncSession = Depends(get_db_session),
     repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
@@ -111,8 +132,7 @@ def get_routes_service(
         DriversRepository(session),
         VehiclesRepository(session),
         RouteStopsRepository(session),
-        repair_records_service,
-        insurance_policies_service,
+        build_assignment_chain(repair_records_service, insurance_policies_service),
     )
     service.attach(notifications)
     return service
