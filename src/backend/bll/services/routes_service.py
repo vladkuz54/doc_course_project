@@ -9,20 +9,9 @@ from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.route_stops_interfaces import IRouteStopsRepository
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
-from ...dal.route_states import ROUTE_STATUS_LABELS, RouteActionNotAllowed
-from ..assignment_checks import (
-    AssignmentRequest,
-    DriverActiveHandler,
-    InsuranceHandler,
-    LicenseCategoryHandler,
-    MedicalCheckHandler,
-    ScheduleConflictHandler,
-    VehicleActiveHandler,
-    VehicleMaintenanceHandler,
-)
+from ...dal.route_states import ROUTE_STATUS_LABELS
+from ..assignment_checks import AssignmentRequest
 from ..exceptions import BusinessRuleError, EntityNotFoundError
-from ..interfaces.insurance_policies_interface import IInsurancePoliciesService
-from ..interfaces.repair_records_interface import IRepairRecordsService
 from ..interfaces.routes_interface import IRoutesService
 from ..observer import DomainEvent
 from .entity_management import EntityManagement
@@ -85,23 +74,13 @@ class RoutesService(IRoutesService, EntityManagement):
         drivers_repository: IDriversRepository,
         vehicles_repository: IVehiclesRepository,
         route_stops_repository: IRouteStopsRepository,
-        repair_records_service: IRepairRecordsService,
-        insurance_policies_service: IInsurancePoliciesService,
+        assignment_chain,
     ):
         super().__init__(repository)
         self.drivers_repository = drivers_repository
         self.vehicles_repository = vehicles_repository
         self.route_stops_repository = route_stops_repository
-        self._assignment_chain = DriverActiveHandler()
-        self._assignment_chain.set_next(LicenseCategoryHandler()).set_next(
-            MedicalCheckHandler()
-        ).set_next(VehicleActiveHandler()).set_next(
-            VehicleMaintenanceHandler(repair_records_service)
-        ).set_next(
-            InsuranceHandler(insurance_policies_service)
-        ).set_next(
-            ScheduleConflictHandler()
-        )
+        self._assignment_chain = assignment_chain
 
     async def _validate(self, data, id=None):
         if data.driver_id is not None:
