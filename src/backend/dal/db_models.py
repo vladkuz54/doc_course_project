@@ -123,6 +123,18 @@ class Drivers(Base):
             return "PENDING"
         return "EXPIRED"
 
+    def apply_license_update(self, request):
+        if request.new_license_category:
+            self.license_categories = [
+                *self.license_categories,
+                request.new_license_category,
+            ]
+        self.license_expiry_date = request.new_license_expiry_date
+
+    def apply_medical_check(self, request):
+        self.medical_check_date = request.medical_check_date
+        self.medical_valid_until = medical_valid_until(request.medical_check_date)
+
     @license_categories.setter
     def license_categories(self, values):
         existing = {c.category: c for c in self.categories}
