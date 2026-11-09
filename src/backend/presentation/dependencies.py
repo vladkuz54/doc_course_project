@@ -10,7 +10,6 @@ from ..bll.assignment_checks import (
     VehicleActiveHandler,
     VehicleMaintenanceHandler,
 )
-from ..bll.exports import ReportExporter
 from ..bll.live_notifications import live_notifications
 from ..bll.reports import ReportService
 from ..bll.services.deadline_monitor import DeadlineMonitor
@@ -35,6 +34,7 @@ from ..dal.repositories.route_stops_repository import RouteStopsRepository
 from ..dal.repositories.routes_repository import RoutesRepository
 from ..dal.repositories.users_repository import UsersRepository
 from ..dal.repositories.vehicles_repository import VehiclesRepository
+from .exports import ReportExporter
 
 
 async def get_db_session():
