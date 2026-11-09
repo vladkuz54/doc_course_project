@@ -1,18 +1,20 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 from ...bll.interfaces.route_stops_interface import IRouteStopsService
-from ...bll.services.route_stops_service import RouteStopData
 from ..dependencies import get_route_stops_service
 from .auth import ensure_visible, get_current_driver_id
 
 router = APIRouter(prefix="/route-stops", tags=["route-stops"])
 
 
-class RouteStopResponse(RouteStopData):
+class RouteStopResponse(BaseModel):
     id: int
+    route_id: int
+    order_no: int
+    address: str
     arrived_at: datetime | None
     model_config = ConfigDict(from_attributes=True)
 
