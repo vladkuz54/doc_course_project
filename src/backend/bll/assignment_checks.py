@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from ..dal.db_models import Drivers, Routes, Vehicles
-from .services.repair_records_service import MAINTENANCE_TYPE_LABELS
+from .labels import MAINTENANCE_TYPE_LABELS
 
 MIN_ROUTE_GAP_MINUTES = 10
 

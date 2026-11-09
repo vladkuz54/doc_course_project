@@ -8,14 +8,9 @@ from ...dal.db_models import ACTIVE_ROUTE_STATUSES, RepairRecords
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ..exceptions import BusinessRuleError
 from ..interfaces.repair_records_interface import IRepairRecordsService
+from ..labels import MAINTENANCE_TYPE_LABELS
 from ..observer import DomainEvent, Subject
 from .accounting_service import AccountingService
-
-MAINTENANCE_TYPE_LABELS = {
-    "SERVICE_TO": "ТО",
-    "INSPECTION": "техогляд",
-    "REPAIR": "ремонт",
-}
 
 
 class RepairRecordData(BaseModel):

@@ -1,8 +1,8 @@
 from datetime import date, timedelta
 
 from ...dal.db_models import WARNING_DAYS
+from ..labels import MAINTENANCE_TYPE_LABELS
 from ..observer import DomainEvent, Subject
-from .repair_records_service import MAINTENANCE_TYPE_LABELS
 
 
 def _until():
