@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from ...dal.db_models import LICENSE_CATEGORIES, medical_valid_until
+from ...dal.db_models import LICENSE_CATEGORIES
 from ...dal.interfaces.driver_requests_interfaces import IDriverRequestsRepository
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ..exceptions import BusinessRuleError, EntityNotFoundError
@@ -67,20 +67,14 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
     async def approve_license_update(self, request_id):
         request = await self._get_pending_request(request_id, "LICENSE_UPDATE")
         driver = await self._get_driver(request.driver_id)
-        if request.new_license_category:
-            driver.license_categories = [
-                *driver.license_categories,
-                request.new_license_category,
-            ]
-        driver.license_expiry_date = request.new_license_expiry_date
+        driver.apply_license_update(request)
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
 
     async def approve_medical_check(self, request_id):
         request = await self._get_pending_request(request_id, "MEDICAL_CHECK")
         driver = await self._get_driver(request.driver_id)
-        driver.medical_check_date = request.medical_check_date
-        driver.medical_valid_until = medical_valid_until(request.medical_check_date)
+        driver.apply_medical_check(request)
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
 
@@ -159,11 +153,7 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
         return request
 
     async def _get_pending_request(self, request_id, type=None):
-        request = await self.repository.get_by_id(request_id)
-        if not request:
-            raise EntityNotFoundError(
-                "Запит не знайдено. Можливо, запис уже видалено — оновіть сторінку."
-            )
+        request = await self.get_by_id(request_id)
         if type is not None and request.type != type:
             raise BusinessRuleError(
                 f"Це запит на {REQUEST_TYPE_LABELS[request.type]}, "
