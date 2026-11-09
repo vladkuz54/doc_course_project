@@ -44,10 +44,6 @@ class RouteStatusData(BaseModel):
     status: Literal["PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
 
 
-class RouteStopsData(BaseModel):
-    stops: list[StopAddress]
-
-
 class RouteDriverData(BaseModel):
     driver_id: int
 
@@ -200,16 +196,6 @@ class RoutesService(IRoutesService, EntityManagement):
         await self._publish_updated(
             route, [f"час виїзду {departure_at:%d.%m.%Y %H:%M}"]
         )
-        return route
-
-    async def edit_stops(self, route_id, addresses):
-        route = await self.get_by_id(route_id)
-        route.edit_stops(addresses)
-        route.update_planned_return()
-        await self._check_assignment(route)
-        addresses = " → ".join(stop.address for stop in route.stops)
-        route = await self.repository.update(route)
-        await self._publish_updated(route, [f"зупинки {addresses}"])
         return route
 
     async def start(self, route_id, started_at=None):

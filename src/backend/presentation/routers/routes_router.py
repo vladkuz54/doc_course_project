@@ -11,10 +11,9 @@ from ...bll.services.routes_service import (
     RouteData,
     RouteDriverData,
     RouteRepeatData,
-    RouteUpdateData,
     RouteStartData,
     RouteStatusData,
-    RouteStopsData,
+    RouteUpdateData,
     RouteVehicleData,
 )
 from ..dependencies import get_routes_service
@@ -94,17 +93,6 @@ async def _ensure_can_act(id, driver_id, service):
     route = await service.get_by_id(id)
     if driver_id is not None:
         ensure_visible(route, await service.list_by_driver(driver_id))
-
-
-@router.put(
-    "/{id}/stops", response_model=RouteResponse, dependencies=[Depends(require_admin)]
-)
-async def edit_stops(
-    id: int,
-    data: RouteStopsData,
-    service: IRoutesService = Depends(get_routes_service),
-):
-    return await service.edit_stops(id, data.stops)
 
 
 @router.put(

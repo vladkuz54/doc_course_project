@@ -26,10 +26,6 @@ class IRoutesService(IEntityManagement):
         pass
 
     @abstractmethod
-    async def edit_stops(self, route_id, addresses):
-        pass
-
-    @abstractmethod
     async def start(self, route_id, started_at=None):
         pass
 
