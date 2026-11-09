@@ -201,7 +201,7 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
 
 @app.exception_handler(IntegrityError)
 async def integrity_error_handler(request: Request, exc: IntegrityError):
-    if "FOREIGN KEY" in str(exc.orig):
+    if "foreign key" in str(exc.orig).lower():
         detail = (
             "Цей запис пов'язаний з іншими даними, тому його не можна "
             "видалити чи змінити."

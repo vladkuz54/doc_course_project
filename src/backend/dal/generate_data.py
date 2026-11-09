@@ -1,8 +1,10 @@
 import asyncio
+import sys
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 import bcrypt
+from sqlalchemy import select
 
 from backend.dal import Session
 from backend.dal.db_models import (
@@ -423,5 +425,13 @@ async def seed():
     )
 
 
+async def seed_if_empty():
+    await DBModels().init_db()
+    async with Session() as session:
+        has_users = await session.scalar(select(Users.id).limit(1))
+    if has_users is None:
+        await seed()
+
+
 if __name__ == "__main__":
-    asyncio.run(seed())
+    asyncio.run(seed_if_empty() if "--if-empty" in sys.argv else seed())
