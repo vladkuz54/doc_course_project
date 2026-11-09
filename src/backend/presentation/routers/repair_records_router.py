@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
+from ...bll.interfaces.repair_records_interface import IRepairRecordsService
 from ...bll.services.repair_records_service import (
     RepairCostData,
     RepairRecordData,
-    RepairRecordsService,
 )
 from ..dependencies import get_repair_records_service
 from .auth import require_admin
@@ -22,13 +22,13 @@ class RepairRecordResponse(RepairRecordData):
 
 
 @router.get("/", response_model=list[RepairRecordResponse])
-async def get_all(service: RepairRecordsService = Depends(get_repair_records_service)):
+async def get_all(service: IRepairRecordsService = Depends(get_repair_records_service)):
     return await service.get_all()
 
 
 @router.get("/{id}", response_model=RepairRecordResponse)
 async def get_by_id(
-    id: int, service: RepairRecordsService = Depends(get_repair_records_service)
+    id: int, service: IRepairRecordsService = Depends(get_repair_records_service)
 ):
     return await service.get_by_id(id)
 
@@ -36,7 +36,7 @@ async def get_by_id(
 @router.post("/", response_model=RepairRecordResponse, status_code=201)
 async def create(
     data: RepairRecordData,
-    service: RepairRecordsService = Depends(get_repair_records_service),
+    service: IRepairRecordsService = Depends(get_repair_records_service),
 ):
     return await service.create(data)
 
@@ -45,7 +45,7 @@ async def create(
 async def update(
     id: int,
     data: RepairRecordData,
-    service: RepairRecordsService = Depends(get_repair_records_service),
+    service: IRepairRecordsService = Depends(get_repair_records_service),
 ):
     return await service.update(id, data)
 
@@ -54,13 +54,13 @@ async def update(
 async def record_cost(
     id: int,
     data: RepairCostData,
-    service: RepairRecordsService = Depends(get_repair_records_service),
+    service: IRepairRecordsService = Depends(get_repair_records_service),
 ):
     return await service.record_repair_cost(id, data.cost)
 
 
 @router.delete("/{id}", response_model=RepairRecordResponse)
 async def delete(
-    id: int, service: RepairRecordsService = Depends(get_repair_records_service)
+    id: int, service: IRepairRecordsService = Depends(get_repair_records_service)
 ):
     return await service.delete(id)

@@ -2,11 +2,11 @@ from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
 
+from ...bll.interfaces.drivers_interface import IDriversService
 from ...bll.services.drivers_service import (
     DriverData,
-    DriversService,
     DriverStatusData,
     DriverUpdateData,
 )
@@ -26,7 +26,7 @@ class DriverResponse(DriverData):
 @router.get("/", response_model=list[DriverResponse])
 async def get_all(
     driver_id: int | None = Depends(get_current_driver_id),
-    service: DriversService = Depends(get_drivers_service),
+    service: IDriversService = Depends(get_drivers_service),
 ):
     if driver_id is None:
         return await service.get_all()
@@ -37,7 +37,7 @@ async def get_all(
 async def get_by_id(
     id: int,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: DriversService = Depends(get_drivers_service),
+    service: IDriversService = Depends(get_drivers_service),
 ):
     obj = await service.get_by_id(id)
     if driver_id is not None:
@@ -52,7 +52,7 @@ async def get_by_id(
     dependencies=[Depends(require_admin)],
 )
 async def create(
-    data: DriverData, service: DriversService = Depends(get_drivers_service)
+    data: DriverData, service: IDriversService = Depends(get_drivers_service)
 ):
     return await service.create(data)
 
@@ -63,7 +63,7 @@ async def create(
 async def update(
     id: int,
     data: DriverUpdateData,
-    service: DriversService = Depends(get_drivers_service),
+    service: IDriversService = Depends(get_drivers_service),
 ):
     return await service.update(id, data)
 
@@ -76,7 +76,7 @@ async def update(
 async def change_status(
     id: int,
     data: DriverStatusData,
-    service: DriversService = Depends(get_drivers_service),
+    service: IDriversService = Depends(get_drivers_service),
 ):
     return await service.change_status(id, data.employment_status)
 
@@ -84,5 +84,5 @@ async def change_status(
 @router.delete(
     "/{id}", response_model=DriverResponse, dependencies=[Depends(require_admin)]
 )
-async def delete(id: int, service: DriversService = Depends(get_drivers_service)):
+async def delete(id: int, service: IDriversService = Depends(get_drivers_service)):
     return await service.delete(id)

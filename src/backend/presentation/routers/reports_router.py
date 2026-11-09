@@ -4,6 +4,11 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Response
 
 from ...bll.exports import ExcelExport, PdfExport, ReportExporter
+from ...bll.interfaces.fuel_records_interface import IFuelRecordsService
+from ...bll.interfaces.insurance_policies_interface import IInsurancePoliciesService
+from ...bll.interfaces.repair_records_interface import IRepairRecordsService
+from ...bll.interfaces.routes_interface import IRoutesService
+from ...bll.interfaces.vehicles_interface import IVehiclesService
 from ...bll.reports import (
     MaintenanceCostReport,
     ReportData,
@@ -11,11 +16,6 @@ from ...bll.reports import (
     UsageAnalyticsReport,
     VehicleUtilizationReport,
 )
-from ...bll.services.fuel_records_service import FuelRecordsService
-from ...bll.services.insurance_policies_service import InsurancePoliciesService
-from ...bll.services.repair_records_service import RepairRecordsService
-from ...bll.services.routes_service import RoutesService
-from ...bll.services.vehicles_service import VehiclesService
 from ..dependencies import (
     get_fuel_records_service,
     get_insurance_policies_service,
@@ -41,13 +41,13 @@ async def get_report(
     format: Literal["json", "pdf", "xlsx"] = "json",
     report_service: ReportService = Depends(get_report_service),
     report_exporter: ReportExporter = Depends(get_report_exporter),
-    routes_service: RoutesService = Depends(get_routes_service),
-    repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
-    fuel_records_service: FuelRecordsService = Depends(get_fuel_records_service),
-    insurance_policies_service: InsurancePoliciesService = Depends(
+    routes_service: IRoutesService = Depends(get_routes_service),
+    repair_records_service: IRepairRecordsService = Depends(get_repair_records_service),
+    fuel_records_service: IFuelRecordsService = Depends(get_fuel_records_service),
+    insurance_policies_service: IInsurancePoliciesService = Depends(
         get_insurance_policies_service
     ),
-    vehicles_service: VehiclesService = Depends(get_vehicles_service),
+    vehicles_service: IVehiclesService = Depends(get_vehicles_service),
 ):
     report_service.set_strategy(
         {

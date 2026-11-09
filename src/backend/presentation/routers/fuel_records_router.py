@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
-from ...bll.services.fuel_records_service import FuelRecordData, FuelRecordsService
+from ...bll.interfaces.fuel_records_interface import IFuelRecordsService
+from ...bll.services.fuel_records_service import FuelRecordData
 from ..dependencies import get_fuel_records_service
 from .auth import require_admin
 
@@ -16,13 +17,13 @@ class FuelRecordResponse(FuelRecordData):
 
 
 @router.get("/", response_model=list[FuelRecordResponse])
-async def get_all(service: FuelRecordsService = Depends(get_fuel_records_service)):
+async def get_all(service: IFuelRecordsService = Depends(get_fuel_records_service)):
     return await service.get_all()
 
 
 @router.get("/{id}", response_model=FuelRecordResponse)
 async def get_by_id(
-    id: int, service: FuelRecordsService = Depends(get_fuel_records_service)
+    id: int, service: IFuelRecordsService = Depends(get_fuel_records_service)
 ):
     return await service.get_by_id(id)
 
@@ -30,7 +31,7 @@ async def get_by_id(
 @router.post("/", response_model=FuelRecordResponse, status_code=201)
 async def create(
     data: FuelRecordData,
-    service: FuelRecordsService = Depends(get_fuel_records_service),
+    service: IFuelRecordsService = Depends(get_fuel_records_service),
 ):
     return await service.create(data)
 
@@ -39,13 +40,13 @@ async def create(
 async def update(
     id: int,
     data: FuelRecordData,
-    service: FuelRecordsService = Depends(get_fuel_records_service),
+    service: IFuelRecordsService = Depends(get_fuel_records_service),
 ):
     return await service.update(id, data)
 
 
 @router.delete("/{id}", response_model=FuelRecordResponse)
 async def delete(
-    id: int, service: FuelRecordsService = Depends(get_fuel_records_service)
+    id: int, service: IFuelRecordsService = Depends(get_fuel_records_service)
 ):
     return await service.delete(id)

@@ -4,13 +4,13 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ConfigDict
 
+from ...bll.interfaces.routes_interface import IRoutesService
 from ...bll.services.routes_service import (
     RouteCompleteData,
     RouteCreateData,
     RouteData,
     RouteDriverData,
     RouteRepeatData,
-    RoutesService,
     RouteStartData,
     RouteStatusData,
     RouteStopsData,
@@ -34,7 +34,7 @@ class RouteResponse(RouteData):
 @router.get("/", response_model=list[RouteResponse])
 async def get_all(
     driver_id: int | None = Depends(get_current_driver_id),
-    service: RoutesService = Depends(get_routes_service),
+    service: IRoutesService = Depends(get_routes_service),
 ):
     if driver_id is None:
         return await service.get_all()
@@ -45,7 +45,7 @@ async def get_all(
 async def get_by_id(
     id: int,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: RoutesService = Depends(get_routes_service),
+    service: IRoutesService = Depends(get_routes_service),
 ):
     obj = await service.get_by_id(id)
     if driver_id is not None:
@@ -60,7 +60,7 @@ async def get_by_id(
     dependencies=[Depends(require_admin)],
 )
 async def create(
-    data: RouteCreateData, service: RoutesService = Depends(get_routes_service)
+    data: RouteCreateData, service: IRoutesService = Depends(get_routes_service)
 ):
     return await service.create(data)
 
@@ -69,7 +69,7 @@ async def create(
     "/{id}", response_model=RouteResponse, dependencies=[Depends(require_admin)]
 )
 async def update(
-    id: int, data: RouteData, service: RoutesService = Depends(get_routes_service)
+    id: int, data: RouteData, service: IRoutesService = Depends(get_routes_service)
 ):
     return await service.update(id, data)
 
@@ -82,7 +82,7 @@ async def update(
 async def change_status(
     id: int,
     data: RouteStatusData,
-    service: RoutesService = Depends(get_routes_service),
+    service: IRoutesService = Depends(get_routes_service),
 ):
     return await service.change_status(id, data.status)
 
@@ -99,7 +99,7 @@ async def _ensure_can_act(id, driver_id, service):
 async def edit_stops(
     id: int,
     data: RouteStopsData,
-    service: RoutesService = Depends(get_routes_service),
+    service: IRoutesService = Depends(get_routes_service),
 ):
     return await service.edit_stops(id, data.stops)
 
@@ -110,7 +110,7 @@ async def edit_stops(
 async def assign_driver(
     id: int,
     data: RouteDriverData,
-    service: RoutesService = Depends(get_routes_service),
+    service: IRoutesService = Depends(get_routes_service),
 ):
     return await service.assign_driver(id, data.driver_id)
 
@@ -121,7 +121,7 @@ async def assign_driver(
 async def assign_vehicle(
     id: int,
     data: RouteVehicleData,
-    service: RoutesService = Depends(get_routes_service),
+    service: IRoutesService = Depends(get_routes_service),
 ):
     return await service.assign_vehicle(id, data.vehicle_id)
 
@@ -129,7 +129,7 @@ async def assign_vehicle(
 @router.post(
     "/{id}/cancel", response_model=RouteResponse, dependencies=[Depends(require_admin)]
 )
-async def cancel(id: int, service: RoutesService = Depends(get_routes_service)):
+async def cancel(id: int, service: IRoutesService = Depends(get_routes_service)):
     return await service.cancel(id)
 
 
@@ -147,7 +147,7 @@ def _with_warnings(result):
     response_model=RouteWithWarningsResponse,
     dependencies=[Depends(require_admin)],
 )
-async def restore(id: int, service: RoutesService = Depends(get_routes_service)):
+async def restore(id: int, service: IRoutesService = Depends(get_routes_service)):
     return _with_warnings(await service.restore(id))
 
 
@@ -160,7 +160,7 @@ async def restore(id: int, service: RoutesService = Depends(get_routes_service))
 async def repeat(
     id: int,
     data: RouteRepeatData,
-    service: RoutesService = Depends(get_routes_service),
+    service: IRoutesService = Depends(get_routes_service),
 ):
     return _with_warnings(await service.repeat(id, data.departure_at))
 
@@ -170,7 +170,7 @@ async def start(
     id: int,
     data: RouteStartData | None = None,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: RoutesService = Depends(get_routes_service),
+    service: IRoutesService = Depends(get_routes_service),
 ):
     await _ensure_can_act(id, driver_id, service)
     started_at = data.started_at if data else None
@@ -186,7 +186,7 @@ async def complete(
     id: int,
     data: RouteCompleteData | None = None,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: RoutesService = Depends(get_routes_service),
+    service: IRoutesService = Depends(get_routes_service),
 ):
     await _ensure_can_act(id, driver_id, service)
     returned_at = data.returned_at if data else None
@@ -202,7 +202,7 @@ async def arrive_at_stop(
     id: int,
     stop_id: int,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: RoutesService = Depends(get_routes_service),
+    service: IRoutesService = Depends(get_routes_service),
 ):
     if driver_id is None:
         raise HTTPException(

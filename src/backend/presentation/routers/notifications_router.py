@@ -5,10 +5,11 @@ from fastapi.responses import StreamingResponse
 from pydantic import ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...bll.interfaces.notifications_interface import INotificationsService
 from ...bll.live_notifications import live_notifications
 from ...bll.observer import DomainEvent
 from ...bll.services.deadline_monitor import DeadlineMonitor
-from ...bll.services.notifications_service import NotificationData, NotificationsService
+from ...bll.services.notifications_service import NotificationData
 from ..dependencies import (
     get_db_session,
     get_deadline_monitor,
@@ -34,7 +35,7 @@ class NotificationResponse(NotificationData):
 @router.get("/", response_model=list[NotificationResponse])
 async def get_all(
     driver_id: int | None = Depends(get_current_driver_id),
-    service: NotificationsService = Depends(get_notifications_service),
+    service: INotificationsService = Depends(get_notifications_service),
 ):
     if driver_id is None:
         return await service.get_for_admins()
@@ -48,7 +49,7 @@ async def get_all(
 )
 async def check_deadlines(
     monitor: DeadlineMonitor = Depends(get_deadline_monitor),
-    notifications: NotificationsService = Depends(get_notifications_service),
+    notifications: INotificationsService = Depends(get_notifications_service),
 ):
     notifications.quiet_period = timedelta(0)
     return [
@@ -78,7 +79,7 @@ async def stream(
 async def get_by_id(
     id: int,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: NotificationsService = Depends(get_notifications_service),
+    service: INotificationsService = Depends(get_notifications_service),
 ):
     obj = await service.get_by_id(id)
     if driver_id is not None:
@@ -89,7 +90,7 @@ async def get_by_id(
 @router.patch("/read-all", response_model=list[NotificationResponse])
 async def mark_all_as_read(
     driver_id: int | None = Depends(get_current_driver_id),
-    service: NotificationsService = Depends(get_notifications_service),
+    service: INotificationsService = Depends(get_notifications_service),
 ):
     return await service.mark_all_as_read(driver_id)
 
@@ -98,7 +99,7 @@ async def mark_all_as_read(
 async def mark_as_read(
     id: int,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: NotificationsService = Depends(get_notifications_service),
+    service: INotificationsService = Depends(get_notifications_service),
 ):
     obj = await service.get_by_id(id)
     if driver_id is not None:
@@ -110,6 +111,6 @@ async def mark_as_read(
     "/{id}", response_model=NotificationResponse, dependencies=[Depends(require_admin)]
 )
 async def delete(
-    id: int, service: NotificationsService = Depends(get_notifications_service)
+    id: int, service: INotificationsService = Depends(get_notifications_service)
 ):
     return await service.delete(id)

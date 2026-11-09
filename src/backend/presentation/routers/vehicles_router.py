@@ -3,9 +3,9 @@ from typing import Literal
 from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
+from ...bll.interfaces.vehicles_interface import IVehiclesService
 from ...bll.services.vehicles_service import (
     VehicleData,
-    VehiclesService,
     VehicleStatusData,
     VehicleUpdateData,
 )
@@ -25,7 +25,7 @@ class VehicleResponse(VehicleData):
 @router.get("/", response_model=list[VehicleResponse])
 async def get_all(
     driver_id: int | None = Depends(get_current_driver_id),
-    service: VehiclesService = Depends(get_vehicles_service),
+    service: IVehiclesService = Depends(get_vehicles_service),
 ):
     if driver_id is None:
         return await service.get_all()
@@ -36,7 +36,7 @@ async def get_all(
 async def get_by_id(
     id: int,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: VehiclesService = Depends(get_vehicles_service),
+    service: IVehiclesService = Depends(get_vehicles_service),
 ):
     obj = await service.get_by_id(id)
     if driver_id is not None:
@@ -51,7 +51,7 @@ async def get_by_id(
     dependencies=[Depends(require_admin)],
 )
 async def create(
-    data: VehicleData, service: VehiclesService = Depends(get_vehicles_service)
+    data: VehicleData, service: IVehiclesService = Depends(get_vehicles_service)
 ):
     return await service.create(data)
 
@@ -62,7 +62,7 @@ async def create(
 async def update(
     id: int,
     data: VehicleUpdateData,
-    service: VehiclesService = Depends(get_vehicles_service),
+    service: IVehiclesService = Depends(get_vehicles_service),
 ):
     return await service.update(id, data)
 
@@ -75,7 +75,7 @@ async def update(
 async def change_status(
     id: int,
     data: VehicleStatusData,
-    service: VehiclesService = Depends(get_vehicles_service),
+    service: IVehiclesService = Depends(get_vehicles_service),
 ):
     return await service.change_status(id, data.status)
 
@@ -83,5 +83,5 @@ async def change_status(
 @router.delete(
     "/{id}", response_model=VehicleResponse, dependencies=[Depends(require_admin)]
 )
-async def delete(id: int, service: VehiclesService = Depends(get_vehicles_service)):
+async def delete(id: int, service: IVehiclesService = Depends(get_vehicles_service)):
     return await service.delete(id)
