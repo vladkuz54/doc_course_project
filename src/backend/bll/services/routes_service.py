@@ -215,9 +215,9 @@ class RoutesService(IRoutesService, EntityManagement):
         )
         return route
 
-    async def edit_stops(self, route_id, stops):
+    async def edit_stops(self, route_id, addresses):
         route = await self.get_by_id(route_id)
-        route.edit_stops(stops)
+        route.edit_stops(addresses)
         route.update_planned_return()
         await self._check_assignment(route)
         addresses = " → ".join(stop.address for stop in route.stops)

@@ -26,7 +26,7 @@ class IRoutesService(IBaseService):
         pass
 
     @abstractmethod
-    async def edit_stops(self, route_id, stops):
+    async def edit_stops(self, route_id, addresses):
         pass
 
     @abstractmethod

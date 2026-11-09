@@ -263,8 +263,11 @@ class Routes(Base):
     def change_distance(self, distance):
         self.state.change_distance(self, distance)
 
-    def edit_stops(self, stops):
-        self.state.edit_stops(self, stops)
+    def edit_stops(self, addresses):
+        self.state.edit_stops(self, addresses)
+
+    def new_stop(self, order_no, address):
+        return RouteStops(order_no=order_no, address=address)
 
     def start(self, started_at=None):
         self.state.start(self, started_at)

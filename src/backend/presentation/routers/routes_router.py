@@ -16,7 +16,6 @@ from ...bll.services.routes_service import (
     RouteStopsData,
     RouteVehicleData,
 )
-from ...dal.db_models import RouteStops
 from ..dependencies import get_routes_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
@@ -102,9 +101,7 @@ async def edit_stops(
     data: RouteStopsData,
     service: RoutesService = Depends(get_routes_service),
 ):
-    return await service.edit_stops(
-        id, [RouteStops(address=address) for address in data.stops]
-    )
+    return await service.edit_stops(id, data.stops)
 
 
 @router.put(
