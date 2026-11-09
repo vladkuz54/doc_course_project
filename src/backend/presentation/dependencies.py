@@ -58,15 +58,10 @@ def get_notifications_service(
 
 def get_drivers_service(
     session: AsyncSession = Depends(get_db_session),
-    notifications: NotificationsService = Depends(get_notifications_service),
 ) -> DriversService:
-    service = DriversService(
-        DriversRepository(session),
-        UsersRepository(session),
-        RoutesRepository(session),
+    return DriversService(
+        DriversRepository(session), UsersRepository(session), RoutesRepository(session)
     )
-    service.attach(notifications)
-    return service
 
 
 def get_driver_requests_service(
@@ -181,7 +176,7 @@ async def run_deadline_checks():
         monitor = get_deadline_monitor(
             get_repair_records_service(session, notifications),
             get_insurance_policies_service(session),
-            get_drivers_service(session, notifications),
+            get_drivers_service(session),
             notifications,
         )
         await monitor.check_maintenance_due()
