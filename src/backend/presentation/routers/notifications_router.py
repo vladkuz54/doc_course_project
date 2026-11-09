@@ -51,7 +51,7 @@ async def check_deadlines(
     monitor: DeadlineMonitor = Depends(get_deadline_monitor),
     notifications: INotificationsService = Depends(get_notifications_service),
 ):
-    notifications.quiet_period = timedelta(0)
+    notifications.set_quiet_period(timedelta(0))
     return [
         *await monitor.check_maintenance_due(),
         *await monitor.check_repair_cost_missing(),
