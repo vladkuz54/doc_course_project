@@ -4,13 +4,13 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, NaiveDatetime, StringConstraints
 
-from ...dal.db_models import ACTIVE_ROUTE_STATUSES, Routes, RouteStops
+from ...dal.db_models import ACTIVE_ROUTE_STATUSES, Routes
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.route_stops_interfaces import IRouteStopsRepository
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ...dal.route_states import ROUTE_STATUS_LABELS
-from ..assignment_checks import AssignmentRequest
+from ..assignment_checks import AssignmentHandler, AssignmentRequest
 from ..exceptions import BusinessRuleError, EntityNotFoundError
 from ..interfaces.routes_interface import IRoutesService
 from ..observer import DomainEvent
@@ -34,6 +34,10 @@ class RouteData(BaseModel):
 
 class RouteCreateData(RouteData):
     stops: list[StopAddress] = Field(min_length=1)
+
+
+class RouteUpdateData(RouteData):
+    stops: list[StopAddress] | None = Field(None, min_length=1)
 
 
 class RouteStatusData(BaseModel):
@@ -74,7 +78,7 @@ class RoutesService(IRoutesService, EntityManagement):
         drivers_repository: IDriversRepository,
         vehicles_repository: IVehiclesRepository,
         route_stops_repository: IRouteStopsRepository,
-        assignment_chain,
+        assignment_chain: AssignmentHandler,
     ):
         super().__init__(repository)
         self.drivers_repository = drivers_repository
@@ -131,6 +135,10 @@ class RoutesService(IRoutesService, EntityManagement):
             changes.append(f"час виїзду {data.departure_at:%d.%m.%Y %H:%M}")
         if data.distance != old_distance:
             changes.append(f"відстань {data.distance:g} км")
+        stops = getattr(data, "stops", None)
+        if stops is not None and stops != [s.address for s in route.stops]:
+            route.edit_stops(stops)
+            changes.append(f"зупинки {' → '.join(s.address for s in route.stops)}")
         route.update_planned_return()
         await self._check_assignment(route)
         route = await self.repository.update(route)
@@ -264,11 +272,10 @@ class RoutesService(IRoutesService, EntityManagement):
             distance=original.distance,
             departure_at=departure_at,
             status="PLANNED",
-            stops=[
-                RouteStops(order_no=stop.order_no, address=stop.address)
-                for stop in original.stops
-            ],
         )
+        route.stops = [
+            route.new_stop(stop.order_no, stop.address) for stop in original.stops
+        ]
         route.update_planned_return()
         removed = await self._remove_what_fails(route)
         route = await self.repository.create(route)
@@ -309,13 +316,11 @@ class RoutesService(IRoutesService, EntityManagement):
         return warnings
 
     def _build_route(self, data):
-        route = self.repository.model(
-            **self.to_fields(data),
-            stops=[
-                RouteStops(order_no=number, address=address)
-                for number, address in enumerate(data.stops, 1)
-            ],
-        )
+        route = self.repository.model(**self.to_fields(data))
+        route.stops = [
+            route.new_stop(number, address)
+            for number, address in enumerate(data.stops, 1)
+        ]
         route.update_planned_return()
         return route
 
