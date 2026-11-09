@@ -11,6 +11,7 @@ from ...bll.services.routes_service import (
     RouteData,
     RouteDriverData,
     RouteRepeatData,
+    RouteUpdateData,
     RouteStartData,
     RouteStatusData,
     RouteStopsData,
@@ -69,7 +70,9 @@ async def create(
     "/{id}", response_model=RouteResponse, dependencies=[Depends(require_admin)]
 )
 async def update(
-    id: int, data: RouteData, service: IRoutesService = Depends(get_routes_service)
+    id: int,
+    data: RouteUpdateData,
+    service: IRoutesService = Depends(get_routes_service),
 ):
     return await service.update(id, data)
 
