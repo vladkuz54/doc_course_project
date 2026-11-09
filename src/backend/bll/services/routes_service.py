@@ -13,7 +13,7 @@ from ...dal.route_states import ROUTE_STATUS_LABELS
 from ..assignment_checks import AssignmentHandler, AssignmentRequest
 from ..exceptions import BusinessRuleError, EntityNotFoundError
 from ..interfaces.routes_interface import IRoutesService
-from ..observer import DomainEvent
+from ..observer import DomainEvent, Subject
 from .entity_management import EntityManagement
 
 StopAddress = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -64,7 +64,7 @@ class RouteCompleteData(BaseModel):
     returned_at: NaiveDatetime | None = None
 
 
-class RoutesService(IRoutesService, EntityManagement):
+class RoutesService(IRoutesService, EntityManagement, Subject):
     entity_name = "Маршрут"
     status_labels = ROUTE_STATUS_LABELS
 
@@ -76,7 +76,8 @@ class RoutesService(IRoutesService, EntityManagement):
         route_stops_repository: IRouteStopsRepository,
         assignment_chain: AssignmentHandler,
     ):
-        super().__init__(repository)
+        EntityManagement.__init__(self, repository)
+        Subject.__init__(self)
         self.drivers_repository = drivers_repository
         self.vehicles_repository = vehicles_repository
         self.route_stops_repository = route_stops_repository
