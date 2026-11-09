@@ -60,6 +60,9 @@ class NotificationsService(INotificationsService, BaseService, Observer, Subject
             await self.repository.update(unread[0])
         return rows
 
+    def set_quiet_period(self, period):
+        self.quiet_period = period
+
     async def on_event(self, event):
         since = datetime.now() - self.quiet_period
         for n in await self.repository.get_unread_or_read_since(since):
