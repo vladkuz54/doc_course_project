@@ -67,6 +67,12 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
     async def approve_license_update(self, request_id):
         request = await self._get_pending_request(request_id, "LICENSE_UPDATE")
         driver = await self._get_driver(request.driver_id)
+        if request.new_license_expiry_date <= driver.license_expiry_date:
+            raise BusinessRuleError(
+                "Посвідчення водія вже дійсне до "
+                f"{driver.license_expiry_date:%d/%m/%Y}, не раніше, ніж у цьому "
+                "запиті. Відхиліть запит."
+            )
         driver.apply_license_update(request)
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
@@ -74,6 +80,11 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
     async def approve_medical_check(self, request_id):
         request = await self._get_pending_request(request_id, "MEDICAL_CHECK")
         driver = await self._get_driver(request.driver_id)
+        if request.medical_check_date <= driver.medical_check_date:
+            raise BusinessRuleError(
+                f"У водія вже враховано медогляд від {driver.medical_check_date:%d/%m/%Y}, "
+                "не раніший за цей запит. Відхиліть запит."
+            )
         driver.apply_medical_check(request)
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
