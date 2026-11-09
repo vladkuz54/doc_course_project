@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from .base_interface import IBaseService
+from .entity_management_interface import IEntityManagement
 
 
-class IDriversService(IBaseService):
+class IDriversService(IEntityManagement):
 
     @abstractmethod
     async def get_by_user_id(self, user_id):

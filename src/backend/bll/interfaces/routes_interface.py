@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from .base_interface import IBaseService
+from .entity_management_interface import IEntityManagement
 
 
-class IRoutesService(IBaseService):
+class IRoutesService(IEntityManagement):
 
     @abstractmethod
     async def list_by_driver(self, driver_id):

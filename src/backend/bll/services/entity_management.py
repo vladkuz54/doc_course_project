@@ -1,9 +1,10 @@
 from ..exceptions import BusinessRuleError
+from ..interfaces.entity_management_interface import IEntityManagement
 from ..observer import Subject
 from .base_service import BaseService
 
 
-class EntityManagement(BaseService, Subject):
+class EntityManagement(BaseService, Subject, IEntityManagement):
     status_field = "status"
     status_labels = {}
     status_blocked_message = "Цей статус зараз не можна встановити."
