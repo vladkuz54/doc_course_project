@@ -18,7 +18,6 @@ class EntityManagement(BaseService, IEntityManagement):
         if not await self._can_change_status(entity, status):
             raise BusinessRuleError(self.status_blocked_message)
         await self._apply_status(entity, status)
-        await self._after_status_change(entity)
         return entity
 
     async def update(self, id, data):
@@ -36,6 +35,3 @@ class EntityManagement(BaseService, IEntityManagement):
     async def _apply_status(self, entity, status):
         setattr(entity, self.status_field, status)
         await self.repository.update(entity)
-
-    async def _after_status_change(self, entity):
-        pass
