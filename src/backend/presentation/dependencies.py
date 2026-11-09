@@ -55,7 +55,6 @@ def get_drivers_service(
         DriversRepository(session),
         UsersRepository(session),
         RoutesRepository(session),
-        DriverRequestsRepository(session),
     )
     service.attach(notifications)
     return service
@@ -63,8 +62,13 @@ def get_drivers_service(
 
 def get_driver_requests_service(
     session: AsyncSession = Depends(get_db_session),
+    notifications: NotificationsService = Depends(get_notifications_service),
 ) -> DriverRequestsService:
-    return DriverRequestsService(DriverRequestsRepository(session))
+    service = DriverRequestsService(
+        DriverRequestsRepository(session), DriversRepository(session)
+    )
+    service.attach(notifications)
+    return service
 
 
 def get_repair_records_service(

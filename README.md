@@ -21,16 +21,13 @@ The first build takes a few minutes. Then open:
 | App | http://localhost:3000 |
 | API docs | http://localhost:8000/docs |
 
-On first start, the backend creates the tables and fills the empty database with demo data. Data is kept between restarts.
-
-### Demo logins
+### Logins
 
 | Role | Username | Password |
 | --- | --- | --- |
 | Admin | `admin` | `admin` |
 | Driver | `petrenko`, `kovalenko`, `shevchenko`, `bondar`, `melnyk` | `password` |
 
-These passwords are public, so don't expose the demo data on a shared network.
 
 ### Everyday commands
 
