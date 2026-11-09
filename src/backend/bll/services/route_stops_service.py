@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
 from ...dal.interfaces.route_stops_interfaces import IRouteStopsRepository
-from ..exceptions import EntityNotFoundError
 from ..interfaces.route_stops_interface import IRouteStopsService
+from .read_service import ReadService
 
 
 class RouteStopData(BaseModel):
@@ -11,23 +11,11 @@ class RouteStopData(BaseModel):
     address: str
 
 
-class RouteStopsService(IRouteStopsService):
+class RouteStopsService(IRouteStopsService, ReadService):
     entity_name = "Зупинку"
 
     def __init__(self, repository: IRouteStopsRepository):
-        self.repository = repository
-
-    async def get_all(self):
-        return await self.repository.get_all()
-
-    async def get_by_id(self, id):
-        obj = await self.repository.get_by_id(id)
-        if not obj:
-            raise EntityNotFoundError(
-                f"{self.entity_name} не знайдено. Можливо, запис уже видалено — "
-                "оновіть сторінку."
-            )
-        return obj
+        super().__init__(repository)
 
     async def get_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)

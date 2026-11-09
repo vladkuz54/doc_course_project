@@ -1,15 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+
+from .read_interface import IReadService
 
 
-class IRouteStopsService(ABC):
-
-    @abstractmethod
-    async def get_all(self):
-        pass
-
-    @abstractmethod
-    async def get_by_id(self, id):
-        pass
+class IRouteStopsService(IReadService):
 
     @abstractmethod
     async def get_by_driver(self, driver_id):

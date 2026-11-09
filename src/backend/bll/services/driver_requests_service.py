@@ -9,6 +9,7 @@ from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ..exceptions import BusinessRuleError, EntityNotFoundError
 from ..interfaces.driver_requests_interface import IDriverRequestsService
 from ..observer import DomainEvent, Subject
+from .read_service import ReadService
 
 
 class DriverRequestData(BaseModel):
@@ -33,7 +34,7 @@ def _license_details(request):
     return details
 
 
-class DriverRequestsService(IDriverRequestsService, Subject):
+class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
     entity_name = "Запит"
 
     def __init__(
@@ -41,21 +42,9 @@ class DriverRequestsService(IDriverRequestsService, Subject):
         repository: IDriverRequestsRepository,
         drivers_repository: IDriversRepository,
     ):
-        super().__init__()
-        self.repository = repository
+        ReadService.__init__(self, repository)
+        Subject.__init__(self)
         self.drivers_repository = drivers_repository
-
-    async def get_all(self):
-        return await self.repository.get_all()
-
-    async def get_by_id(self, id):
-        obj = await self.repository.get_by_id(id)
-        if not obj:
-            raise EntityNotFoundError(
-                f"{self.entity_name} не знайдено. Можливо, запис уже видалено — "
-                "оновіть сторінку."
-            )
-        return obj
 
     async def get_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)
