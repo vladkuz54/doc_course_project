@@ -74,6 +74,7 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
                 "запиті. Відхиліть запит."
             )
         driver.apply_license_update(request)
+        await self.drivers_repository.update(driver)
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
 
@@ -86,6 +87,7 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
                 "не раніший за цей запит. Відхиліть запит."
             )
         driver.apply_medical_check(request)
+        await self.drivers_repository.update(driver)
         request.status = "APPROVED"
         return await self._save_decision(request, "REQUEST_APPROVED", "схвалено")
 
