@@ -28,6 +28,15 @@ class DeadlineMonitor(Subject):
         self.insurance_policies_service = insurance_policies_service
         self.drivers_service = drivers_service
 
+    async def check_all(self):
+        return [
+            *await self.check_maintenance_due(),
+            *await self.check_repair_cost_missing(),
+            *await self.check_insurance_expiring(),
+            *await self.check_license_expiring(),
+            *await self.check_medical_check_due(),
+        ]
+
     async def check_maintenance_due(self):
         until = _until()
         events = []
