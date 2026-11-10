@@ -1,3 +1,6 @@
+from datetime import timedelta
+from typing import Literal
+
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +14,13 @@ from ..bll.assignment_checks import (
     VehicleMaintenanceHandler,
 )
 from ..bll.live_notifications import live_notifications
-from ..bll.reports import ReportService
+from ..bll.reports import (
+    MaintenanceCostReport,
+    ReportService,
+    ReportStrategy,
+    UsageAnalyticsReport,
+    VehicleUtilizationReport,
+)
 from ..bll.services.deadline_monitor import DeadlineMonitor
 from ..bll.services.driver_requests_service import DriverRequestsService
 from ..bll.services.drivers_service import DriversService
@@ -162,8 +171,47 @@ def get_deadline_monitor(
     return monitor
 
 
+def get_manual_deadline_monitor(
+    repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
+    insurance_policies_service: InsurancePoliciesService = Depends(
+        get_insurance_policies_service
+    ),
+    drivers_service: DriversService = Depends(get_drivers_service),
+    notifications: NotificationsService = Depends(get_notifications_service),
+) -> DeadlineMonitor:
+    notifications.set_quiet_period(timedelta(0))
+    return get_deadline_monitor(
+        repair_records_service,
+        insurance_policies_service,
+        drivers_service,
+        notifications,
+    )
+
+
 def get_report_service() -> ReportService:
     return ReportService()
+
+
+def get_report_strategy(
+    kind: Literal["utilization", "maintenance", "usage"],
+    routes_service: RoutesService = Depends(get_routes_service),
+    repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
+    fuel_records_service: FuelRecordsService = Depends(get_fuel_records_service),
+    insurance_policies_service: InsurancePoliciesService = Depends(
+        get_insurance_policies_service
+    ),
+    vehicles_service: VehiclesService = Depends(get_vehicles_service),
+) -> ReportStrategy:
+    if kind == "utilization":
+        return VehicleUtilizationReport(routes_service, vehicles_service)
+    if kind == "maintenance":
+        return MaintenanceCostReport(
+            repair_records_service,
+            fuel_records_service,
+            insurance_policies_service,
+            vehicles_service,
+        )
+    return UsageAnalyticsReport(routes_service, fuel_records_service, vehicles_service)
 
 
 def get_report_exporter() -> ReportExporter:
@@ -179,8 +227,4 @@ async def run_deadline_checks():
             get_drivers_service(session),
             notifications,
         )
-        await monitor.check_maintenance_due()
-        await monitor.check_repair_cost_missing()
-        await monitor.check_insurance_expiring()
-        await monitor.check_license_expiring()
-        await monitor.check_medical_check_due()
+        await monitor.check_all()
