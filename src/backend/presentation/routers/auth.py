@@ -75,7 +75,7 @@ async def get_current_driver_id(
     if current_user.role == "ADMIN":
         return None
     driver = await drivers_service.get_by_user_id(current_user.user_id)
-    if driver.employment_status == "DISMISSED":
+    if driver.is_dismissed():
         raise HTTPException(
             status_code=403,
             detail="Ваш обліковий запис водія деактивовано. Зверніться до адміністратора.",

@@ -47,7 +47,7 @@ class AssignmentHandler(ABC):
 
 class DriverActiveHandler(AssignmentHandler):
     async def _check(self, request):
-        if request.driver and request.driver.employment_status != "ACTIVE":
+        if request.driver and request.driver.is_dismissed():
             return CheckResult(
                 False,
                 f"Водій {request.driver.full_name} звільнений, тому його не можна "

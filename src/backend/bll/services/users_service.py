@@ -40,7 +40,7 @@ class UsersService(IUsersService, BaseService):
         ):
             return None
         driver = await self.drivers_repository.get_by_user_id(user.id)
-        if driver and driver.employment_status == "DISMISSED":
+        if driver and driver.is_dismissed():
             raise AccountDisabledError(
                 "Ваш обліковий запис водія деактивовано. Зверніться до "
                 "адміністратора."

@@ -93,12 +93,12 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
 
     async def reject_request(self, request_id):
         request = await self._get_pending_request(request_id)
-        request.status = "REJECTED"
+        request.reject()
         return await self._save_decision(request, "REQUEST_REJECTED", "відхилено")
 
     async def _validate_request(self, data):
         driver = await self._get_driver(data.driver_id)
-        if driver.employment_status == "DISMISSED":
+        if driver.is_dismissed():
             raise BusinessRuleError(
                 f"{driver.full_name} звільнено, тому запит подати не можна."
             )

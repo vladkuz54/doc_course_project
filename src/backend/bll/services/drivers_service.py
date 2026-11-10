@@ -69,19 +69,19 @@ class DriversService(IDriversService, EntityManagement):
 
     async def update(self, id, data):
         driver = await super().update(id, data)
-        if data.employment_status == "DISMISSED":
+        if driver.is_dismissed():
             await self._reject_pending_requests(id)
         return driver
 
     async def _apply_status(self, entity, status):
         await super()._apply_status(entity, status)
-        if status == "DISMISSED":
+        if entity.is_dismissed():
             await self._reject_pending_requests(entity.id)
 
     async def _reject_pending_requests(self, driver_id):
         for request in await self.driver_requests_repository.get_by_driver(driver_id):
             if request.status == "PENDING":
-                request.status = "REJECTED"
+                request.reject()
                 await self.driver_requests_repository.update(request)
 
     async def _validate(self, data, id=None):
