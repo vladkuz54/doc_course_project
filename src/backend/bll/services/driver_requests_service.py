@@ -98,6 +98,10 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
 
     async def _validate_request(self, data):
         driver = await self._get_driver(data.driver_id)
+        if driver.employment_status == "DISMISSED":
+            raise BusinessRuleError(
+                f"{driver.full_name} звільнено, тому запит подати не можна."
+            )
         pending = [
             r
             for r in await self.repository.get_by_driver(data.driver_id)

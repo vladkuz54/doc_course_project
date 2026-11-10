@@ -7,6 +7,7 @@ from ...dal.db_models import (
     LICENSE_CATEGORIES,
     medical_valid_until,
 )
+from ...dal.interfaces.driver_requests_interfaces import IDriverRequestsRepository
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.users_interfaces import IUsersRepository
@@ -59,10 +60,29 @@ class DriversService(IDriversService, EntityManagement):
         repository: IDriversRepository,
         users_repository: IUsersRepository,
         routes_repository: IRoutesRepository,
+        driver_requests_repository: IDriverRequestsRepository,
     ):
         super().__init__(repository)
         self.users_repository = users_repository
         self.routes_repository = routes_repository
+        self.driver_requests_repository = driver_requests_repository
+
+    async def update(self, id, data):
+        driver = await super().update(id, data)
+        if data.employment_status == "DISMISSED":
+            await self._reject_pending_requests(id)
+        return driver
+
+    async def _apply_status(self, entity, status):
+        await super()._apply_status(entity, status)
+        if status == "DISMISSED":
+            await self._reject_pending_requests(entity.id)
+
+    async def _reject_pending_requests(self, driver_id):
+        for request in await self.driver_requests_repository.get_by_driver(driver_id):
+            if request.status == "PENDING":
+                request.status = "REJECTED"
+                await self.driver_requests_repository.update(request)
 
     async def _validate(self, data, id=None):
         if id is None:
