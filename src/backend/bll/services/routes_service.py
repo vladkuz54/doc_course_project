@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, NaiveDatetime, StringConstraints
 
-from ...dal.db_models import ACTIVE_ROUTE_STATUSES, Routes
+from ...dal.db_models import Routes
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.route_stops_interfaces import IRouteStopsRepository
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
@@ -13,7 +13,8 @@ from ...dal.route_states import ROUTE_STATUS_LABELS
 from ..assignment_checks import AssignmentHandler, AssignmentRequest
 from ..exceptions import BusinessRuleError, EntityNotFoundError
 from ..interfaces.routes_interface import IRoutesService
-from ..observer import DomainEvent, Subject
+from ..observer import Subject
+from ..route_events import RouteEvents
 from .entity_management import EntityManagement
 
 StopAddress = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -99,8 +100,8 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
 
     async def _after_add(self, entity):
         if entity.driver_id is not None:
-            await self._publish_assigned(
-                entity, await self._get_driver(entity.driver_id)
+            await self._publish_to_driver(
+                entity.driver_id, RouteEvents.assigned, entity
             )
 
     async def update(self, id, data):
@@ -227,12 +228,7 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         route.cancel()
         route = await self.repository.update(route)
         if route.driver_id is not None:
-            await self._publish_to_driver(
-                route.driver_id,
-                "ROUTE_CANCELLED",
-                route,
-                f"Маршрут №{route.id} на {route.departure_at:%d.%m.%Y %H:%M} скасовано",
-            )
+            await self._publish_to_driver(route.driver_id, RouteEvents.cancelled, route)
         return route
 
     async def restore(self, route_id):
@@ -242,12 +238,7 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         route = await self.repository.update(route)
         warnings = await self._publish_warnings(route, "відновлено", removed)
         if route.driver_id is not None:
-            await self._publish_to_driver(
-                route.driver_id,
-                "ROUTE_ASSIGNED",
-                route,
-                f"Маршрут №{route.id} на {route.departure_at:%d.%m.%Y %H:%M} відновлено",
-            )
+            await self._publish_to_driver(route.driver_id, RouteEvents.restored, route)
         return RouteWithWarnings(route, warnings)
 
     async def repeat(self, route_id, departure_at):
@@ -268,7 +259,7 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         route = await self.repository.create(route)
         warnings = await self._publish_warnings(route, "створено", removed)
         if route.driver_id is not None:
-            await self._publish_assigned(route, await self._get_driver(route.driver_id))
+            await self._publish_to_driver(route.driver_id, RouteEvents.assigned, route)
         return RouteWithWarnings(route, warnings)
 
     async def _remove_what_fails(self, route):
@@ -297,9 +288,7 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
             for missing, reason, advice in removed
         ]
         for warning in warnings:
-            await self._notify(
-                DomainEvent("ROUTE_UPDATED", "routes", route.id, warning)
-            )
+            await self._notify(RouteEvents.warning(route, warning))
         return warnings
 
     def _build_route(self, data):
@@ -325,11 +314,7 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         if vehicle_id is not None:
             vehicle = await self.vehicles_repository.get_by_id(vehicle_id)
             others += await self.repository.get_by_vehicle(vehicle_id)
-        other_routes = {
-            r.id: r
-            for r in others
-            if r.status in ACTIVE_ROUTE_STATUSES and r.id != route.id
-        }
+        other_routes = {r.id: r for r in others if r.is_active() and r.id != route.id}
         return await self._assignment_chain.handle(
             AssignmentRequest(route, driver, vehicle, [*other_routes.values()])
         )
@@ -373,35 +358,15 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         if old_driver_id == new_driver.id:
             return
         if old_driver_id is not None:
-            await self._publish_to_driver(
-                old_driver_id,
-                "ROUTE_UNASSIGNED",
-                route,
-                f"Маршрут №{route.id} на {route.departure_at:%d.%m.%Y %H:%M} "
-                "передано іншому водію",
-            )
-        await self._publish_assigned(route, new_driver)
+            await self._publish_to_driver(old_driver_id, RouteEvents.unassigned, route)
+        await self._notify(RouteEvents.assigned(route, new_driver))
 
     async def _publish_updated(self, route, changes):
         if route.driver_id is not None:
             await self._publish_to_driver(
-                route.driver_id,
-                "ROUTE_UPDATED",
-                route,
-                f"Маршрут №{route.id} змінено: {'; '.join(changes)}",
+                route.driver_id, RouteEvents.updated, route, changes
             )
 
-    async def _publish_to_driver(self, driver_id, type, route, text):
+    async def _publish_to_driver(self, driver_id, build, route, *args):
         driver = await self._get_driver(driver_id)
-        await self._notify(DomainEvent(type, "routes", route.id, text, driver.user_id))
-
-    async def _publish_assigned(self, route, driver):
-        await self._notify(
-            DomainEvent(
-                "ROUTE_ASSIGNED",
-                "routes",
-                route.id,
-                f"Вам призначено маршрут №{route.id} на {route.departure_at:%d.%m.%Y %H:%M}",
-                driver.user_id,
-            )
-        )
+        await self._notify(build(route, driver, *args))

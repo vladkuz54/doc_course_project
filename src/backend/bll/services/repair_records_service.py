@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from ...dal.db_models import ACTIVE_ROUTE_STATUSES, RepairRecords
+from ...dal.db_models import RepairRecords
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ..exceptions import BusinessRuleError
 from ..interfaces.repair_records_interface import IRepairRecordsService
@@ -80,12 +80,11 @@ class RepairRecordsService(IRepairRecordsService, AccountingService, Subject):
                         "Оберіть сьогоднішню або пізнішу дату."
                     )
             for route in await self.routes_repository.get_by_vehicle(data.vehicle_id):
-                last_day = route.planned_return_at
-                if route.status == "IN_PROGRESS":
-                    last_day = max(last_day, datetime.now())
                 if (
-                    route.status in ACTIVE_ROUTE_STATUSES
-                    and route.departure_at.date() <= data.date <= last_day.date()
+                    route.is_active()
+                    and route.departure_at.date()
+                    <= data.date
+                    <= route.occupied_until().date()
                 ):
                     raise BusinessRuleError(
                         f"{data.date:%d/%m/%Y} транспорт буде на маршруті "
