@@ -135,6 +135,9 @@ class Drivers(Base):
         self.medical_check_date = request.medical_check_date
         self.medical_valid_until = medical_valid_until(request.medical_check_date)
 
+    def is_dismissed(self):
+        return self.employment_status == "DISMISSED"
+
     @license_categories.setter
     def license_categories(self, values):
         existing = {c.category: c for c in self.categories}
@@ -178,6 +181,9 @@ class DriverRequests(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.now)
 
     driver = relationship("Drivers", back_populates="requests")
+
+    def reject(self):
+        self.status = "REJECTED"
 
 
 class Vehicles(Base):
