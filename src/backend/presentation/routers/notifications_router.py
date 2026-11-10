@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -12,7 +12,7 @@ from ...bll.services.deadline_monitor import DeadlineMonitor
 from ...bll.services.notifications_service import NotificationData
 from ..dependencies import (
     get_db_session,
-    get_deadline_monitor,
+    get_manual_deadline_monitor,
     get_notifications_service,
 )
 from .auth import (
@@ -48,17 +48,9 @@ async def get_all(
     dependencies=[Depends(require_admin)],
 )
 async def check_deadlines(
-    monitor: DeadlineMonitor = Depends(get_deadline_monitor),
-    notifications: INotificationsService = Depends(get_notifications_service),
+    monitor: DeadlineMonitor = Depends(get_manual_deadline_monitor),
 ):
-    notifications.set_quiet_period(timedelta(0))
-    return [
-        *await monitor.check_maintenance_due(),
-        *await monitor.check_repair_cost_missing(),
-        *await monitor.check_insurance_expiring(),
-        *await monitor.check_license_expiring(),
-        *await monitor.check_medical_check_due(),
-    ]
+    return await monitor.check_all()
 
 
 @router.get("/stream")
