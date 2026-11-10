@@ -42,7 +42,7 @@ class RouteUpdateData(RouteData):
 
 
 class RouteStatusData(BaseModel):
-    status: Literal["PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
+    status: Literal["IN_PROGRESS", "COMPLETED", "CANCELLED"]
 
 
 class RouteDriverData(BaseModel):
@@ -120,23 +120,23 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
                 "Призначте інший транспорт або скасуйте маршрут."
             )
         new_driver = None
-        changes = []
+        changes = {}
         if data.driver_id != route.driver_id:
             new_driver = await self._get_driver(data.driver_id)
             route.reassign_driver(new_driver)
         if data.vehicle_id != route.vehicle_id:
             vehicle = await self._get_vehicle(data.vehicle_id)
             route.reassign_vehicle(vehicle)
-            changes.append(f"транспорт {vehicle.make}")
+            changes["vehicle"] = vehicle.make
         if data.departure_at != route.departure_at:
             route.reschedule(data.departure_at)
-            changes.append(f"час виїзду {data.departure_at:%d.%m.%Y %H:%M}")
+            changes["departure_at"] = data.departure_at
         if data.distance != old_distance:
-            changes.append(f"відстань {data.distance:g} км")
+            changes["distance"] = data.distance
         stops = getattr(data, "stops", None)
         if stops is not None and stops != [s.address for s in route.stops]:
             route.edit_stops(stops)
-            changes.append(f"зупинки {' → '.join(s.address for s in route.stops)}")
+            changes["stops"] = [s.address for s in route.stops]
         route.update_planned_return()
         await self._check_assignment(route)
         route = await self.repository.update(route)
@@ -147,16 +147,12 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         return route
 
     async def _apply_status(self, entity, status):
-        if status == "IN_PROGRESS":
-            await self.start(entity.id)
-        elif status == "COMPLETED":
-            await self.complete(entity.id)
-        elif status == "CANCELLED":
-            await self.cancel(entity.id)
-        else:
-            raise BusinessRuleError(
-                "Маршрут не можна повернути до статусу «Заплановано»."
-            )
+        actions = {
+            "IN_PROGRESS": self.start,
+            "COMPLETED": self.complete,
+            "CANCELLED": self.cancel,
+        }
+        await actions[status](entity.id)
 
     async def list_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)
@@ -186,7 +182,7 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         await self._check_assignment(route)
         route = await self.repository.update(route)
         if changed:
-            await self._publish_updated(route, [f"транспорт {vehicle.make}"])
+            await self._publish_updated(route, {"vehicle": vehicle.make})
         return route
 
     async def reschedule(self, route_id, departure_at):
@@ -195,9 +191,7 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         route.update_planned_return()
         await self._check_assignment(route)
         route = await self.repository.update(route)
-        await self._publish_updated(
-            route, [f"час виїзду {departure_at:%d.%m.%Y %H:%M}"]
-        )
+        await self._publish_updated(route, {"departure_at": departure_at})
         return route
 
     async def start(self, route_id, started_at=None):
@@ -236,7 +230,7 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         route.restore()
         removed = await self._remove_what_fails(route)
         route = await self.repository.update(route)
-        warnings = await self._publish_warnings(route, "відновлено", removed)
+        warnings = await self._publish_warnings(route, "restored", removed)
         if route.driver_id is not None:
             await self._publish_to_driver(route.driver_id, RouteEvents.restored, route)
         return RouteWithWarnings(route, warnings)
@@ -257,7 +251,7 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         route.update_planned_return()
         removed = await self._remove_what_fails(route)
         route = await self.repository.create(route)
-        warnings = await self._publish_warnings(route, "створено", removed)
+        warnings = await self._publish_warnings(route, "created", removed)
         if route.driver_id is not None:
             await self._publish_to_driver(route.driver_id, RouteEvents.assigned, route)
         return RouteWithWarnings(route, warnings)
@@ -267,28 +261,25 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         if route.driver_id is not None:
             result = await self._run_chain(route, route.driver_id, None)
             if not result.passed:
-                removed.append(("водія", result.reason, "Призначте водія пізніше."))
+                removed.append(("driver", result.reason))
                 route.unassign_driver()
         if route.vehicle_id is not None:
             result = await self._run_chain(route, None, route.vehicle_id)
             if not result.passed:
-                removed.append(
-                    ("транспорту", result.reason, "Призначте транспорт пізніше.")
-                )
+                removed.append(("vehicle", result.reason))
                 route.unassign_vehicle()
         result = await self._run_chain(route, route.driver_id, route.vehicle_id)
         if not result.passed:
-            removed.append(("водія", result.reason, "Призначте водія пізніше."))
+            removed.append(("driver", result.reason))
             route.unassign_driver()
         return removed
 
-    async def _publish_warnings(self, route, verb, removed):
-        warnings = [
-            f"Маршрут №{route.id} {verb} без {missing}. {reason} {advice}"
-            for missing, reason, advice in removed
-        ]
-        for warning in warnings:
-            await self._notify(RouteEvents.warning(route, warning))
+    async def _publish_warnings(self, route, action, removed):
+        warnings = []
+        for missing, reason in removed:
+            event = RouteEvents.warning(route, action, missing, reason)
+            await self._notify(event)
+            warnings.append(event.text)
         return warnings
 
     def _build_route(self, data):
