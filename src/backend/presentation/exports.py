@@ -11,7 +11,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from .exceptions import BusinessRuleError
+from ..bll.exceptions import BusinessRuleError
 
 PDF_FONT = "DejaVuSans"
 COLUMN_LABELS = {

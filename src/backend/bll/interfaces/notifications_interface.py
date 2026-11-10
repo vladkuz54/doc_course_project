@@ -22,5 +22,5 @@ class INotificationsService(IBaseService):
         pass
 
     @abstractmethod
-    async def on_event(self, event):
+    def set_quiet_period(self, period):
         pass

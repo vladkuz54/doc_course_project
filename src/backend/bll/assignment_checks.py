@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from ..dal.db_models import Drivers, Routes, Vehicles
-from .services.repair_records_service import MAINTENANCE_TYPE_LABELS
+from .labels import MAINTENANCE_TYPE_LABELS
 
 MIN_ROUTE_GAP_MINUTES = 10
 
@@ -47,7 +47,7 @@ class AssignmentHandler(ABC):
 
 class DriverActiveHandler(AssignmentHandler):
     async def _check(self, request):
-        if request.driver and request.driver.employment_status != "ACTIVE":
+        if request.driver and request.driver.is_dismissed():
             return CheckResult(
                 False,
                 f"Водій {request.driver.full_name} звільнений, тому його не можна "
@@ -165,21 +165,15 @@ class InsuranceHandler(AssignmentHandler):
         )
 
 
-def _end_of(route):
-    if route.status == "IN_PROGRESS":
-        return max(route.planned_return_at, datetime.now())
-    return route.planned_return_at
-
-
 class ScheduleConflictHandler(AssignmentHandler):
     async def _check(self, request):
         route = request.route
         gap = timedelta(minutes=MIN_ROUTE_GAP_MINUTES)
         for other in request.other_routes:
-            end = _end_of(other)
+            end = other.occupied_until()
             if (
                 route.departure_at - end < gap
-                and other.departure_at - _end_of(route) < gap
+                and other.departure_at - route.occupied_until() < gap
             ):
                 busy = (
                     "Водій"

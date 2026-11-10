@@ -40,7 +40,7 @@ class RouteState(ABC):
     def change_distance(self, route, distance):
         self._reject("редагувати")
 
-    def edit_stops(self, route, stops):
+    def edit_stops(self, route, addresses):
         self._reject("змінити зупинки")
 
     def start(self, route, started_at):
@@ -101,17 +101,16 @@ class PlannedState(RouteState):
     def change_distance(self, route, distance):
         route.distance = distance
 
-    def edit_stops(self, route, stops):
-        if not stops:
+    def edit_stops(self, route, addresses):
+        if not addresses:
             raise RouteActionNotAllowed("Маршрут повинен мати хоча б одну зупинку.")
         existing_count = len(route.stops)
-        for position, stop in enumerate(stops, 1):
+        for position, address in enumerate(addresses, 1):
             if position <= existing_count:
-                route.stops[position - 1].address = stop.address
+                route.stops[position - 1].address = address
             else:
-                stop.order_no = position
-                route.stops.append(stop)
-        del route.stops[len(stops) :]
+                route.stops.append(route.new_stop(position, address))
+        del route.stops[len(addresses) :]
 
     def start(self, route, started_at):
         self._ensure_assigned(route)

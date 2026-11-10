@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, StringConstraints, field_validator
 
-from ...dal.db_models import ACTIVE_ROUTE_STATUSES, LICENSE_CATEGORIES, MIN_VEHICLE_YEAR
+from ...dal.db_models import LICENSE_CATEGORIES, MIN_VEHICLE_YEAR
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityAlreadyExistsError
@@ -61,7 +61,7 @@ class VehiclesService(IVehiclesService, EntityManagement):
         if status != "DECOMMISSIONED":
             return True
         routes = await self.routes_repository.get_by_vehicle(entity.id)
-        return not any(r.status in ACTIVE_ROUTE_STATUSES for r in routes)
+        return not any(r.is_active() for r in routes)
 
     async def get_by_driver(self, driver_id):
         return await self.repository.get_by_driver(driver_id)

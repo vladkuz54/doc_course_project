@@ -123,6 +123,21 @@ class Drivers(Base):
             return "PENDING"
         return "EXPIRED"
 
+    def apply_license_update(self, request):
+        if request.new_license_category:
+            self.license_categories = [
+                *self.license_categories,
+                request.new_license_category,
+            ]
+        self.license_expiry_date = request.new_license_expiry_date
+
+    def apply_medical_check(self, request):
+        self.medical_check_date = request.medical_check_date
+        self.medical_valid_until = medical_valid_until(request.medical_check_date)
+
+    def is_dismissed(self):
+        return self.employment_status == "DISMISSED"
+
     @license_categories.setter
     def license_categories(self, values):
         existing = {c.category: c for c in self.categories}
@@ -166,6 +181,9 @@ class DriverRequests(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.now)
 
     driver = relationship("Drivers", back_populates="requests")
+
+    def reject(self):
+        self.status = "REJECTED"
 
 
 class Vehicles(Base):
@@ -263,8 +281,11 @@ class Routes(Base):
     def change_distance(self, distance):
         self.state.change_distance(self, distance)
 
-    def edit_stops(self, stops):
-        self.state.edit_stops(self, stops)
+    def edit_stops(self, addresses):
+        self.state.edit_stops(self, addresses)
+
+    def new_stop(self, order_no, address):
+        return RouteStops(order_no=order_no, address=address)
 
     def start(self, started_at=None):
         self.state.start(self, started_at)
@@ -289,6 +310,14 @@ class Routes(Base):
 
     def unassign_vehicle(self):
         self.state.unassign_vehicle(self)
+
+    def is_active(self):
+        return self.status in ACTIVE_ROUTE_STATUSES
+
+    def occupied_until(self):
+        if self.status == "IN_PROGRESS":
+            return max(self.planned_return_at, datetime.now())
+        return self.planned_return_at
 
     def update_planned_return(self):
         try:

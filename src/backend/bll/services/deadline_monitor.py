@@ -1,8 +1,8 @@
 from datetime import date, timedelta
 
 from ...dal.db_models import WARNING_DAYS
+from ..labels import MAINTENANCE_TYPE_LABELS
 from ..observer import DomainEvent, Subject
-from .repair_records_service import MAINTENANCE_TYPE_LABELS
 
 
 def _until():
@@ -27,6 +27,15 @@ class DeadlineMonitor(Subject):
         self.repair_records_service = repair_records_service
         self.insurance_policies_service = insurance_policies_service
         self.drivers_service = drivers_service
+
+    async def check_all(self):
+        return [
+            *await self.check_maintenance_due(),
+            *await self.check_repair_cost_missing(),
+            *await self.check_insurance_expiring(),
+            *await self.check_license_expiring(),
+            *await self.check_medical_check_due(),
+        ]
 
     async def check_maintenance_due(self):
         until = _until()

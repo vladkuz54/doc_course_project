@@ -4,12 +4,11 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ConfigDict
 
+from ...bll.interfaces.driver_requests_interface import IDriverRequestsService
 from ...bll.services.driver_requests_service import (
     DriverRequestData,
-    DriverRequestsService,
 )
-from ...bll.services.drivers_service import DriversService
-from ..dependencies import get_driver_requests_service, get_drivers_service
+from ..dependencies import get_driver_requests_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
 router = APIRouter(prefix="/driver-requests", tags=["driver-requests"])
@@ -25,7 +24,7 @@ class DriverRequestResponse(DriverRequestData):
 @router.get("/", response_model=list[DriverRequestResponse])
 async def get_all(
     driver_id: int | None = Depends(get_current_driver_id),
-    service: DriverRequestsService = Depends(get_driver_requests_service),
+    service: IDriverRequestsService = Depends(get_driver_requests_service),
 ):
     if driver_id is None:
         return await service.get_all()
@@ -36,7 +35,7 @@ async def get_all(
 async def get_by_id(
     id: int,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: DriverRequestsService = Depends(get_driver_requests_service),
+    service: IDriverRequestsService = Depends(get_driver_requests_service),
 ):
     obj = await service.get_by_id(id)
     if driver_id is not None:
@@ -48,7 +47,7 @@ async def get_by_id(
 async def create(
     data: DriverRequestData,
     driver_id: int | None = Depends(get_current_driver_id),
-    service: DriversService = Depends(get_drivers_service),
+    service: IDriverRequestsService = Depends(get_driver_requests_service),
 ):
     if driver_id is not None and data.driver_id != driver_id:
         raise HTTPException(
@@ -64,7 +63,7 @@ async def create(
     dependencies=[Depends(require_admin)],
 )
 async def approve_license(
-    id: int, service: DriversService = Depends(get_drivers_service)
+    id: int, service: IDriverRequestsService = Depends(get_driver_requests_service)
 ):
     return await service.approve_license_update(id)
 
@@ -75,7 +74,7 @@ async def approve_license(
     dependencies=[Depends(require_admin)],
 )
 async def approve_medical(
-    id: int, service: DriversService = Depends(get_drivers_service)
+    id: int, service: IDriverRequestsService = Depends(get_driver_requests_service)
 ):
     return await service.approve_medical_check(id)
 
@@ -85,5 +84,7 @@ async def approve_medical(
     response_model=DriverRequestResponse,
     dependencies=[Depends(require_admin)],
 )
-async def reject(id: int, service: DriversService = Depends(get_drivers_service)):
+async def reject(
+    id: int, service: IDriverRequestsService = Depends(get_driver_requests_service)
+):
     return await service.reject_request(id)

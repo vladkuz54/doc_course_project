@@ -1,9 +1,26 @@
+from datetime import timedelta
+from typing import Literal
+
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..bll.exports import ReportExporter
+from ..bll.assignment_checks import (
+    DriverActiveHandler,
+    InsuranceHandler,
+    LicenseCategoryHandler,
+    MedicalCheckHandler,
+    ScheduleConflictHandler,
+    VehicleActiveHandler,
+    VehicleMaintenanceHandler,
+)
 from ..bll.live_notifications import live_notifications
-from ..bll.reports import ReportService
+from ..bll.reports import (
+    MaintenanceCostReport,
+    ReportService,
+    ReportStrategy,
+    UsageAnalyticsReport,
+    VehicleUtilizationReport,
+)
 from ..bll.services.deadline_monitor import DeadlineMonitor
 from ..bll.services.driver_requests_service import DriverRequestsService
 from ..bll.services.drivers_service import DriversService
@@ -26,6 +43,7 @@ from ..dal.repositories.route_stops_repository import RouteStopsRepository
 from ..dal.repositories.routes_repository import RoutesRepository
 from ..dal.repositories.users_repository import UsersRepository
 from ..dal.repositories.vehicles_repository import VehiclesRepository
+from .exports import ReportExporter
 
 
 async def get_db_session():
@@ -49,22 +67,24 @@ def get_notifications_service(
 
 def get_drivers_service(
     session: AsyncSession = Depends(get_db_session),
-    notifications: NotificationsService = Depends(get_notifications_service),
 ) -> DriversService:
-    service = DriversService(
+    return DriversService(
         DriversRepository(session),
         UsersRepository(session),
         RoutesRepository(session),
         DriverRequestsRepository(session),
     )
-    service.attach(notifications)
-    return service
 
 
 def get_driver_requests_service(
     session: AsyncSession = Depends(get_db_session),
+    notifications: NotificationsService = Depends(get_notifications_service),
 ) -> DriverRequestsService:
-    return DriverRequestsService(DriverRequestsRepository(session))
+    service = DriverRequestsService(
+        DriverRequestsRepository(session), DriversRepository(session)
+    )
+    service.attach(notifications)
+    return service
 
 
 def get_repair_records_service(
@@ -94,6 +114,18 @@ def get_insurance_policies_service(
     )
 
 
+def build_assignment_chain(repair_records_service, insurance_policies_service):
+    chain = DriverActiveHandler()
+    chain.set_next(LicenseCategoryHandler()).set_next(MedicalCheckHandler()).set_next(
+        VehicleActiveHandler()
+    ).set_next(VehicleMaintenanceHandler(repair_records_service)).set_next(
+        InsuranceHandler(insurance_policies_service)
+    ).set_next(
+        ScheduleConflictHandler()
+    )
+    return chain
+
+
 def get_routes_service(
     session: AsyncSession = Depends(get_db_session),
     repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
@@ -107,8 +139,7 @@ def get_routes_service(
         DriversRepository(session),
         VehiclesRepository(session),
         RouteStopsRepository(session),
-        repair_records_service,
-        insurance_policies_service,
+        build_assignment_chain(repair_records_service, insurance_policies_service),
     )
     service.attach(notifications)
     return service
@@ -143,8 +174,47 @@ def get_deadline_monitor(
     return monitor
 
 
+def get_manual_deadline_monitor(
+    repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
+    insurance_policies_service: InsurancePoliciesService = Depends(
+        get_insurance_policies_service
+    ),
+    drivers_service: DriversService = Depends(get_drivers_service),
+    notifications: NotificationsService = Depends(get_notifications_service),
+) -> DeadlineMonitor:
+    notifications.set_quiet_period(timedelta(0))
+    return get_deadline_monitor(
+        repair_records_service,
+        insurance_policies_service,
+        drivers_service,
+        notifications,
+    )
+
+
 def get_report_service() -> ReportService:
     return ReportService()
+
+
+def get_report_strategy(
+    kind: Literal["utilization", "maintenance", "usage"],
+    routes_service: RoutesService = Depends(get_routes_service),
+    repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
+    fuel_records_service: FuelRecordsService = Depends(get_fuel_records_service),
+    insurance_policies_service: InsurancePoliciesService = Depends(
+        get_insurance_policies_service
+    ),
+    vehicles_service: VehiclesService = Depends(get_vehicles_service),
+) -> ReportStrategy:
+    if kind == "utilization":
+        return VehicleUtilizationReport(routes_service, vehicles_service)
+    if kind == "maintenance":
+        return MaintenanceCostReport(
+            repair_records_service,
+            fuel_records_service,
+            insurance_policies_service,
+            vehicles_service,
+        )
+    return UsageAnalyticsReport(routes_service, fuel_records_service, vehicles_service)
 
 
 def get_report_exporter() -> ReportExporter:
@@ -157,11 +227,7 @@ async def run_deadline_checks():
         monitor = get_deadline_monitor(
             get_repair_records_service(session, notifications),
             get_insurance_policies_service(session),
-            get_drivers_service(session, notifications),
+            get_drivers_service(session),
             notifications,
         )
-        await monitor.check_maintenance_due()
-        await monitor.check_repair_cost_missing()
-        await monitor.check_insurance_expiring()
-        await monitor.check_license_expiring()
-        await monitor.check_medical_check_due()
+        await monitor.check_all()

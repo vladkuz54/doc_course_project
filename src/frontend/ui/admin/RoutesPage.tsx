@@ -98,7 +98,6 @@ export function RoutesPage() {
     notice,
     warning,
     pending,
-    reload,
     run,
     setWarning,
     clearMessages,
@@ -112,19 +111,11 @@ export function RoutesPage() {
   };
   const [routes, drivers, vehicles, stops] = data ?? [];
 
-  const updateRoute = async (
-    route: Route,
-    form: FormData,
-    edited: StopAddress[],
-  ) => {
-    await apiPut(`/routes/${route.id}`, routeFields(form));
-    await reload();
-    const addresses = edited.map(joinAddress);
-    const current = stopsOf(stops, route.id).map((stop) => stop.address);
-    if (addresses.join("\n") !== current.join("\n")) {
-      await apiPut(`/routes/${route.id}/stops`, { stops: addresses });
-    }
-  };
+  const updateRoute = (route: Route, form: FormData, edited: StopAddress[]) =>
+    apiPut(`/routes/${route.id}`, {
+      ...routeFields(form),
+      stops: edited.map(joinAddress),
+    });
 
   useEffect(() => {
     if (editing?.form === "new") window.scrollTo(0, 0);

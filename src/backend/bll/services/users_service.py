@@ -20,6 +20,10 @@ class UserData(BaseModel):
     role: Literal["DRIVER", "ADMIN"]
 
 
+def hash_password(password):
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
 class UsersService(IUsersService, BaseService):
     entity_name = "Користувача"
 
@@ -36,7 +40,7 @@ class UsersService(IUsersService, BaseService):
         ):
             return None
         driver = await self.drivers_repository.get_by_user_id(user.id)
-        if driver and driver.employment_status == "DISMISSED":
+        if driver and driver.is_dismissed():
             raise AccountDisabledError(
                 "Ваш обліковий запис водія деактивовано. Зверніться до "
                 "адміністратора."
@@ -61,9 +65,7 @@ class UsersService(IUsersService, BaseService):
 
     def to_fields(self, data):
         fields = data.model_dump(exclude={"password"})
-        fields["password_hash"] = bcrypt.hashpw(
-            data.password.encode(), bcrypt.gensalt()
-        ).decode()
+        fields["password_hash"] = hash_password(data.password)
         return fields
 
     async def get_by_driver(self, driver_id):

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
+from ...bll.interfaces.insurance_policies_interface import IInsurancePoliciesService
 from ...bll.services.insurance_policies_service import (
-    InsurancePoliciesService,
     InsurancePolicyData,
 )
 from ..dependencies import get_insurance_policies_service
@@ -22,14 +22,15 @@ class InsurancePolicyResponse(InsurancePolicyData):
 
 @router.get("/", response_model=list[InsurancePolicyResponse])
 async def get_all(
-    service: InsurancePoliciesService = Depends(get_insurance_policies_service),
+    service: IInsurancePoliciesService = Depends(get_insurance_policies_service),
 ):
     return await service.get_all()
 
 
 @router.get("/{id}", response_model=InsurancePolicyResponse)
 async def get_by_id(
-    id: int, service: InsurancePoliciesService = Depends(get_insurance_policies_service)
+    id: int,
+    service: IInsurancePoliciesService = Depends(get_insurance_policies_service),
 ):
     return await service.get_by_id(id)
 
@@ -37,7 +38,7 @@ async def get_by_id(
 @router.post("/", response_model=InsurancePolicyResponse, status_code=201)
 async def create(
     data: InsurancePolicyData,
-    service: InsurancePoliciesService = Depends(get_insurance_policies_service),
+    service: IInsurancePoliciesService = Depends(get_insurance_policies_service),
 ):
     return await service.create(data)
 
@@ -46,13 +47,14 @@ async def create(
 async def update(
     id: int,
     data: InsurancePolicyData,
-    service: InsurancePoliciesService = Depends(get_insurance_policies_service),
+    service: IInsurancePoliciesService = Depends(get_insurance_policies_service),
 ):
     return await service.update(id, data)
 
 
 @router.delete("/{id}", response_model=InsurancePolicyResponse)
 async def delete(
-    id: int, service: InsurancePoliciesService = Depends(get_insurance_policies_service)
+    id: int,
+    service: IInsurancePoliciesService = Depends(get_insurance_policies_service),
 ):
     return await service.delete(id)

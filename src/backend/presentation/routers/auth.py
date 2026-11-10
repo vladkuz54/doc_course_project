@@ -8,8 +8,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
-from ...bll.services.drivers_service import DriversService
-from ...bll.services.users_service import UsersService
+from ...bll.interfaces.drivers_interface import IDriversService
+from ...bll.interfaces.users_interface import IUsersService
 from ..dependencies import get_drivers_service, get_users_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -70,12 +70,12 @@ async def require_admin(current_user: CurrentUser = Depends(get_current_user)):
 
 async def get_current_driver_id(
     current_user: CurrentUser = Depends(get_current_user),
-    drivers_service: DriversService = Depends(get_drivers_service),
+    drivers_service: IDriversService = Depends(get_drivers_service),
 ):
     if current_user.role == "ADMIN":
         return None
     driver = await drivers_service.get_by_user_id(current_user.user_id)
-    if driver.employment_status == "DISMISSED":
+    if driver.is_dismissed():
         raise HTTPException(
             status_code=403,
             detail="Ваш обліковий запис водія деактивовано. Зверніться до адміністратора.",
@@ -91,7 +91,7 @@ def ensure_visible(obj, visible):
 @router.post("/token", response_model=TokenResponse)
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    service: UsersService = Depends(get_users_service),
+    service: IUsersService = Depends(get_users_service),
 ):
     user = await service.authenticate(form_data.username, form_data.password)
     if not user:

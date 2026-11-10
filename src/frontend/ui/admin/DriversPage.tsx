@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState, type FormEvent } from "react";
-import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "../api";
+import { apiGet, apiPatch, apiPost, apiPut } from "../api";
 import { DateField, toIsoDate } from "../shared/DateField";
 import {
   formatDate,
@@ -34,18 +34,12 @@ function driverFields(form: FormData) {
   };
 }
 
-async function createDriver(form: FormData) {
-  const user = await apiPost<{ id: number }>("/users/", {
+function createDriver(form: FormData) {
+  return apiPost("/drivers/", {
+    ...driverFields(form),
     username: form.get("username"),
     password: form.get("password"),
-    role: "DRIVER",
   });
-  try {
-    await apiPost("/drivers/", { ...driverFields(form), user_id: user.id });
-  } catch (error) {
-    await apiDelete(`/users/${user.id}`);
-    throw error;
-  }
 }
 
 function updateDriver(driver: Driver, form: FormData) {

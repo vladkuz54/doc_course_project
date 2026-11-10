@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from .base_interface import IBaseService
+from .entity_management_interface import IEntityManagement
 
 
-class IVehiclesService(IBaseService):
+class IVehiclesService(IEntityManagement):
 
     @abstractmethod
     async def get_by_driver(self, driver_id):
