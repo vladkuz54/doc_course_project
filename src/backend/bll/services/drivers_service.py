@@ -3,10 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, StringConstraints
 
-from ...dal.db_models import (
-    LICENSE_CATEGORIES,
-    medical_valid_until,
-)
+from ...dal.db_models import LICENSE_CATEGORIES, medical_valid_until
 from ...dal.interfaces.driver_requests_interfaces import IDriverRequestsRepository
 from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ...dal.interfaces.routes_interfaces import IRoutesRepository

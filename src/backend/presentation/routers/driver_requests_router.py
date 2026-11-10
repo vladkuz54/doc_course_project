@@ -5,9 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ConfigDict
 
 from ...bll.interfaces.driver_requests_interface import IDriverRequestsService
-from ...bll.services.driver_requests_service import (
-    DriverRequestData,
-)
+from ...bll.services.driver_requests_service import DriverRequestData
 from ..dependencies import get_driver_requests_service
 from .auth import ensure_visible, get_current_driver_id, require_admin
 
