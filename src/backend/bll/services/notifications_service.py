@@ -56,8 +56,7 @@ class NotificationsService(INotificationsService, BaseService, Observer, Subject
         for row in unread:
             row.is_read = True
             row.read_at = datetime.now()
-        if unread:
-            await self.repository.update(unread[0])
+            await self.repository.update(row)
         return rows
 
     def set_quiet_period(self, period):
