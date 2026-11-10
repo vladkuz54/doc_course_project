@@ -2,9 +2,7 @@ from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
 from ...bll.interfaces.insurance_policies_interface import IInsurancePoliciesService
-from ...bll.services.insurance_policies_service import (
-    InsurancePolicyData,
-)
+from ...bll.services.insurance_policies_service import InsurancePolicyData
 from ..dependencies import get_insurance_policies_service
 from .auth import require_admin
 

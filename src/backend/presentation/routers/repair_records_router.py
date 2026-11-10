@@ -2,10 +2,7 @@ from fastapi import APIRouter, Depends
 from pydantic import ConfigDict
 
 from ...bll.interfaces.repair_records_interface import IRepairRecordsService
-from ...bll.services.repair_records_service import (
-    RepairCostData,
-    RepairRecordData,
-)
+from ...bll.services.repair_records_service import RepairCostData, RepairRecordData
 from ..dependencies import get_repair_records_service
 from .auth import require_admin
 
