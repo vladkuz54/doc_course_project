@@ -305,6 +305,14 @@ class Routes(Base):
     def unassign_vehicle(self):
         self.state.unassign_vehicle(self)
 
+    def is_active(self):
+        return self.status in ACTIVE_ROUTE_STATUSES
+
+    def occupied_until(self):
+        if self.status == "IN_PROGRESS":
+            return max(self.planned_return_at, datetime.now())
+        return self.planned_return_at
+
     def update_planned_return(self):
         try:
             self.planned_return_at = self.departure_at + timedelta(
