@@ -4,7 +4,6 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field, StringConstraints
 
 from ...dal.db_models import (
-    ACTIVE_ROUTE_STATUSES,
     LICENSE_CATEGORIES,
     medical_valid_until,
 )
@@ -18,10 +17,10 @@ from ..exceptions import (
 )
 from ..interfaces.drivers_interface import IDriversService
 from .entity_management import EntityManagement
+from .users_service import hash_password
 
 
-class DriverData(BaseModel):
-    user_id: int
+class DriverProfileData(BaseModel):
     full_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
     license_categories: list[Literal[LICENSE_CATEGORIES]] = Field(min_length=1)
     experience_years: int = Field(0, ge=0, le=60)
@@ -30,7 +29,13 @@ class DriverData(BaseModel):
     employment_status: Literal["ACTIVE", "DISMISSED"] = "ACTIVE"
 
 
-class DriverUpdateData(DriverData):
+class DriverData(DriverProfileData):
+    username: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+    password: str = Field(min_length=1)
+
+
+class DriverUpdateData(DriverProfileData):
+    user_id: int
     experience_years: int = Field(ge=0, le=60)
     employment_status: Literal["ACTIVE", "DISMISSED"]
 
@@ -60,6 +65,12 @@ class DriversService(IDriversService, EntityManagement):
         self.routes_repository = routes_repository
 
     async def _validate(self, data, id=None):
+        if id is None:
+            if await self.users_repository.get_by_username(data.username):
+                raise EntityAlreadyExistsError(
+                    f"Ім'я користувача «{data.username}» уже зайняте. Оберіть інше."
+                )
+            return
         user = await self.users_repository.get_by_id(data.user_id)
         if not user:
             raise EntityNotFoundError(
@@ -81,10 +92,20 @@ class DriversService(IDriversService, EntityManagement):
         if status != "DISMISSED":
             return True
         routes = await self.routes_repository.get_by_driver(entity.id)
-        return not any(r.status in ACTIVE_ROUTE_STATUSES for r in routes)
+        return not any(r.is_active() for r in routes)
+
+    async def _save(self, data):
+        user = self.users_repository.model(
+            username=data.username,
+            password_hash=hash_password(data.password),
+            role="DRIVER",
+        )
+        return await self.repository.create(
+            self.repository.model(**self.to_fields(data), user=user)
+        )
 
     def to_fields(self, data):
-        fields = data.model_dump()
+        fields = data.model_dump(exclude={"username", "password"})
         fields["medical_valid_until"] = medical_valid_until(data.medical_check_date)
         return fields
 
