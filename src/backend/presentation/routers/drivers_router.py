@@ -7,6 +7,7 @@ from pydantic import ConfigDict
 from ...bll.interfaces.drivers_interface import IDriversService
 from ...bll.services.drivers_service import (
     DriverData,
+    DriverProfileData,
     DriverStatusData,
     DriverUpdateData,
 )
@@ -16,8 +17,9 @@ from .auth import ensure_visible, get_current_driver_id, require_admin
 router = APIRouter(prefix="/drivers", tags=["drivers"])
 
 
-class DriverResponse(DriverData):
+class DriverResponse(DriverProfileData):
     id: int
+    user_id: int
     medical_valid_until: date
     medical_check_status: Literal["VALID", "EXPIRED", "PENDING"]
     model_config = ConfigDict(from_attributes=True)
