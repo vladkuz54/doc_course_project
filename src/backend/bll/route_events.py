@@ -9,6 +9,19 @@ def _when(route):
     return f"{route.departure_at:%d.%m.%Y %H:%M}"
 
 
+CHANGE_TEXT = {
+    "vehicle": lambda make: f"транспорт {make}",
+    "departure_at": lambda at: f"час виїзду {at:%d.%m.%Y %H:%M}",
+    "distance": lambda km: f"відстань {km:g} км",
+    "stops": lambda addresses: f"зупинки {' → '.join(addresses)}",
+}
+ACTION_TEXT = {"restored": "відновлено", "created": "створено"}
+MISSING_TEXT = {
+    "driver": ("водія", "Призначте водія пізніше."),
+    "vehicle": ("транспорту", "Призначте транспорт пізніше."),
+}
+
+
 class RouteEvents:
     @staticmethod
     def assigned(route, driver):
@@ -43,7 +56,8 @@ class RouteEvents:
             driver,
             "ROUTE_UPDATED",
             route,
-            f"Маршрут №{route.id} змінено: {'; '.join(changes)}",
+            f"Маршрут №{route.id} змінено: "
+            + "; ".join(CHANGE_TEXT[key](value) for key, value in changes.items()),
         )
 
     @staticmethod
@@ -56,5 +70,9 @@ class RouteEvents:
         )
 
     @staticmethod
-    def warning(route, text):
+    def warning(route, action, missing, reason):
+        name, advice = MISSING_TEXT[missing]
+        text = (
+            f"Маршрут №{route.id} {ACTION_TEXT[action]} без {name}. {reason} {advice}"
+        )
         return DomainEvent("ROUTE_UPDATED", "routes", route.id, text)
