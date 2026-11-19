@@ -35,7 +35,7 @@ async def get_report(
     vehicle = None
     if vehicle_id is not None:
         vehicle = await vehicles_service.get_by_id(vehicle_id)
-    report = await report_service.build(period_from, period_to, vehicle)
+    report = await report_service.generate(period_from, period_to, vehicle)
     if format == "json":
         return report
     report_exporter.set_strategy({"pdf": PdfExport(), "xlsx": ExcelExport()}[format])
