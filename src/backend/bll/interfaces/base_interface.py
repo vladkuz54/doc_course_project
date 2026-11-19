@@ -1,9 +1,15 @@
-from abc import abstractmethod
-
-from .read_interface import IReadService
+from abc import ABC, abstractmethod
 
 
-class IBaseService(IReadService):
+class IBaseService(ABC):
+
+    @abstractmethod
+    async def get_all(self):
+        pass
+
+    @abstractmethod
+    async def get_by_id(self, id):
+        pass
 
     @abstractmethod
     async def create(self, data):

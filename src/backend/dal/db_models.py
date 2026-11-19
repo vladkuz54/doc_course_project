@@ -402,7 +402,6 @@ class Notifications(Base):
         StrEnum(
             "LICENSE_UPDATE_REQUEST",
             "MEDICAL_CHECK_REQUEST",
-            "MAINTENANCE_SCHEDULED",
             "MAINTENANCE_DUE",
             "INSURANCE_EXPIRING",
             "LICENSE_EXPIRING",

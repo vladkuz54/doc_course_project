@@ -14,7 +14,7 @@ from ..exceptions import (
     EntityNotFoundError,
 )
 from ..interfaces.drivers_interface import IDriversService
-from .entity_management import EntityManagement
+from .entity_management_service import EntityManagement
 from .users_service import hash_password
 
 

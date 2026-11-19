@@ -3,8 +3,9 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, Response
 
+from ...bll.interfaces.reports_interface import IReportService
 from ...bll.interfaces.vehicles_interface import IVehiclesService
-from ...bll.reports import ReportData, ReportService, ReportStrategy
+from ...bll.services.reports_service import ReportData, ReportStrategy
 from ..dependencies import (
     get_report_exporter,
     get_report_service,
@@ -21,12 +22,12 @@ router = APIRouter(
 
 @router.get("/{kind}", response_model=ReportData)
 async def get_report(
-    kind: Literal["utilization", "maintenance", "usage"],
+    kind: Literal["utilization", "expenses", "usage"],
     period_from: date,
     period_to: date,
     vehicle_id: int | None = None,
     format: Literal["json", "pdf", "xlsx"] = "json",
-    report_service: ReportService = Depends(get_report_service),
+    report_service: IReportService = Depends(get_report_service),
     report_exporter: ReportExporter = Depends(get_report_exporter),
     strategy: ReportStrategy = Depends(get_report_strategy),
     vehicles_service: IVehiclesService = Depends(get_vehicles_service),

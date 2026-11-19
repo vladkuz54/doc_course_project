@@ -15,7 +15,7 @@ from ..exceptions import BusinessRuleError, EntityNotFoundError
 from ..interfaces.routes_interface import IRoutesService
 from ..observer import Subject
 from ..route_events import RouteEvents
-from .entity_management import EntityManagement
+from .entity_management_service import EntityManagement
 
 StopAddress = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 

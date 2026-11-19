@@ -9,7 +9,7 @@ from ...dal.interfaces.drivers_interfaces import IDriversRepository
 from ..exceptions import BusinessRuleError, EntityNotFoundError
 from ..interfaces.driver_requests_interface import IDriverRequestsService
 from ..observer import DomainEvent, Subject
-from .read_service import ReadService
+from .base_service import BaseService
 
 
 class DriverRequestData(BaseModel):
@@ -34,7 +34,7 @@ def _license_details(request):
     return details
 
 
-class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
+class DriverRequestsService(IDriverRequestsService, BaseService, Subject):
     entity_name = "Запит"
 
     def __init__(
@@ -42,7 +42,7 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
         repository: IDriverRequestsRepository,
         drivers_repository: IDriversRepository,
     ):
-        ReadService.__init__(self, repository)
+        BaseService.__init__(self, repository)
         Subject.__init__(self)
         self.drivers_repository = drivers_repository
 
@@ -50,7 +50,7 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
         return await self.repository.get_by_driver(driver_id)
 
     async def submit_request(self, data):
-        await self._validate_request(data)
+        await self._validate(data)
         request = await self.repository.create(
             self.repository.model(**data.model_dump(), status="PENDING")
         )
@@ -96,7 +96,7 @@ class DriverRequestsService(IDriverRequestsService, ReadService, Subject):
         request.reject()
         return await self._save_decision(request, "REQUEST_REJECTED", "відхилено")
 
-    async def _validate_request(self, data):
+    async def _validate(self, data, id=None):
         driver = await self._get_driver(data.driver_id)
         if driver.is_dismissed():
             raise BusinessRuleError(

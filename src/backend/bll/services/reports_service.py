@@ -4,7 +4,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
-from .exceptions import BusinessRuleError
+from ..exceptions import BusinessRuleError
+from ..interfaces.reports_interface import IReportService
 
 
 class ReportData(BaseModel):
@@ -83,7 +84,7 @@ class VehicleUtilizationReport(ReportStrategy):
         )
 
 
-class MaintenanceCostReport(ReportStrategy):
+class ExpensesReport(ReportStrategy):
     def __init__(
         self,
         repair_records_service,
@@ -180,7 +181,7 @@ class UsageAnalyticsReport(ReportStrategy):
         )
 
 
-class ReportService:
+class ReportService(IReportService):
     def __init__(self):
         self._strategy = None
 

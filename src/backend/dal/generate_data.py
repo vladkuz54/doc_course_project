@@ -340,13 +340,6 @@ def build():
                 text=f"{shevchenko.full_name} повідомляє про медогляд {days(-1):%d.%m.%Y}",
             ),
             Notifications(
-                type="MAINTENANCE_SCHEDULED",
-                related_entity="vehicles",
-                related_id=volvo.id,
-                created_at=NOW - timedelta(days=2),
-                text=f"Заплановано ТО для Volvo FH16 на {repairs[2].date:%d.%m.%Y}",
-            ),
-            Notifications(
                 type="INSURANCE_EXPIRING",
                 related_entity="vehicles",
                 related_id=renault.id,

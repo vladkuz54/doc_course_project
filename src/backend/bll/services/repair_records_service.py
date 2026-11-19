@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from typing import Literal
 
@@ -8,8 +8,6 @@ from ...dal.db_models import RepairRecords
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ..exceptions import BusinessRuleError
 from ..interfaces.repair_records_interface import IRepairRecordsService
-from ..labels import MAINTENANCE_TYPE_LABELS
-from ..observer import DomainEvent, Subject
 from .accounting_service import AccountingService
 
 
@@ -26,14 +24,13 @@ class RepairCostData(BaseModel):
     cost: Decimal
 
 
-class RepairRecordsService(IRepairRecordsService, AccountingService, Subject):
+class RepairRecordsService(IRepairRecordsService, AccountingService):
     entity_name = "Запис про обслуговування"
 
     def __init__(
         self, repository, vehicles_repository, routes_repository: IRoutesRepository
     ):
         AccountingService.__init__(self, repository, vehicles_repository)
-        Subject.__init__(self)
         self.routes_repository = routes_repository
 
     async def _validate(self, data, id=None):
@@ -93,19 +90,6 @@ class RepairRecordsService(IRepairRecordsService, AccountingService, Subject):
 
     def _create_record(self, data):
         return RepairRecords(**self.to_fields(data))
-
-    async def _after_add(self, entity):
-        if entity.status != "PLANNED":
-            return
-        vehicle = await self.vehicles_repository.get_by_id(entity.vehicle_id)
-        await self._notify(
-            DomainEvent(
-                "MAINTENANCE_SCHEDULED",
-                "vehicles",
-                entity.vehicle_id,
-                f"Заплановано {MAINTENANCE_TYPE_LABELS[entity.type]} для {vehicle.make} на {entity.date:%d.%m.%Y}",
-            )
-        )
 
     async def record_repair_cost(self, id, cost):
         record = await self.get_by_id(id)

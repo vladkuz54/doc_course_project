@@ -14,13 +14,6 @@ from ..bll.assignment_checks import (
     VehicleMaintenanceHandler,
 )
 from ..bll.live_notifications import live_notifications
-from ..bll.reports import (
-    MaintenanceCostReport,
-    ReportService,
-    ReportStrategy,
-    UsageAnalyticsReport,
-    VehicleUtilizationReport,
-)
 from ..bll.services.deadline_monitor import DeadlineMonitor
 from ..bll.services.driver_requests_service import DriverRequestsService
 from ..bll.services.drivers_service import DriversService
@@ -28,6 +21,13 @@ from ..bll.services.fuel_records_service import FuelRecordsService
 from ..bll.services.insurance_policies_service import InsurancePoliciesService
 from ..bll.services.notifications_service import NotificationsService
 from ..bll.services.repair_records_service import RepairRecordsService
+from ..bll.services.reports_service import (
+    ExpensesReport,
+    ReportService,
+    ReportStrategy,
+    UsageAnalyticsReport,
+    VehicleUtilizationReport,
+)
 from ..bll.services.route_stops_service import RouteStopsService
 from ..bll.services.routes_service import RoutesService
 from ..bll.services.users_service import UsersService
@@ -89,15 +89,12 @@ def get_driver_requests_service(
 
 def get_repair_records_service(
     session: AsyncSession = Depends(get_db_session),
-    notifications: NotificationsService = Depends(get_notifications_service),
 ) -> RepairRecordsService:
-    service = RepairRecordsService(
+    return RepairRecordsService(
         RepairRecordsRepository(session),
         VehiclesRepository(session),
         RoutesRepository(session),
     )
-    service.attach(notifications)
-    return service
 
 
 def get_vehicles_service(
@@ -196,7 +193,7 @@ def get_report_service() -> ReportService:
 
 
 def get_report_strategy(
-    kind: Literal["utilization", "maintenance", "usage"],
+    kind: Literal["utilization", "expenses", "usage"],
     routes_service: RoutesService = Depends(get_routes_service),
     repair_records_service: RepairRecordsService = Depends(get_repair_records_service),
     fuel_records_service: FuelRecordsService = Depends(get_fuel_records_service),
@@ -207,14 +204,17 @@ def get_report_strategy(
 ) -> ReportStrategy:
     if kind == "utilization":
         return VehicleUtilizationReport(routes_service, vehicles_service)
-    if kind == "maintenance":
-        return MaintenanceCostReport(
+    if kind == "expenses":
+        return ExpensesReport(
             repair_records_service,
             fuel_records_service,
             insurance_policies_service,
             vehicles_service,
         )
-    return UsageAnalyticsReport(routes_service, fuel_records_service, vehicles_service)
+    if kind == "usage":
+        return UsageAnalyticsReport(
+            routes_service, fuel_records_service, vehicles_service
+        )
 
 
 def get_report_exporter() -> ReportExporter:

@@ -8,7 +8,7 @@ from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
 from ..exceptions import EntityAlreadyExistsError
 from ..interfaces.vehicles_interface import IVehiclesService
-from .entity_management import EntityManagement
+from .entity_management_service import EntityManagement
 
 
 class VehicleData(BaseModel):

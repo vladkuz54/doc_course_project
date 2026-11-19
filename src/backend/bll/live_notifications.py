@@ -1,11 +1,11 @@
 import asyncio
 
-from .observer import Observer
+from .observer import Subscriber
 
 HEARTBEAT_SECONDS = 15
 
 
-class LiveNotifications(Observer):
+class LiveNotifications(Subscriber):
     def __init__(self):
         self._subscribers = {}
 

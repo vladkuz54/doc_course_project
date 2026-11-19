@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from .read_interface import IReadService
+from .base_interface import IBaseService
 
 
-class IDriverRequestsService(IReadService):
+class IDriverRequestsService(IBaseService):
 
     @abstractmethod
     async def get_by_driver(self, driver_id):

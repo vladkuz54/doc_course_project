@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from ...dal.interfaces.notifications_interfaces import INotificationsRepository
 from ..interfaces.notifications_interface import INotificationsService
-from ..observer import NotificationType, Observer, Subject
+from ..observer import NotificationType, Subject, Subscriber
 from .base_service import BaseService
 
 READ_WARNING_QUIET_PERIOD = timedelta(hours=12)
@@ -20,7 +20,7 @@ class NotificationData(BaseModel):
     is_read: bool = False
 
 
-class NotificationsService(INotificationsService, BaseService, Observer, Subject):
+class NotificationsService(INotificationsService, BaseService, Subscriber, Subject):
     entity_name = "Сповіщення"
 
     def __init__(

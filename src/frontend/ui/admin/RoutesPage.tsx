@@ -45,11 +45,11 @@ const TIME_ACTIONS: Record<
     notice: "Маршрут розпочато.",
   },
   close: {
-    title: "Закрити маршрут",
+    title: "Завершити маршрут",
     label: "Час повернення",
     path: "complete",
     field: "returned_at",
-    notice: "Маршрут закрито.",
+    notice: "Маршрут завершено.",
   },
   complete: {
     title: "Завершити маршрут",
@@ -289,7 +289,7 @@ export function RoutesPage() {
                             className="secondary"
                             onClick={() => openForm({ form: "close", route })}
                           >
-                            Закрити
+                            Завершити
                           </button>
                         </>
                       )}

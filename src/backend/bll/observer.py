@@ -5,7 +5,6 @@ from typing import Literal
 NotificationType = Literal[
     "LICENSE_UPDATE_REQUEST",
     "MEDICAL_CHECK_REQUEST",
-    "MAINTENANCE_SCHEDULED",
     "MAINTENANCE_DUE",
     "INSURANCE_EXPIRING",
     "LICENSE_EXPIRING",
@@ -29,7 +28,7 @@ class DomainEvent:
     recipient_id: int | None = None
 
 
-class Observer(ABC):
+class Subscriber(ABC):
 
     @abstractmethod
     async def on_event(self, event: DomainEvent):
@@ -38,14 +37,14 @@ class Observer(ABC):
 
 class Subject(ABC):
     def __init__(self):
-        self._observers = []
+        self._subscribers = []
 
-    def attach(self, observer: Observer):
-        self._observers.append(observer)
+    def attach(self, subscriber: Subscriber):
+        self._subscribers.append(subscriber)
 
-    def detach(self, observer: Observer):
-        self._observers.remove(observer)
+    def detach(self, subscriber: Subscriber):
+        self._subscribers.remove(subscriber)
 
     async def _notify(self, event: DomainEvent):
-        for observer in self._observers:
-            await observer.on_event(event)
+        for subscriber in self._subscribers:
+            await subscriber.on_event(event)
