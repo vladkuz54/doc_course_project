@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, time
+from datetime import date, datetime, time
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, NaiveDatetime, StringConstraints
@@ -91,6 +91,8 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
             await self._get_vehicle(data.vehicle_id)
         if id is None and (data.driver_id is not None or data.vehicle_id is not None):
             await self._check_assignment(self._build_route(data))
+        if data.departure_at < datetime.today():
+            raise BusinessRuleError("Маршрут не можна запланувати в минулому.")
 
     def to_fields(self, data):
         return data.model_dump(exclude={"stops"})
@@ -240,13 +242,13 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
     async def restore(self, route_id, departure_at):
         route = await self.get_by_id(route_id)
         route.restore(departure_at)
+        route.update_planned_return()
         removed = await self._remove_what_fails(route)
         route = await self.repository.update(route)
         warnings = self._warnings(route, "restored", removed)
         if route.driver_id is not None:
             await self._publish_to_driver(route.driver_id, RouteEvents.restored, route)
         return RouteWithWarnings(route, warnings)
-
 
     async def _remove_what_fails(self, route):
         removed = []
