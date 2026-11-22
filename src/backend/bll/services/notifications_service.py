@@ -9,6 +9,13 @@ from ..observer import NotificationType, Subject, Subscriber
 from .base_service import BaseService
 
 READ_WARNING_QUIET_PERIOD = timedelta(hours=12)
+DEADLINE_WARNING_TYPES = {
+    "MAINTENANCE_DUE",
+    "REPAIR_COST_MISSING",
+    "INSURANCE_EXPIRING",
+    "LICENSE_EXPIRING",
+    "MEDICAL_CHECK_DUE",
+}
 
 
 class NotificationData(BaseModel):
@@ -63,16 +70,8 @@ class NotificationsService(INotificationsService, BaseService, Subscriber, Subje
         self.quiet_period = period
 
     async def on_event(self, event):
-        since = datetime.now() - self.quiet_period
-        for n in await self.repository.get_unread_or_read_since(since):
-            if (
-                n.type == event.type
-                and n.related_entity == event.related_entity
-                and n.related_id == event.related_id
-                and n.recipient_id == event.recipient_id
-                and n.text == event.text
-            ):
-                return
+        if event.type in DEADLINE_WARNING_TYPES and await self._is_repeat(event):
+            return
         await self.repository.create(
             self.repository.model(
                 type=event.type,
@@ -83,3 +82,14 @@ class NotificationsService(INotificationsService, BaseService, Subscriber, Subje
             )
         )
         await self._notify(event)
+
+    async def _is_repeat(self, event):
+        since = datetime.now() - self.quiet_period
+        return any(
+            n.type == event.type
+            and n.related_entity == event.related_entity
+            and n.related_id == event.related_id
+            and n.recipient_id == event.recipient_id
+            and n.text == event.text
+            for n in await self.repository.get_unread_or_read_since(since)
+        )
