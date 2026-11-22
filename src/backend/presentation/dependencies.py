@@ -107,7 +107,9 @@ def get_insurance_policies_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> InsurancePoliciesService:
     return InsurancePoliciesService(
-        InsurancePoliciesRepository(session), VehiclesRepository(session)
+        InsurancePoliciesRepository(session),
+        VehiclesRepository(session),
+        RoutesRepository(session),
     )
 
 
