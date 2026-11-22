@@ -359,14 +359,15 @@ def build():
                 related_entity="drivers",
                 related_id=kovalenko.id,
                 created_at=NOW,
-                text=f"Посвідчення спливає: {kovalenko.full_name}, {days(20):%d.%m.%Y}",
+                text=f"Ваше посвідчення спливає {days(20):%d.%m.%Y}. "
+                "Оновіть його та повідомте адміністратора.",
             ),
             Notifications(
                 type="MEDICAL_CHECK_DUE",
                 related_entity="drivers",
                 related_id=shevchenko.id,
                 created_at=NOW - timedelta(days=5),
-                text=f"Медогляд спливає: {shevchenko.full_name}, {shevchenko.medical_valid_until:%d.%m.%Y}",
+                text=f"Медогляд сплив: {shevchenko.full_name}, {shevchenko.medical_valid_until:%d.%m.%Y}",
                 is_read=True,
                 read_at=NOW - timedelta(days=5),
             ),
@@ -376,7 +377,8 @@ def build():
                 related_entity="drivers",
                 related_id=shevchenko.id,
                 created_at=NOW - timedelta(days=5),
-                text=f"Медогляд спливає: {shevchenko.full_name}, {shevchenko.medical_valid_until:%d.%m.%Y}",
+                text=f"Ваш медогляд сплив {shevchenko.medical_valid_until:%d.%m.%Y}. "
+                "Пройдіть новий і повідомте адміністратора.",
             ),
         ]
 
