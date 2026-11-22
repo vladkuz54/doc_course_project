@@ -11,7 +11,7 @@ class RouteStopsService(IRouteStopsService, BaseService):
     def __init__(self, repository: IRouteStopsRepository):
         super().__init__(repository)
 
-    def _validate(self, data, id=None):
+    async def _validate(self, data, id=None):
         raise BusinessRuleError("Зупинки потрібно редагувати через маршрутин.")
 
     async def get_by_driver(self, driver_id):
