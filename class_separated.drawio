@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="Epg1_yAVhbFvh7sry_zz">
-    <mxGraphModel dx="10121" dy="5432" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="14058" dy="7596" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -457,31 +457,31 @@
           <mxGeometry height="26" width="173" y="102" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-110" parent="1" style="text;html=1;fontStyle=1;align=left;" value="Legend: GoF patterns" vertex="1">
-          <mxGeometry height="24" width="260" x="-5857" y="-3070" as="geometry" />
+          <mxGeometry height="24" width="260" x="-5839" y="-2510" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-111" parent="1" style="rounded=0;html=1;align=left;spacingLeft=6;fillColor=#fad9d5;strokeColor=#ae4132;" value="Strategy" vertex="1">
-          <mxGeometry height="24" width="260" x="-5857" y="-3040" as="geometry" />
+          <mxGeometry height="24" width="260" x="-5839" y="-2480" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-112" parent="1" style="rounded=0;html=1;align=left;spacingLeft=6;fillColor=#1ba1e2;strokeColor=#006EAF;fontColor=#ffffff;" value="Observer" vertex="1">
-          <mxGeometry height="24" width="260" x="-5857" y="-3014" as="geometry" />
+          <mxGeometry height="24" width="260" x="-5839" y="-2454" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-113" parent="1" style="rounded=0;html=1;align=left;spacingLeft=6;fillColor=#76608a;strokeColor=#432D57;fontColor=#ffffff;" value="State" vertex="1">
-          <mxGeometry height="24" width="260" x="-5857" y="-2988" as="geometry" />
+          <mxGeometry height="24" width="260" x="-5839" y="-2428" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-114" parent="1" style="rounded=0;html=1;align=left;spacingLeft=6;fillColor=#fa6800;strokeColor=#C73500;fontColor=#000000;" value="Chain of Responsibility" vertex="1">
-          <mxGeometry height="24" width="260" x="-5857" y="-2962" as="geometry" />
+          <mxGeometry height="24" width="260" x="-5839" y="-2402" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-115" parent="1" style="rounded=0;html=1;align=left;spacingLeft=6;fillColor=#6d8764;strokeColor=#3A5431;fontColor=#ffffff;" value="Template Method" vertex="1">
-          <mxGeometry height="24" width="260" x="-5857" y="-2936" as="geometry" />
+          <mxGeometry height="24" width="260" x="-5839" y="-2376" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-116" parent="1" style="rounded=0;html=1;align=left;spacingLeft=6;fillColor=#a0522d;strokeColor=#6D1F00;fontColor=#ffffff;" value="Factory Method + Template Method" vertex="1">
-          <mxGeometry height="24" width="260" x="-5857" y="-2910" as="geometry" />
+          <mxGeometry height="24" width="260" x="-5839" y="-2350" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-117" parent="1" style="rounded=0;html=1;align=left;spacingLeft=6;fillColor=#a20025;strokeColor=#6F0000;fontColor=#ffffff;" value="Abstract Factory" vertex="1">
-          <mxGeometry height="24" width="260" x="-5857" y="-2884" as="geometry" />
+          <mxGeometry height="24" width="260" x="-5839" y="-2324" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-118" parent="1" style="rounded=0;html=1;align=left;spacingLeft=6;fillColor=#f2f2f2;strokeColor=#666666;" value="Domain entities" vertex="1">
-          <mxGeometry height="24" width="260" x="-5857" y="-2858" as="geometry" />
+          <mxGeometry height="24" width="260" x="-5839" y="-2298" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-128" parent="1" style="swimlane;swimlaneFillColor=#f2f2f2;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#F2F2F2;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="&lt;b&gt;AccountingRecord&lt;/b&gt;" vertex="1">
           <mxGeometry height="154" width="173" x="-4486" y="-270" as="geometry" />
@@ -2300,16 +2300,17 @@
             <mxPoint x="1" y="-12" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="cGHOpVxAGfsGq6y66gTd-40" edge="1" parent="1" source="ZpyBOz_4ZA0WI4AkRPg7-1113" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;defaultLabelBackgroundColor=page;labelPadding=0 4;endArrow=open;endFill=0;endSize=16;exitX=1;exitY=0.5192;exitDx=0;exitDy=0;" target="kEX7O3nYaBrxjG8E4G6q-215">
-          <mxGeometry relative="1" x="0.069" as="geometry">
+        <mxCell id="cGHOpVxAGfsGq6y66gTd-40" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;defaultLabelBackgroundColor=page;labelPadding=0 4;endArrow=open;endFill=0;endSize=16;" target="kEX7O3nYaBrxjG8E4G6q-215">
+          <mxGeometry relative="1" x="0.0459" as="geometry">
             <Array as="points">
               <mxPoint x="4462" y="-1800" />
               <mxPoint x="4758" y="-1800" />
             </Array>
+            <mxPoint x="4462" y="-1800" as="sourcePoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="cGHOpVxAGfsGq6y66gTd-41" connectable="0" parent="cGHOpVxAGfsGq6y66gTd-40" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];inheritText=1;defaultLabelBackgroundColor=page;labelPadding=0 4;" value="sums fuel costs" vertex="1">
-          <mxGeometry relative="1" x="-0.0747" y="-1" as="geometry">
+          <mxGeometry relative="1" x="-0.107" y="-1" as="geometry">
             <mxPoint y="-1" as="offset" />
           </mxGeometry>
         </mxCell>
@@ -3009,7 +3010,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-1630" parent="1" style="rounded=0;html=1;align=left;spacingLeft=6;fillColor=#647687;strokeColor=#314354;fontColor=light-dark(#E9E1F8,#000000);" value="Repositories (data access)" vertex="1">
-          <mxGeometry height="24" width="260" x="-5857" y="-2832" as="geometry" />
+          <mxGeometry height="24" width="260" x="-5839" y="-2272" as="geometry" />
         </mxCell>
         <mxCell id="kEX7O3nYaBrxjG8E4G6q-3" parent="1" style="swimlane;swimlaneFillColor=#f2f2f2;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#F2F2F2;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="&lt;b&gt;NotificationType&lt;/b&gt;" vertex="1">
           <mxGeometry height="414" width="191" x="-3337" y="-1150" as="geometry" />
@@ -3681,7 +3682,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="sync-42" parent="1" style="swimlane;swimlaneFillColor=#e8d3c0;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#a0522d;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontColor=#ffffff;strokeColor=#6D1F00;" value="&lt;b&gt;InsurancePoliciesService&lt;/b&gt;" vertex="1">
-          <mxGeometry height="104" width="293" x="4345" y="-2017" as="geometry" />
+          <mxGeometry height="104" width="293" x="4345" y="-2043" as="geometry" />
         </mxCell>
         <mxCell id="sync-43" parent="sync-42" style="text;strokeColor=#6D1F00;fillColor=#a0522d;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#ffffff;" value="#validate(data: EntityData, id: int)" vertex="1">
           <mxGeometry height="26" width="293" y="26" as="geometry" />
