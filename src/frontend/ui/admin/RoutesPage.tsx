@@ -26,7 +26,7 @@ import {
   type StopAddress,
 } from "./StopFields";
 
-type TimeAction = "start" | "close" | "complete" | "repeat";
+type TimeAction = "start" | "close" | "complete" | "repeat" | "restore";
 
 type Editing =
   | { form: "new" }
@@ -64,6 +64,13 @@ const TIME_ACTIONS: Record<
     path: "repeat",
     field: "departure_at",
     notice: "Маршрут створено.",
+  },
+  restore: {
+    title: "Відновити маршрут",
+    label: "Виїзд",
+    path: "restore",
+    field: "departure_at",
+    notice: "Маршрут відновлено.",
   },
 };
 
@@ -302,8 +309,7 @@ export function RoutesPage() {
                           Завершити
                         </button>
                       )}
-                      {(route.status === "PLANNED" ||
-                        route.status === "IN_PROGRESS") && (
+                      {route.status === "PLANNED" && (
                         <button
                           type="button"
                           className="secondary danger"
@@ -332,14 +338,7 @@ export function RoutesPage() {
                         <button
                           type="button"
                           className="secondary"
-                          disabled={pending}
-                          onClick={() =>
-                            run(
-                              () =>
-                                postWithWarnings(`/routes/${route.id}/restore`),
-                              "Маршрут відновлено.",
-                            )
-                          }
+                          onClick={() => openForm({ form: "restore", route })}
                         >
                           Відновити
                         </button>

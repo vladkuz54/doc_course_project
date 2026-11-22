@@ -14,7 +14,7 @@ from ..assignment_checks import AssignmentHandler, AssignmentRequest
 from ..exceptions import BusinessRuleError, EntityNotFoundError
 from ..interfaces.routes_interface import IRoutesService
 from ..observer import Subject
-from ..route_events import RouteEvents
+from ..route_events import RouteEvents, warning_text
 from .entity_management_service import EntityManagement
 
 StopAddress = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -185,15 +185,6 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
             await self._publish_updated(route, {"vehicle": vehicle.make})
         return route
 
-    async def reschedule(self, route_id, departure_at):
-        route = await self.get_by_id(route_id)
-        route.reschedule(departure_at)
-        route.update_planned_return()
-        await self._check_assignment(route)
-        route = await self.repository.update(route)
-        await self._publish_updated(route, {"departure_at": departure_at})
-        return route
-
     async def start(self, route_id, started_at=None):
         route = await self.get_by_id(route_id)
         await self._ensure_nothing_in_progress(route)
@@ -225,16 +216,6 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
             await self._publish_to_driver(route.driver_id, RouteEvents.cancelled, route)
         return route
 
-    async def restore(self, route_id):
-        route = await self.get_by_id(route_id)
-        route.restore()
-        removed = await self._remove_what_fails(route)
-        route = await self.repository.update(route)
-        warnings = await self._publish_warnings(route, "restored", removed)
-        if route.driver_id is not None:
-            await self._publish_to_driver(route.driver_id, RouteEvents.restored, route)
-        return RouteWithWarnings(route, warnings)
-
     async def repeat(self, route_id, departure_at):
         original = await self.get_by_id(route_id)
         original.repeat()
@@ -251,10 +232,21 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         route.update_planned_return()
         removed = await self._remove_what_fails(route)
         route = await self.repository.create(route)
-        warnings = await self._publish_warnings(route, "created", removed)
+        warnings = self._warnings(route, "created", removed)
         if route.driver_id is not None:
             await self._publish_to_driver(route.driver_id, RouteEvents.assigned, route)
         return RouteWithWarnings(route, warnings)
+
+    async def restore(self, route_id, departure_at):
+        route = await self.get_by_id(route_id)
+        route.restore(departure_at)
+        removed = await self._remove_what_fails(route)
+        route = await self.repository.update(route)
+        warnings = self._warnings(route, "restored", removed)
+        if route.driver_id is not None:
+            await self._publish_to_driver(route.driver_id, RouteEvents.restored, route)
+        return RouteWithWarnings(route, warnings)
+
 
     async def _remove_what_fails(self, route):
         removed = []
@@ -274,13 +266,10 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
             route.unassign_driver()
         return removed
 
-    async def _publish_warnings(self, route, action, removed):
-        warnings = []
-        for missing, reason in removed:
-            event = RouteEvents.warning(route, action, missing, reason)
-            await self._notify(event)
-            warnings.append(event.text)
-        return warnings
+    def _warnings(self, route, action, removed):
+        return [
+            warning_text(route, action, missing, reason) for missing, reason in removed
+        ]
 
     def _build_route(self, data):
         route = self.repository.model(**self.to_fields(data))

@@ -22,6 +22,11 @@ MISSING_TEXT = {
 }
 
 
+def warning_text(route, action, missing, reason):
+    name, advice = MISSING_TEXT[missing]
+    return f"Маршрут №{route.id} {ACTION_TEXT[action]} без {name}. {reason} {advice}"
+
+
 class RouteEvents:
     @staticmethod
     def assigned(route, driver):
@@ -29,16 +34,7 @@ class RouteEvents:
             driver,
             "ROUTE_ASSIGNED",
             route,
-            f"Вам призначено маршрут №{route.id} на {_when(route)}",
-        )
-
-    @staticmethod
-    def restored(route, driver):
-        return _to_driver(
-            driver,
-            "ROUTE_ASSIGNED",
-            route,
-            f"Маршрут №{route.id} на {_when(route)} відновлено",
+            f"Вам було призначено маршрут №{route.id} на {_when(route)}",
         )
 
     @staticmethod
@@ -47,7 +43,7 @@ class RouteEvents:
             driver,
             "ROUTE_UNASSIGNED",
             route,
-            f"Маршрут №{route.id} на {_when(route)} передано іншому водію",
+            f"Ваш маршрут №{route.id} на {_when(route)} передано іншому водію",
         )
 
     @staticmethod
@@ -56,8 +52,17 @@ class RouteEvents:
             driver,
             "ROUTE_UPDATED",
             route,
-            f"Маршрут №{route.id} змінено: "
+            f"У вашому маршруті №{route.id} змінено: "
             + "; ".join(CHANGE_TEXT[key](value) for key, value in changes.items()),
+        )
+
+    @staticmethod
+    def restored(route, driver):
+        return _to_driver(
+            driver,
+            "ROUTE_ASSIGNED",
+            route,
+            f"Ваш маршрут №{route.id} на {_when(route)} відновлено",
         )
 
     @staticmethod
@@ -66,13 +71,5 @@ class RouteEvents:
             driver,
             "ROUTE_CANCELLED",
             route,
-            f"Маршрут №{route.id} на {_when(route)} скасовано",
+            f"Ваш маршрут №{route.id} на {_when(route)} скасовано",
         )
-
-    @staticmethod
-    def warning(route, action, missing, reason):
-        name, advice = MISSING_TEXT[missing]
-        text = (
-            f"Маршрут №{route.id} {ACTION_TEXT[action]} без {name}. {reason} {advice}"
-        )
-        return DomainEvent("ROUTE_UPDATED", "routes", route.id, text)
