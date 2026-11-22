@@ -299,11 +299,11 @@ class Routes(Base):
     def cancel(self):
         self.state.cancel(self)
 
-    def restore(self):
-        self.state.restore(self)
-
     def repeat(self):
         self.state.repeat(self)
+
+    def restore(self, departure_at):
+        self.state.restore(self, departure_at)
 
     def unassign_driver(self):
         self.state.unassign_driver(self)
