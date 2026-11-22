@@ -12,9 +12,6 @@ class VehiclesRepository(IVehiclesRepository, BaseRepository):
     async def get_by_vin(self, vin):
         return await self._first(self.model.vin == vin)
 
-    async def get_active(self):
-        return await self._where(self.model.status == "ACTIVE")
-
     async def get_by_driver(self, driver_id):
         result = await self.session.execute(
             select(self.model)

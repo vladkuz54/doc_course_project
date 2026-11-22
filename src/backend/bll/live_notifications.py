@@ -1,11 +1,11 @@
 import asyncio
 
-from .observer import Observer
+from .observer import Subscriber
 
 HEARTBEAT_SECONDS = 15
 
 
-class LiveNotifications(Observer):
+class LiveNotifications(Subscriber):
     def __init__(self):
         self._subscribers = {}
 
@@ -16,9 +16,6 @@ class LiveNotifications(Observer):
 
     def unsubscribe(self, queue):
         self._subscribers.pop(queue, None)
-
-    def subscriber_count(self):
-        return len(self._subscribers)
 
     async def on_event(self, event):
         for queue, (user_id, is_admin) in self._subscribers.items():

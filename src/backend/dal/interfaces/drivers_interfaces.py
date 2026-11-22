@@ -11,10 +11,6 @@ class IDriversRepository(IBaseRepository[Drivers]):
         pass
 
     @abstractmethod
-    async def get_active(self):
-        pass
-
-    @abstractmethod
     async def get_license_expiring(self, until):
         pass
 

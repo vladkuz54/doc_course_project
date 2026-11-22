@@ -124,13 +124,15 @@ export function VehiclesPage() {
                     <td>{vehicle.required_license_category}</td>
                     <td>{TECHNICAL_STATE_LABELS[vehicle.technical_state]}</td>
                     <td className="actions">
-                      <button
-                        type="button"
-                        className="secondary"
-                        onClick={() => openForm(vehicle)}
-                      >
-                        Редагувати
-                      </button>
+                      {vehicle.status === "ACTIVE" && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => openForm(vehicle)}
+                        >
+                          Редагувати
+                        </button>
+                      )}
                       {vehicle.status === "ACTIVE" ? (
                         <button
                           type="button"

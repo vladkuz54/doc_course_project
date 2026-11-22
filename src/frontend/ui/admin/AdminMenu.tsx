@@ -18,7 +18,6 @@ const OPEN_PAGES: Record<RelatedEntity, string> = {
 
 const OPEN_BY_TYPE: Record<string, string> = {
   INSURANCE_EXPIRING: "accounting/insurance",
-  MAINTENANCE_SCHEDULED: "accounting/repairs",
   MAINTENANCE_DUE: "accounting/repairs",
   REPAIR_COST_MISSING: "accounting/repairs",
 };

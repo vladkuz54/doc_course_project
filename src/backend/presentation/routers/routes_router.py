@@ -136,10 +136,15 @@ def _with_warnings(result):
 @router.post(
     "/{id}/restore",
     response_model=RouteWithWarningsResponse,
+    status_code=201,
     dependencies=[Depends(require_admin)],
 )
-async def restore(id: int, service: IRoutesService = Depends(get_routes_service)):
-    return _with_warnings(await service.restore(id))
+async def restore(
+    id: int,
+    data: RouteRepeatData,
+    service: IRoutesService = Depends(get_routes_service),
+):
+    return _with_warnings(await service.restore(id, data.departure_at))
 
 
 @router.post(

@@ -4,7 +4,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
-from .exceptions import BusinessRuleError
+from ..exceptions import BusinessRuleError
+from ..interfaces.reports_interface import IReportService
 
 
 class ReportData(BaseModel):
@@ -83,7 +84,7 @@ class VehicleUtilizationReport(ReportStrategy):
         )
 
 
-class MaintenanceCostReport(ReportStrategy):
+class ExpensesReport(ReportStrategy):
     def __init__(
         self,
         repair_records_service,
@@ -180,14 +181,14 @@ class UsageAnalyticsReport(ReportStrategy):
         )
 
 
-class ReportService:
+class ReportService(IReportService):
     def __init__(self):
         self._strategy = None
 
     def set_strategy(self, strategy):
         self._strategy = strategy
 
-    async def build(self, period_from, period_to, vehicle=None):
+    async def generate(self, period_from, period_to, vehicle=None):
         if self._strategy is None:
             raise BusinessRuleError("Оберіть тип звіту.")
         if period_from > period_to:

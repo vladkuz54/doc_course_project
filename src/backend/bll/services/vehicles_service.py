@@ -6,9 +6,9 @@ from pydantic import BaseModel, Field, StringConstraints, field_validator
 from ...dal.db_models import LICENSE_CATEGORIES, MIN_VEHICLE_YEAR
 from ...dal.interfaces.routes_interfaces import IRoutesRepository
 from ...dal.interfaces.vehicles_interfaces import IVehiclesRepository
-from ..exceptions import EntityAlreadyExistsError
+from ..exceptions import BusinessRuleError, EntityAlreadyExistsError
 from ..interfaces.vehicles_interface import IVehiclesService
-from .entity_management import EntityManagement
+from .entity_management_service import EntityManagement
 
 
 class VehicleData(BaseModel):
@@ -50,6 +50,10 @@ class VehiclesService(IVehiclesService, EntityManagement):
         self.routes_repository = routes_repository
 
     async def _validate(self, data, id=None):
+        if id is not None:
+            vehicle = await self.get_by_id(id)
+            if vehicle.status == "DECOMMISSIONED":
+                raise BusinessRuleError("Списаний автомобіль не можна оновлювати.")
         existing = await self.repository.get_by_vin(data.vin)
         if existing and existing.id != id:
             raise EntityAlreadyExistsError(

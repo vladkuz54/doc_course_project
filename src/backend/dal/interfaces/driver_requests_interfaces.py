@@ -9,7 +9,3 @@ class IDriverRequestsRepository(IBaseRepository[DriverRequests]):
     @abstractmethod
     async def get_by_driver(self, driver_id):
         pass
-
-    @abstractmethod
-    async def get_pending(self):
-        pass

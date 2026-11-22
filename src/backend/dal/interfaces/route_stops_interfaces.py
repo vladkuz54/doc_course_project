@@ -7,9 +7,5 @@ from .base_interfaces import IBaseRepository
 class IRouteStopsRepository(IBaseRepository[RouteStops]):
 
     @abstractmethod
-    async def get_by_route(self, route_id):
-        pass
-
-    @abstractmethod
     async def get_by_driver(self, driver_id):
         pass

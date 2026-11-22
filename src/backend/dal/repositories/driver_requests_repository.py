@@ -9,6 +9,3 @@ class DriverRequestsRepository(IDriverRequestsRepository, BaseRepository):
 
     async def get_by_driver(self, driver_id):
         return await self._where(self.model.driver_id == driver_id)
-
-    async def get_pending(self):
-        return await self._where(self.model.status == "PENDING")

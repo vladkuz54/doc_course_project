@@ -22,10 +22,6 @@ class IRoutesService(IEntityManagement):
         pass
 
     @abstractmethod
-    async def reschedule(self, route_id, departure_at):
-        pass
-
-    @abstractmethod
     async def start(self, route_id, started_at=None):
         pass
 
@@ -42,9 +38,9 @@ class IRoutesService(IEntityManagement):
         pass
 
     @abstractmethod
-    async def restore(self, route_id):
+    async def repeat(self, route_id, departure_at):
         pass
 
     @abstractmethod
-    async def repeat(self, route_id, departure_at):
+    async def restore(self, route_id, departure_at):
         pass

@@ -1,10 +1,28 @@
 from abc import abstractmethod
 
+from backend.bll.exceptions import EntityNotFoundError
+
 from ..interfaces.base_interface import IBaseService
-from .read_service import ReadService
 
 
-class BaseService(ReadService, IBaseService):
+class BaseService(IBaseService):
+    entity_name = "Запис"
+
+    def __init__(self, repository):
+        self.repository = repository
+
+    async def get_all(self):
+        return await self.repository.get_all()
+
+    async def get_by_id(self, id):
+        obj = await self.repository.get_by_id(id)
+        if not obj:
+            raise EntityNotFoundError(
+                f"{self.entity_name} не знайдено. Можливо, запис уже видалено — "
+                "оновіть сторінку."
+            )
+        return obj
+
     async def create(self, data):
         await self._validate(data)
         entity = await self._save(data)
