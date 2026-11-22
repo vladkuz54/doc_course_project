@@ -109,7 +109,7 @@ class DriversService(IDriversService, EntityManagement):
         driver = await self.get_by_id(id)
         if driver.is_dismissed():
             raise BusinessRuleError("Звільненого водія не можна оновлювати.")
-        
+
     async def _can_change_status(self, entity, status):
         if status != "DISMISSED":
             return True

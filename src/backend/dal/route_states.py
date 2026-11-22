@@ -59,7 +59,7 @@ class RouteState(ABC):
         self._reject("повторити")
 
     def restore(self, route, departure_at):
-        self._reject("відновити") 
+        self._reject("відновити")
 
     def unassign_driver(self, route):
         self._reject("прибрати водія")
