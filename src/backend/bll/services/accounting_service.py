@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from decimal import Decimal
 
 from ..exceptions import EntityNotFoundError
 from ..interfaces.accounting_interface import IAccountingService
@@ -15,10 +14,6 @@ class AccountingService(IAccountingService, BaseService):
         return await self.repository.get_between_dates(
             period_from, period_to, vehicle.id if vehicle else None
         )
-
-    async def total(self, period_from, period_to):
-        records = await self.repository.get_between_dates(period_from, period_to)
-        return sum((r.amount for r in records if r.amount is not None), Decimal("0"))
 
     async def get_by_vehicle(self, vehicle_id):
         return await self.repository.get_by_vehicle(vehicle_id)

@@ -9,14 +9,6 @@ class RouteStopsRepository(IRouteStopsRepository, BaseRepository):
     def __init__(self, session):
         super().__init__(session, RouteStops)
 
-    async def get_by_route(self, route_id):
-        result = await self.session.execute(
-            select(self.model)
-            .where(self.model.route_id == route_id)
-            .order_by(self.model.order_no)
-        )
-        return result.scalars().all()
-
     async def get_by_driver(self, driver_id):
         result = await self.session.execute(
             select(self.model)

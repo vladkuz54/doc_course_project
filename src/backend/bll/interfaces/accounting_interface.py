@@ -10,9 +10,5 @@ class IAccountingService(IBaseService):
         pass
 
     @abstractmethod
-    async def total(self, period_from, period_to):
-        pass
-
-    @abstractmethod
     async def get_by_vehicle(self, vehicle_id):
         pass

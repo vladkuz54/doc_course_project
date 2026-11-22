@@ -17,9 +17,6 @@ class LiveNotifications(Subscriber):
     def unsubscribe(self, queue):
         self._subscribers.pop(queue, None)
 
-    def subscriber_count(self):
-        return len(self._subscribers)
-
     async def on_event(self, event):
         for queue, (user_id, is_admin) in self._subscribers.items():
             if (event.recipient_id is None and is_admin) or (

@@ -10,9 +10,6 @@ class DriversRepository(IDriversRepository, BaseRepository):
     async def get_by_user_id(self, user_id):
         return await self._first(self.model.user_id == user_id)
 
-    async def get_active(self):
-        return await self._where(self.model.employment_status == "ACTIVE")
-
     async def get_license_expiring(self, until):
         return await self._where(
             self.model.employment_status == "ACTIVE",
