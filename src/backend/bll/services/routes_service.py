@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date, datetime, time
+from datetime import datetime, time
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, NaiveDatetime, StringConstraints
@@ -219,6 +219,8 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         return route
 
     async def repeat(self, route_id, departure_at):
+        if departure_at < datetime.today():
+            raise BusinessRuleError("Маршрут не можна запланувати в минулому.")
         original = await self.get_by_id(route_id)
         original.repeat()
         route = self.repository.model(
@@ -240,6 +242,8 @@ class RoutesService(IRoutesService, EntityManagement, Subject):
         return RouteWithWarnings(route, warnings)
 
     async def restore(self, route_id, departure_at):
+        if departure_at < datetime.today():
+            raise BusinessRuleError("Маршрут не можна запланувати в минулому.")
         route = await self.get_by_id(route_id)
         route.restore(departure_at)
         route.update_planned_return()

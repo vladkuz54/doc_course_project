@@ -446,6 +446,7 @@ function RouteForm({
           name="departure_at"
           withTime
           defaultValue={route?.departure_at}
+          min={nowForField()}
           required
         />
       </label>
@@ -496,6 +497,11 @@ function RouteTimeForm({
           required
           defaultValue={
             action === "start" || action === "complete"
+              ? nowForField()
+              : undefined
+          }
+          min={
+            action === "repeat" || action === "restore"
               ? nowForField()
               : undefined
           }
