@@ -50,9 +50,10 @@ class VehiclesService(IVehiclesService, EntityManagement):
         self.routes_repository = routes_repository
 
     async def _validate(self, data, id=None):
-        vehicle = await self.get_by_id(id)
-        if vehicle.status == "DECOMMISSIONED":
-            raise BusinessRuleError("Списаний автомобіль не можна оновлювати.")
+        if id is not None:
+            vehicle = await self.get_by_id(id)
+            if vehicle.status == "DECOMMISSIONED":
+                raise BusinessRuleError("Списаний автомобіль не можна оновлювати.")
         existing = await self.repository.get_by_vin(data.vin)
         if existing and existing.id != id:
             raise EntityAlreadyExistsError(
