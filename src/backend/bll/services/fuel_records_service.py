@@ -4,6 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 
 from ...dal.db_models import FuelRecords
+from ..exceptions import BusinessRuleError
 from ..interfaces.fuel_records_interface import IFuelRecordsService
 from .accounting_service import AccountingService
 
@@ -20,6 +21,8 @@ class FuelRecordsService(IFuelRecordsService, AccountingService):
 
     async def _validate(self, data, id=None):
         await self._ensure_vehicle_exists(data.vehicle_id)
+        if data.date > date.today():
+            raise BusinessRuleError("Запис про пальне не може бути в майбутньому.")
 
     def _create_record(self, data):
         return FuelRecords(**self.to_fields(data))

@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { apiDelete, apiGet, apiPost, apiPut } from "../api";
-import { DateField, toIsoDate } from "../shared/DateField";
+import { DateField, nowForField, toIsoDate } from "../shared/DateField";
 import { formatDate, type Vehicle } from "../shared/fleet";
 import { FormRow } from "../shared/FormRow";
 import { Messages } from "../shared/Messages";
@@ -301,7 +301,12 @@ function FuelTab() {
       <VehicleSelect vehicles={vehicles} defaultValue={record?.vehicle_id} />
       <label>
         Дата
-        <DateField name="date" defaultValue={record?.date} required />
+        <DateField
+          name="date"
+          defaultValue={record?.date}
+          max={nowForField().slice(0, 10)}
+          required
+        />
       </label>
       <NumberField
         label="Вартість пального"
