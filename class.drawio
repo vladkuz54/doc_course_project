@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="Epg1_yAVhbFvh7sry_zz">
-    <mxGraphModel dx="7442" dy="4089" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2417" dy="1328" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -820,15 +820,15 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-383" edge="1" parent="1" source="ZpyBOz_4ZA0WI4AkRPg7-229" style="rounded=0;html=1;defaultLabelBackgroundColor=page;endArrow=open;endFill=0;jumpStyle=arc;jumpSize=12;exitX=1.0000;exitY=0.6697;exitDx=0;exitDy=0;entryX=0.0000;entryY=0.2885;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;endSize=16;" target="ZpyBOz_4ZA0WI4AkRPg7-682">
-          <mxGeometry relative="1" as="geometry">
+          <mxGeometry relative="1" x="0.0011" as="geometry">
             <Array as="points">
               <mxPoint x="4120" y="2700" />
-              <mxPoint x="4120" y="2750" />
+              <mxPoint x="4120" y="2757.5" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-385" connectable="0" parent="ZpyBOz_4ZA0WI4AkRPg7-383" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];inheritText=1;defaultLabelBackgroundColor=page;" value="gets expiring policies" vertex="1">
-          <mxGeometry relative="1" x="-0.194" as="geometry">
+          <mxGeometry relative="1" x="-0.1941" as="geometry">
             <mxPoint x="67" as="offset" />
           </mxGeometry>
         </mxCell>
@@ -1554,8 +1554,8 @@
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="3040" y="4070" />
-              <mxPoint x="3040" y="3680" />
-              <mxPoint x="2740" y="3680" />
+              <mxPoint x="3040" y="3700" />
+              <mxPoint x="2740" y="3700" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -1807,7 +1807,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-682" parent="1" style="swimlane;swimlaneFillColor=#e8d3c0;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#a0522d;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontColor=#ffffff;strokeColor=#6D1F00;" value="&lt;b&gt;InsurancePoliciesService&lt;/b&gt;" vertex="1">
-          <mxGeometry height="104" width="293" x="4160" y="2720" as="geometry" />
+          <mxGeometry height="130" width="293" x="4160" y="2720" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-683" parent="ZpyBOz_4ZA0WI4AkRPg7-682" style="text;strokeColor=#6D1F00;fillColor=#a0522d;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#ffffff;" value="#validate(data: EntityData, id: int)" vertex="1">
           <mxGeometry height="26" width="293" y="26" as="geometry" />
@@ -1817,6 +1817,9 @@
         </mxCell>
         <mxCell id="kEX7O3nYaBrxjG8E4G6q-135" parent="ZpyBOz_4ZA0WI4AkRPg7-682" style="text;strokeColor=#6D1F00;fillColor=#a0522d;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#ffffff;" value="+getExpiring(until: date): List&amp;lt;InsurancePolicy&amp;gt;" vertex="1">
           <mxGeometry height="26" width="293" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-682-del" parent="ZpyBOz_4ZA0WI4AkRPg7-682" style="text;strokeColor=#6D1F00;fillColor=#a0522d;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#ffffff;" value="+delete(id: int): InsurancePolicy" vertex="1">
+          <mxGeometry height="26" width="293" y="104" as="geometry" />
         </mxCell>
         <mxCell id="ZpyBOz_4ZA0WI4AkRPg7-859" edge="1" parent="1" source="ZpyBOz_4ZA0WI4AkRPg7-790" style="rounded=0;html=1;defaultLabelBackgroundColor=page;endArrow=diamondThin;endFill=0;jumpStyle=arc;jumpSize=12;exitX=0.1024;exitY=1.0000;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.1127;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;endSize=16;" target="ZpyBOz_4ZA0WI4AkRPg7-44">
           <mxGeometry relative="1" as="geometry">
@@ -3621,18 +3624,16 @@
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nt-e0" edge="1" parent="1" source="ZpyBOz_4ZA0WI4AkRPg7-229" style="rounded=0;html=1;defaultLabelBackgroundColor=page;labelPadding=0 4;dashed=1;endArrow=open;endFill=0;endSize=16;jumpStyle=arc;jumpSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0.0000;exitY=0.1339;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.8974;entryDx=0;entryDy=0;" target="ZpyBOz_4ZA0WI4AkRPg7-360">
-          <mxGeometry relative="1" as="geometry">
+        <mxCell id="nt-e0" edge="1" parent="1" source="ZpyBOz_4ZA0WI4AkRPg7-229" style="rounded=0;html=1;defaultLabelBackgroundColor=page;labelPadding=0 4;dashed=1;endArrow=open;endFill=0;endSize=16;jumpStyle=arc;jumpSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0.0000;exitY=0.1339;exitDx=0;exitDy=0;entryX=0.997;entryY=0.426;entryDx=0;entryDy=0;entryPerimeter=0;" target="39L622nNSr-qQs6GSWPq-115">
+          <mxGeometry relative="1" x="0.0164" as="geometry">
             <Array as="points">
               <mxPoint x="3370" y="2580" />
-              <mxPoint x="3370" y="2400" />
-              <mxPoint x="3210" y="2400" />
-              <mxPoint x="3210" y="2390" />
+              <mxPoint x="3370" y="2399.1" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="nt-e0-l" connectable="0" parent="nt-e0" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];defaultLabelBackgroundColor=page;labelPadding=0 4;" value="notifies" vertex="1">
-          <mxGeometry relative="1" as="geometry">
+          <mxGeometry relative="1" x="0.0164" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
@@ -3655,8 +3656,8 @@
             <Array as="points">
               <mxPoint x="4490" y="3220" />
               <mxPoint x="4490" y="2660" />
-              <mxPoint x="4240" y="2660" />
-              <mxPoint x="4240" y="2440" />
+              <mxPoint x="4260" y="2660" />
+              <mxPoint x="4260" y="2440" />
               <mxPoint x="3560" y="2440" />
               <mxPoint x="3560" y="2120" />
               <mxPoint x="3130" y="2120" />
@@ -3684,6 +3685,16 @@
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="4540" y="3750" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ip-rr" edge="1" parent="1" source="ZpyBOz_4ZA0WI4AkRPg7-682" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;labelPadding=0 4;endArrow=open;endFill=0;endSize=16;jumpStyle=arc;jumpSize=12;exitX=0.05;exitY=1;exitDx=0;exitDy=0;entryX=0.087;entryY=0;entryDx=0;entryDy=0;" target="ZpyBOz_4ZA0WI4AkRPg7-651">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="4174.65" y="2990" />
+              <mxPoint x="3670" y="2990" />
+              <mxPoint x="3670" y="3190" />
+              <mxPoint x="3390" y="3190" />
             </Array>
           </mxGeometry>
         </mxCell>
