@@ -82,6 +82,8 @@ class DriversService(IDriversService, EntityManagement):
                 await self.driver_requests_repository.update(request)
 
     async def _validate(self, data, id=None):
+        if data.medical_check_date > date.today():
+            raise BusinessRuleError("Дата медогляду не може бути в майбутньому.")
         if id is None:
             if await self.users_repository.get_by_username(data.username):
                 raise EntityAlreadyExistsError(
@@ -104,7 +106,10 @@ class DriversService(IDriversService, EntityManagement):
                 f"Користувач «{user.username}» уже має профіль водія. "
                 "Відредагуйте наявний профіль."
             )
-
+        driver = await self.get_by_id(id)
+        if driver.is_dismissed():
+            raise BusinessRuleError("Звільненого водія не можна оновлювати.")
+        
     async def _can_change_status(self, entity, status):
         if status != "DISMISSED":
             return True

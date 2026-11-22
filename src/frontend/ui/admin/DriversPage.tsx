@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { apiGet, apiPatch, apiPost, apiPut } from "../api";
-import { DateField, toIsoDate } from "../shared/DateField";
+import { DateField, nowForField, toIsoDate } from "../shared/DateField";
 import {
   formatDate,
   LICENSE_CATEGORIES,
@@ -144,13 +144,15 @@ export function DriversPage() {
                       {formatDate(driver.medical_valid_until)}
                     </td>
                     <td className="actions">
-                      <button
-                        type="button"
-                        className="secondary"
-                        onClick={() => openForm(driver)}
-                      >
-                        Редагувати
-                      </button>
+                      {driver.employment_status === "ACTIVE" && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => openForm(driver)}
+                        >
+                          Редагувати
+                        </button>
+                      )}
                       {driver.employment_status === "ACTIVE" ? (
                         <button
                           type="button"
@@ -256,6 +258,7 @@ function DriverForm({
         <DateField
           name="medical_check_date"
           defaultValue={driver?.medical_check_date}
+          max={nowForField().slice(0, 10)}
           required
         />
       </label>
