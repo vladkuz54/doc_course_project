@@ -92,27 +92,39 @@ class DeadlineMonitor(Subject):
     async def check_license_expiring(self):
         events = []
         for driver in await self.drivers_service.get_license_expiring(_until()):
+            end = driver.license_expiry_date
+            verb = "сплило" if end < date.today() else "спливає"
             events += self._driver_and_admin_events(
                 "LICENSE_EXPIRING",
                 driver,
-                f"Посвідчення спливає: {driver.full_name}, {driver.license_expiry_date:%d.%m.%Y}",
+                f"Ваше посвідчення {verb} {end:%d.%m.%Y}. "
+                "Оновіть його та повідомте адміністратора.",
+                f"Посвідчення {verb}: {driver.full_name}, {end:%d.%m.%Y}",
             )
         return await self._publish(events)
 
     async def check_medical_check_due(self):
         events = []
         for driver in await self.drivers_service.get_medical_check_due(_until()):
+            end = driver.medical_valid_until
+            if end < date.today():
+                driver_text = f"Ваш медогляд сплив {end:%d.%m.%Y}."
+                admin_text = f"Медогляд сплив: {driver.full_name}, {end:%d.%m.%Y}"
+            else:
+                driver_text = f"Ваш медогляд дійсний до {end:%d.%m.%Y}."
+                admin_text = f"Медогляд спливає: {driver.full_name}, {end:%d.%m.%Y}"
             events += self._driver_and_admin_events(
                 "MEDICAL_CHECK_DUE",
                 driver,
-                f"Медогляд спливає: {driver.full_name}, {driver.medical_valid_until:%d.%m.%Y}",
+                f"{driver_text} Пройдіть новий і повідомте адміністратора.",
+                admin_text,
             )
         return await self._publish(events)
 
-    def _driver_and_admin_events(self, type, driver, text):
+    def _driver_and_admin_events(self, type, driver, driver_text, admin_text):
         return [
-            DomainEvent(type, "drivers", driver.id, text, recipient_id)
-            for recipient_id in (driver.user_id, None)
+            DomainEvent(type, "drivers", driver.id, driver_text, driver.user_id),
+            DomainEvent(type, "drivers", driver.id, admin_text),
         ]
 
     async def _publish(self, events):
