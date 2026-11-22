@@ -97,6 +97,8 @@ class RepairRecordsService(IRepairRecordsService, AccountingService):
             raise BusinessRuleError("Вартість цього обслуговування вже внесено.")
         if cost < 0:
             raise BusinessRuleError("Вартість обслуговування не може бути від'ємною.")
+        if record.date > date.today():
+            raise BusinessRuleError("Не можна внести вартість раніше терміну.")
         record.amount = cost
         record.status = "DONE"
         return await self.repository.update(record)
