@@ -225,7 +225,7 @@ async def run_deadline_checks():
     async with Session() as session:
         notifications = get_notifications_service(session)
         monitor = get_deadline_monitor(
-            get_repair_records_service(session, notifications),
+            get_repair_records_service(session),
             get_insurance_policies_service(session),
             get_drivers_service(session),
             notifications,
